@@ -1,7 +1,7 @@
 import email
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
-import databases, sqlalchemy, datetime, uuid
+import databases, sqlalchemy, datetime, uuid  
 
 ## Postgres Database 
 DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
