@@ -5,6 +5,7 @@ alembic==1.0.11
 aniso8601==5.1.0
 astroid==2.2.5
 authy==2.2.3
+asyncpg
 bcrypt==3.1.7
 certifi==2019.3.9
 cffi==1.12.3
@@ -36,6 +37,7 @@ nejma==0.1.0
 passlib==1.7.1
 pbr==5.4.0
 promise==2.2.1
+psycopg2-binary
 pycparser==2.19
 pydantic==0.26
 PyJWT==1.7.1
