@@ -5,7 +5,8 @@ import databases, sqlalchemy, datetime, uuid
 
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
-DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
+LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
+DATABASE_URL = LOCAL_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
@@ -177,42 +178,100 @@ userwalletlog_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+news_table = sqlalchemy.Table(
+    "news",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("title"        , sqlalchemy.String),
+    sqlalchemy.Column("content"      , sqlalchemy.String),
+    sqlalchemy.Column("image"        , sqlalchemy.Text),
+    sqlalchemy.Column("file1"        , sqlalchemy.Text),
+    sqlalchemy.Column("file2"        , sqlalchemy.Text),
+    sqlalchemy.Column("file3"        , sqlalchemy.Text),
+    sqlalchemy.Column("file4"        , sqlalchemy.Text),
+    sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+posts_table = sqlalchemy.Table(
+    "posts",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("title"        , sqlalchemy.String),
+    sqlalchemy.Column("content"      , sqlalchemy.String),
+    sqlalchemy.Column("image"        , sqlalchemy.Text),
+    sqlalchemy.Column("file1"        , sqlalchemy.Text),
+    sqlalchemy.Column("file2"        , sqlalchemy.Text),
+    sqlalchemy.Column("file3"        , sqlalchemy.Text),
+    sqlalchemy.Column("file4"        , sqlalchemy.Text),
+    sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("likes"        , sqlalchemy.Integer),
+    sqlalchemy.Column("dislikes"        , sqlalchemy.Integer),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
+)
+
+comments_table = sqlalchemy.Table(
+    "comments",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("postid"       , sqlalchemy.String),
+    sqlalchemy.Column("comment"      , sqlalchemy.String),
+    sqlalchemy.Column("file1"        , sqlalchemy.Text),
+    sqlalchemy.Column("file2"        , sqlalchemy.Text),
+    sqlalchemy.Column("file3"        , sqlalchemy.Text),
+    sqlalchemy.Column("file4"        , sqlalchemy.Text),
+    sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
+)
+
 engine = sqlalchemy.create_engine(
     DATABASE_URL
 )
 metadata.create_all(engine)
 
-class PostSchema(BaseModel):
-    id          : str = Field(default=None)
-    title       : str = Field(default=None)
-    content     : str = Field(default= None)
-    thumbnail   : str = Field(default= None)
-    likes       : int = Field(default= 0)
-    dislikes    : str = Field(default=0)
-    datepublished:Optional[datetime.datetime] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "title": "My Blog",
-                "content": "My Blog Content",
-                "thumbnail" : "--",
-                "likes": 0,
-                "dislikes": 0,
-                "datepublished": datetime.datetime,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
+# class PostSchema(BaseModel):
+#     id          : str = Field(default=None)
+#     title       : str = Field(default=None)
+#     content     : str = Field(default= None)
+#     thumbnail   : str = Field(default= None)
+#     likes       : int = Field(default= 0)
+#     dislikes    : str = Field(default=0)
+#     datepublished:Optional[datetime.datetime] = None
+#     datecreated : datetime.datetime
+#     createdby   : Optional[str] = None
+#     dateupdated : Optional[datetime.datetime] = None
+#     updatedby   : Optional[str] = None
+#     status   : Optional[str] = None
+#     class Config:
+#         orm_mode = True
+#         the_schema = {
+#             "user_demo": {
+#                 "id" : "---",
+#                 "title": "My Blog",
+#                 "content": "My Blog Content",
+#                 "thumbnail" : "--",
+#                 "likes": 0,
+#                 "dislikes": 0,
+#                 "datepublished": datetime.datetime,
+#                 "datecreated": datetime.datetime,
+#                 "createdby": "1",
+#                 "dateupdated": None,
+#                 "updatedby": None,
+#                 "status": "1"
+#             }
+#         }
 
 ##################### USERS ###########################
 
@@ -368,6 +427,177 @@ class RoleDeleteSchema(BaseModel):
         }
 
 ##################### END_ROLES ###########################
+
+##################### NEWS ###########################
+class NewsSchema(BaseModel):
+    id          : str = Field(default=None)
+    title       : str = Field(default=None)
+    content     : str = Field(default= None)
+    image       : str = Field(default= None)
+    file1       : str = Field(default= None)
+    file2       : str = Field(default= None)
+    file3       : str = Field(default= None)
+    file4       : str = Field(default= None)
+    file5       : str = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "news_demo": {
+                "id" : "---",
+                "title": "Title",
+                "content": "Cotent",
+                "image": "IMG Base64",
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class NewsUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    title       : str = Field(default=None)
+    content     : str = Field(default= None)
+    image       : str = Field(default= None)
+    file1       : str = Field(default= None)
+    file2       : str = Field(default= None)
+    file3       : str = Field(default= None)
+    file4       : str = Field(default= None)
+    file5       : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "title": "Title",
+                "content": "Cotent",
+                "image": "IMG Base64",
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class NewsDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "news": {
+                "id" : "---"
+            }
+        }
+
+##################### END_NEWS ###########################
+
+
+##################### POSTS ###########################
+class PostSchema(BaseModel):
+    id          : str = Field(default=None)
+    title       : str = Field(default=None)
+    content     : str = Field(default= None)
+    image       : str = Field(default= None)
+    file1       : str = Field(default= None)
+    file2       : str = Field(default= None)
+    file3       : str = Field(default= None)
+    file4       : str = Field(default= None)
+    file5       : str = Field(default= None)
+    likes       : int = Field(default= 0)
+    likes       : int = Field(default= 0)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "news_demo": {
+                "id" : "---",
+                "title": "Title",
+                "content": "Cotent",
+                "image": "IMG Base64",
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "likes": 0,
+                "disikes": 0,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "PENDING"
+            }
+        }
+
+class PostUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    title       : str = Field(default=None)
+    content     : str = Field(default= None)
+    image       : str = Field(default= None)
+    file1       : str = Field(default= None)
+    file2       : str = Field(default= None)
+    file3       : str = Field(default= None)
+    file4       : str = Field(default= None)
+    file5       : str = Field(default= None)
+    likes       : int = Field(default= 0)
+    likes       : int = Field(default= 0)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "title": "Title",
+                "content": "Cotent",
+                "image": "IMG Base64",
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "likes": 0,
+                "disikes": 0,
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "PENDING"
+            }
+        }
+
+class PostDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "post": {
+                "id" : "---"
+            }
+        }
+
+##################### END_POSTS ###########################
 
 ##################### SUBJECTS ###########################
 class SubjectSchema(BaseModel):
