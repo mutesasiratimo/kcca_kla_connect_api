@@ -1,4 +1,5 @@
 import email
+from tokenize import Double
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 import databases, sqlalchemy, datetime, uuid  
@@ -22,7 +23,6 @@ roles_table = sqlalchemy.Table(
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
-
 
 users_table = sqlalchemy.Table(
     "users",
@@ -49,6 +49,36 @@ classes_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("classname"    , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+days_table = sqlalchemy.Table(
+    "days",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("dayname"     , sqlalchemy.String),
+    sqlalchemy.Column("daycode"  , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+schedules_table = sqlalchemy.Table(
+    "schedules",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("subjectid"    , sqlalchemy.String),
+    sqlalchemy.Column("userid"       , sqlalchemy.String),
+    sqlalchemy.Column("classid"      , sqlalchemy.String),
+    sqlalchemy.Column("dayid"        , sqlalchemy.String),
+    sqlalchemy.Column("start"        , sqlalchemy.Time),
+    sqlalchemy.Column("end"          , sqlalchemy.Time),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -930,10 +960,337 @@ class FeesDeleteSchema(BaseModel):
 
 ##################### END_CLUBS ###########################
 
+##################### WALLET ###########################
+class WalletSchema(BaseModel):
+    id                  : str = Field(default=None)
+    userid              : str = Field(default=None)
+    availablebalance    : float = Field(default= None)
+    currentbalance      : float = Field(default= None)
+    totalincoming       : float = Field(default= None)
+    totaloutgoing       : float = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "userid": "UserID",
+                "availablebalance": 0.0,
+                "currentbalance": 0.0,
+                "totalincoming": 0.0,
+                "totaloutgoing": 0.0,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class WalletUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    availablebalance    : float = Field(default= None)
+    currentbalance      : float = Field(default= None)
+    totalincoming       : float = Field(default= None)
+    totaloutgoing       : float = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "availablebalance": 0.0,
+                "currentbalance": 0.0,
+                "totalincoming": 0.0,
+                "totaloutgoing": 0.0,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class WalletTopupSchema(BaseModel):
+    id                  : str = Field(default=None)
+    amount              : float = Field(default= None)
+    userid              : str = Field(default=None)
+    userwalletid        : str = Field(default=None)
+    type                : str = Field(default=None)
+    description         : str = Field(default=None)
+    availablebalance    : float = Field(default= None)
+    currentbalance      : float = Field(default= None)
+    totalincoming       : float = Field(default= None)
+    totaloutgoing       : float = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "availablebalance": 0.0,
+                "currentbalance": 0.0,
+                "totalincoming": 0.0,
+                "totaloutgoing": 0.0,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class WalletDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "wallet": {
+                "id" : "---"
+            }
+        }
+
+##################### END_WALLET ###########################
+
+##################### WALLET LOGS ###########################
+class WalletLogSchema(BaseModel):
+    id                  : str = Field(default=None)
+    userid              : str = Field(default=None)
+    userwalletid        : str = Field(default=None)
+    amount              : float = Field(default= None)
+    type                : str = Field(default= None)
+    description         : str = Field(default= None)
+    datecreated         : Optional[datetime.datetime] = None
+    createdby           : Optional[str] = None
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "walletlog_demo": {
+                "id" : "---",
+                "userid": "UserID",
+                "userwalletid": "",
+                "amount": 0.0,
+                "type": "IN",
+                "descripttion": "FLutterwave Top up",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class WalletLogUpdateSchema(BaseModel):
+    id                  : str = Field(default=None)
+    userid              : str = Field(default=None)
+    userwalletid        : str = Field(default=None)
+    amount              : float = Field(default= None)
+    type                : str = Field(default= None)
+    description         : float = Field(default= None)
+    dateupdated         : datetime.datetime
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "walletlog_demo": {
+                "id":  "ID",
+                "userid": "UserID",
+                "userwalletid": "",
+                "amount": 0.0,
+                "type": "IN",
+                "descripttion": "FLutterwave Top up",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class WalletLogDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "walletlog": {
+                "id" : "---"
+            }
+        }
+
+##################### END_WALLET_LOGS ###########################
+
+
+#################### STUDENTS #############################
+
+class StudentSchema(BaseModel):
+    id          : str = Field(..., example="0")
+    firstname   : str = Field(..., example="John")
+    lastname    : str = Field(..., example="Doe")
+    othernames  : str = Field(..., example="Alex")
+    dateofbirth : Optional[datetime.datetime] = None
+    photo       : str = Field(..., example="-----")
+    phone       : str = Field(..., example="0771000111")
+    email       : EmailStr = Field(..., example="email@gmail.com")
+    parentone   : str = Field(..., example="Parent")
+    parenttwo   : str = Field(..., example="Parent")
+    parentthree : str = Field(..., example="Parent")
+    classid     : str = Field(..., example="Class Id")
+    studentid   : str = Field(..., example="Student Id")
+    gender      : str = Field(..., example="M")
+    address     : str = Field(..., example="First Street, City")
+    datecreated : Optional[datetime.datetime] = None
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "student_demo": {
+                "id" : "---",
+                "firstname": "Fname",
+                "lastname": "Lname",
+                "othernames": "OtherNames",
+                "dateofbirth": datetime.datetime,
+                "photo": "------",
+                "phone": "0770111222",
+                "email": "me@email.com",
+                "gender": "F",
+                "classid": "Class ID",
+                "studentid": "Student ID",
+                "address": "First Street, City",
+                "parentone": "",
+                "parenttwo": "",
+                "parentthree": "",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
 
 class StudentSignUpSchema(BaseModel):
     id          : str = Field(..., example="0")
     firstname   : str = Field(..., example="John")
     lastname    : str = Field(..., example="Doe")
-    othernames    : str = Field(..., example="Alex")
+    othernames  : str = Field(..., example="Alex")
+    dateofbirth : Optional[datetime.datetime] = None
+    photo       : str = Field(..., example="-----")
+    phone       : str = Field(..., example="0771000111")
+    email       : EmailStr = Field(..., example="email@gmail.com")
+    parentone   : str = Field(..., example="Parent")
+    parenttwo   : str = Field(..., example="Parent")
+    parentthree : str = Field(..., example="Parent")
+    classid     : str = Field(..., example="Class Id")
+    studentid   : str = Field(..., example="Student Id")
     gender      : str = Field(..., example="M")
+    address     : str = Field(..., example="First Street, City")
+    createdby   : Optional[str] = None
+    datecreated : Optional[datetime.datetime] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "student_demo": {
+                "id" : "---",
+                "firstname": "Fname",
+                "lastname": "Lname",
+                "othernames": "OtherNames",
+                "dateofbirth": datetime.datetime,
+                "photo": "------",
+                "phone": "0770111222",
+                "email": "me@email.com",
+                "gender": "F",
+                "classid": "Class ID",
+                "studentid": "Student ID",
+                "address": "First Street, City",
+                "parentone": "",
+                "parenttwo": "",
+                "parentthree": "",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "status": "1"
+            }
+        }
+
+##################### END_STUDENTS ##########################
+
+##################### TIMETABLES ###########################
+class ScheduleSchema(BaseModel):
+    id                  : str = Field(default=None)
+    subjectid           : str = Field(default=None)
+    userid              : str = Field(default=None)
+    classid             : str = Field(default=None)
+    dayid               : str = Field(default=None)
+    start               : datetime.time = Field(default= None)
+    end                 : datetime.time = Field(default= None)
+    datecreated         : Optional[datetime.datetime] = None
+    createdby           : Optional[str] = None
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "schedule_demo": {
+                "id" : "---",
+                "subjectid": "Subject ID",
+                "userid": "User ID",
+                "classid": "Class ID",
+                "dayid": "Day ID",
+                "start": datetime.time,
+                "end": datetime.time,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ScheduleUpdateSchema(BaseModel):
+    id                  : str = Field(default=None)
+    subjectid           : str = Field(default=None)
+    userid              : str = Field(default=None)
+    classid             : str = Field(default=None)
+    dayid               : str = Field(default=None)
+    start               : datetime.time = Field(default= None)
+    end                 : datetime.time = Field(default= None)
+    dateupdated         : datetime.datetime
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "schedule_demo": {
+                "id":  "ID",
+                "subjectid": "Subject ID",
+                "userid": "User ID",
+                "classid": "Class ID",
+                "dayid": "Day ID",
+                "start": datetime.time,
+                "end": datetime.time,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ScheduleDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "schedule": {
+                "id" : "---"
+            }
+        }
+
+##################### END_TIMETABLES ###########################
