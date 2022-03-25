@@ -889,7 +889,7 @@ async def get_studentname_by_id(studentid: str):
         return "Unknown Student"
 
 
-@app.get("/students/{parentid}", tags=["students"])
+@app.get("/students/parent/{parentid}", tags=["students"])
 async def get_parent_students(parentid: str):
     query = students_table.select().where(students_table.c.parentone == parentid)
     results = await database.fetch_all(query)
@@ -911,7 +911,7 @@ async def register_student(student: StudentSignUpSchema):
         firstname=student.firstname,
         lastname=student.lastname,
         othernames=student.othernames,
-        dateofbirth=student.dateofbirth,
+        # dateofbirth=student.dateofbirth,
         classid=student.classid,
         studentid=student.studentid,
         photo=student.photo,

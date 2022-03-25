@@ -49,6 +49,7 @@ classes_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("classname"    , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("classteacherid", sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -378,7 +379,7 @@ class UserDeleteSchema(BaseModel):
         }
 
 class UserLoginSchema(BaseModel):
-    username : EmailStr = Field(default= None)
+    username : str = Field(default= None)
     password : str = Field(default=None)
     class Config:
         orm_mode = True
@@ -695,6 +696,7 @@ class ClassSchema(BaseModel):
     id          : str = Field(default=None)
     classname : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    classteacherid : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -707,6 +709,7 @@ class ClassSchema(BaseModel):
                 "id" : "---",
                 "classname": "Primary 7 A",
                 "shortcode": "P.7.A",
+                "classteacherid": "-",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -719,6 +722,7 @@ class ClassUpdateSchema(BaseModel):
     id          : str = Field(default=None)
     classname : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    classteacherid : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -729,6 +733,7 @@ class ClassUpdateSchema(BaseModel):
                 "id" : "---",
                 "classname": "Primary 7A",
                 "shortcode": "P.7.A",
+                "classteacherid": "-",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
