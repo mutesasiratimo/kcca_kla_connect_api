@@ -87,6 +87,21 @@ schedules_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+events_table = sqlalchemy.Table(
+    "events",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("name"         , sqlalchemy.String),
+    sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("start"        , sqlalchemy.DateTime),
+    sqlalchemy.Column("end"          , sqlalchemy.DateTime),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 students_table = sqlalchemy.Table(
     "students",
     metadata,
@@ -515,6 +530,71 @@ class DayDeleteSchema(BaseModel):
         }
 
 ##################### END_DAYS ###########################
+
+##################### EVENTS ###########################
+class EventSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    description : str = Field(default= None)
+    start       : Optional[datetime.datetime] = None
+    end         : Optional[datetime.datetime] = None
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "name": "Sports Day",
+                "description": "Annual Sports Day",
+                "start": datetime.datetime,
+                "end": datetime.datetime,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class EventUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    description : str = Field(default= None)
+    start       : Optional[datetime.datetime] = None
+    end         : Optional[datetime.datetime] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "name": "Sports Day",
+                "description": "Annual Sports Day",
+                "start": datetime.datetime,
+                "end": datetime.datetime,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class EventDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "event": {
+                "id" : "---"
+            }
+        }
+
+##################### END_EVENTS ###########################
 
 ##################### NEWS ###########################
 class NewsSchema(BaseModel):

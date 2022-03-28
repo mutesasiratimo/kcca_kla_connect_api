@@ -731,6 +731,120 @@ async def delete_club(clubid: str):
 
 ###################### END CLUBS ##################
 
+
+###################### EVENTS ######################
+
+@app.get("/events", response_model=List[EventSchema], tags=["events"])
+async def get_all_events():
+    query = events_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/events/{eventid}", response_model=EventSchema, tags=["events"])
+async def get_event_by_id(eventid: str):
+    query = events_table.select().where(events_table.c.id == eventid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/events/name/{eventid}", tags=["events"])
+async def get_eventname_by_id(eventid: str):
+    query = events_table.select().where(events_table.c.id == eventid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["name"]
+        return fullname
+    else:
+        return "Unkown Event"
+
+
+@app.post("/events/register", response_model=EventSchema, tags=["events"])
+async def register_event(event: EventSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = events_table.insert().values(
+        id=gID,
+        name=event.name,
+        description=event.description,
+        start = event.start,
+        end = event.end,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **event.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/events/update", response_model=EventUpdateSchema, tags=["events"])
+async def update_event(event: EventUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = events_table.update().\
+        where(events_table.c.id == event.id).\
+        values(
+            name=event.name,
+        description=event.description,
+        start = event.start,
+        end = event.end,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_event_by_id(event.id)
+
+
+@app.put("/events/archive", response_model=EventUpdateSchema, tags=["events"])
+async def archive_event(event: EventUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = events_table.update().\
+        where(events_table.c.id == event.id).\
+        values(
+            name=event.name,
+            description=event.description,
+            start = event.start,
+            end = event.end,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_event_by_id(event.id)
+
+
+@app.put("/events/restore", response_model=EventUpdateSchema, tags=["events"])
+async def restore_event(event: EventUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = events_table.update().\
+        where(events_table.c.id == event.id).\
+        values(
+            name=event.name,
+            description=event.description,
+            start = event.start,
+            end = event.end,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_event_by_id(event.id)
+
+
+@app.delete("/events/{eventid}", tags=["events"])
+async def delete_events(eventid: str):
+    query = events_table.delete().where(events_table.c.id == eventid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This event has been deleted!"
+    }
+
+###################### END ROLES ##################
+
 ###################### FEES ######################
 
 
