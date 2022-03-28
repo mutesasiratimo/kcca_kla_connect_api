@@ -282,6 +282,52 @@ comments_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
+grades_table = sqlalchemy.Table(
+    "grades",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("gradename"    , sqlalchemy.String),
+    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("min"          , sqlalchemy.Float),
+    sqlalchemy.Column("max"          , sqlalchemy.Float),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+results_table = sqlalchemy.Table(
+    "results",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("subjectid"    , sqlalchemy.String),
+    sqlalchemy.Column("classid"      , sqlalchemy.String),
+    sqlalchemy.Column("gradeid"      , sqlalchemy.String),
+    sqlalchemy.Column("teacherid"    , sqlalchemy.String),
+    sqlalchemy.Column("studentid"    , sqlalchemy.String),
+    sqlalchemy.Column("resultypeid"  , sqlalchemy.String),
+    sqlalchemy.Column("mark"         , sqlalchemy.Float),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+resulttypes_table = sqlalchemy.Table(
+    "resulttypes",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("name"         , sqlalchemy.String),
+    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 engine = sqlalchemy.create_engine(
     DATABASE_URL
 )
