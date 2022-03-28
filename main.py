@@ -1383,7 +1383,7 @@ async def get_all_schedules():
     return await database.fetch_all(query)
 
 
-@app.get("/timetable/{scheduleid}", response_model=ScheduleSchema, tags=["timetable"])
+@app.get("/timetable/{scheduleid}", response_model=ScheduleDetailsSchema, tags=["timetable"])
 async def get_schedule_by_id(scheduleid: str):
     query = schedules_table.select().where(schedules_table.c.id == scheduleid)
     result = await database.fetch_one(query)
@@ -1395,12 +1395,23 @@ async def get_schedule_by_classid(classid: str):
     query = schedules_table.select().where(schedules_table.c.classid == classid)
     results = await database.fetch_all(query)
     if results:
-        return results
+        res = []
+        for result in results:
+            res.append({
+                "subjectname": await get_subjectname_by_id(result["subjectid"]),
+                "classname": await get_classname_by_id(result["classid"]),
+                "teachername": await get_usernames_by_id(result["userid"]),
+                "dayname": await get_dayname_by_id(result["dayid"]),
+                "start": result["start"],
+                "end": result["end"],
+            })
+        return res
 
     else:
         return{
             "error": "Class has no schedules"
         }
+
 
 @app.get("/timetable/details/{scheduleid}", tags=["timetable"])
 async def get_scheduled_details_by_id(scheduleid: str):
@@ -1410,20 +1421,21 @@ async def get_scheduled_details_by_id(scheduleid: str):
         print(result)
         subject = await get_subjectname_by_id(result["subjectid"])
         teacher = await get_usernames_by_id(result["userid"])
-        day = await get_subjectname_by_id(result["dayid"])
+        day = await get_dayname_by_id(result["dayid"])
         classname = await get_classname_by_id(result["classid"])
         return{
             "subject": subject,
             "teacher": teacher,
-            # "day":  day
+            "day":  day,
             "class": classname,
             "start": result["start"],
             "end": result["end"]
         }
-    else: 
+    else:
         return {
             "Error": "This schedule does not exist!"
         }
+
 
 @app.post("/timetable", response_model=ScheduleSchema, tags=["timetable"])
 async def add_schedule(schedule: ScheduleSchema):
@@ -1525,3 +1537,108 @@ async def delete_schedule(scheduleid: str):
     }
 
 ###################### END TIMETABLE ##################
+
+
+###################### DAYS ######################
+
+
+@app.get("/days", response_model=List[DaySchema], tags=["days"])
+async def get_all_days():
+    query = days_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/days/{dayid}", response_model=NewsSchema, tags=["days"])
+async def get_day_by_id(dayid: str):
+    query = days_table.select().where(days_table.c.id == dayid)
+    result = await database.fetch_one(query)
+    return result
+
+@app.get("/days/{dayid}", response_model=NewsSchema, tags=["days"])
+async def get_dayname_by_id(dayid: str):
+    query = days_table.select().where(days_table.c.id == dayid)
+    result = await database.fetch_one(query)
+    if result:
+        return result["dayname"]
+    else:
+        return "Uknown Day"
+
+
+@app.post("/days/post", response_model=DaySchema, tags=["days"])
+async def post_day(day: DaySchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = days_table.insert().values(
+        id=gID,
+        dayname=day.dayname,
+        daycode=day.daycode,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **day.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/days/update", response_model=DayUpdateSchema, tags=["days"])
+async def update_day(day: DayUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = days_table.update().\
+        where(days_table.c.id == day.id).\
+        values(
+            dayname=day.dayname,
+            daycode=day.daycode,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_day_by_id(day.id)
+
+
+@app.put("/days/archive", response_model=DayUpdateSchema, tags=["days"])
+async def archive_news(day: DayUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = days_table.update().\
+        where(days_table.c.id == day.id).\
+        values(
+            dayname=day.dayname,
+            daycode=day.daycode,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_day_by_id(day.id)
+
+
+@app.put("/days/restore", response_model=DayUpdateSchema, tags=["days"])
+async def restore_news(day: DayUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = days_table.update().\
+        where(days_table.c.id == day.id).\
+        values(
+            dayname=day.dayname,
+            daycode=day.daycode,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_day_by_id(day.id)
+
+
+@app.delete("/days/{dayid}", tags=["days"])
+async def delete_day(dayid: str):
+    query = days_table.delete().where(days_table.c.id == dayid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This day has been deleted!"
+    }
+
+###################### END DAYS ##################

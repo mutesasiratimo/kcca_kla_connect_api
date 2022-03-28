@@ -459,6 +459,63 @@ class RoleDeleteSchema(BaseModel):
 
 ##################### END_ROLES ###########################
 
+##################### DAYS ###########################
+class DaySchema(BaseModel):
+    id          : str = Field(default=None)
+    dayname     : str = Field(default=None)
+    daycode     : str = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "dayname": "Monday",
+                "daycode": "MON",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class DayUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    dayname     : str = Field(default=None)
+    daycode     : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "dayname": "Monday",
+                "daycode": "MON",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class DayDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "day": {
+                "id" : "---"
+            }
+        }
+
+##################### END_DAYS ###########################
+
 ##################### NEWS ###########################
 class NewsSchema(BaseModel):
     id          : str = Field(default=None)
@@ -1231,6 +1288,47 @@ class StudentSignUpSchema(BaseModel):
 class ScheduleSchema(BaseModel):
     id                  : str = Field(default=None)
     subjectid           : str = Field(default=None)
+    userid              : str = Field(default=None)
+    classid             : str = Field(default=None)
+    dayid               : str = Field(default=None)
+    start               : datetime.time = Field(default= None)
+    end                 : datetime.time = Field(default= None)
+    datecreated         : Optional[datetime.datetime] = None
+    createdby           : Optional[str] = None
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "schedule_demo": {
+                "id" : "---",
+                "subjectid": "Subject ID",
+                "userid": "User ID",
+                "classid": "Class ID",
+                "dayid": "Day ID",
+                "start": datetime.time,
+                "end": datetime.time,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+async def get_subjectname_by_id(subjectid: str):
+    query = subjects_table.select().where(subjects_table.c.id == subjectid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["subjectname"]
+        return fullname
+    else:
+        return "Unkown Subject"
+
+class ScheduleDetailsSchema(BaseModel):
+    id                  : str = Field(default=None)
+    subjectid           : str = Field(default="")
     userid              : str = Field(default=None)
     classid             : str = Field(default=None)
     dayid               : str = Field(default=None)
