@@ -1069,6 +1069,28 @@ async def get_result_by_id(resultid: str):
     result = await database.fetch_one(query)
     return result
 
+@app.get("/results/student/{studentid}", tags=["results"])
+async def get_schedule_by_studentid(studentid: str):
+    query = results_table.select().where(results_table.c.studentid == studentid)
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "subjectname": await get_subjectname_by_id(result["subjectid"]),
+                "classname": await get_classname_by_id(result["classid"]),
+                "teachername": await get_usernames_by_id(result["teacherid"]),
+                "resulttype": await get_result_type_name_by_id(result["resultypeid"]),
+                "mark": result["mark"],
+                "dateadded": result["datecreated"]
+            })
+        return res
+
+    else:
+        return{
+            "error": "Class has no schedules"
+        }
+
 
 @app.get("/results/name/{resultid}", tags=["results"])
 async def get_result_name_by_id(resultid: str):
@@ -1126,7 +1148,7 @@ async def update_result(result: ResultUpdateSchema):
 
 
 @app.put("/results/archive", response_model=ResultUpdateSchema, tags=["results"])
-async def archive_grade(result: ResultUpdateSchema):
+async def archive_result(result: ResultUpdateSchema):
     gDate = datetime.datetime.now()
     query = results_table.update().\
         where(results_table.c.id == result.id).\

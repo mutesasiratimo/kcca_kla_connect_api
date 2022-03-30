@@ -32,6 +32,9 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("lastname"     , sqlalchemy.String),
     sqlalchemy.Column("username"     , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
+    sqlalchemy.Column("phone"        , sqlalchemy.String),
+    sqlalchemy.Column("address"      , sqlalchemy.String),
+    sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
     sqlalchemy.Column("password"     , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
     sqlalchemy.Column("photo"        , sqlalchemy.String),
@@ -102,6 +105,21 @@ events_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+houses_table = sqlalchemy.Table(
+    "houses",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("housename"    , sqlalchemy.String),
+    sqlalchemy.Column("color"        , sqlalchemy.String),
+    sqlalchemy.Column("patronid"     , sqlalchemy.String),
+    sqlalchemy.Column("asstpatronid" , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 students_table = sqlalchemy.Table(
     "students",
     metadata,
@@ -113,9 +131,10 @@ students_table = sqlalchemy.Table(
     sqlalchemy.Column("phone"        , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
+    sqlalchemy.Column("houseid"      , sqlalchemy.String),
     sqlalchemy.Column("parentone"    , sqlalchemy.String),
     sqlalchemy.Column("parenttwo"    , sqlalchemy.String),
-    sqlalchemy.Column("parentthree"    , sqlalchemy.String),
+    sqlalchemy.Column("parentthree"  , sqlalchemy.String),
     sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
     sqlalchemy.Column("address"      , sqlalchemy.String),
     sqlalchemy.Column("weight"       , sqlalchemy.Float),
@@ -765,8 +784,8 @@ class EventSchema(BaseModel):
     id          : str = Field(default=None)
     name        : str = Field(default=None)
     description : str = Field(default= None)
-    start       : str = Field(default= None)
-    end         : str = Field(default= None)
+    start       : Optional[datetime.datetime] = None
+    end         : Optional[datetime.datetime] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
