@@ -131,7 +131,7 @@ students_table = sqlalchemy.Table(
     sqlalchemy.Column("phone"        , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
-    sqlalchemy.Column("houseid"      , sqlalchemy.String),
+    # sqlalchemy.Column("houseid"      , sqlalchemy.String),
     sqlalchemy.Column("parentone"    , sqlalchemy.String),
     sqlalchemy.Column("parenttwo"    , sqlalchemy.String),
     sqlalchemy.Column("parentthree"  , sqlalchemy.String),
