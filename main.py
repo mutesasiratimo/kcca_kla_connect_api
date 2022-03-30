@@ -35,9 +35,9 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.get("/", tags=["test"])
+@app.get("/", tags=["welcome"])
 def greet():
-    return{"Hello": "World"}
+    return{"Hello": "Welcome to the school system"}
 
 ################### USERS ###################
 
@@ -766,8 +766,8 @@ async def register_event(event: EventSchema):
         id=gID,
         name=event.name,
         description=event.description,
-        start = event.start,
-        end = event.end,
+        start = datetime.datetime.strptime((event.start), "%Y-%m-%dT%H:%M:%S").date(),
+        end =  datetime.datetime.strptime((event.end), "%Y-%m-%dT%H:%M:%S").date(),
         datecreated=gDate,
         status="1"
     )
@@ -844,6 +844,341 @@ async def delete_events(eventid: str):
     }
 
 ###################### END ROLES ##################
+
+###################### RESULT TYPES ######################
+
+@app.get("/resulttypes", response_model=List[ResultTypeSchema], tags=["resulttypes"])
+async def get_all_result_types():
+    query = resulttypes_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/resulttypes/{resulttypeid}", response_model=ResultTypeSchema, tags=["resulttypes"])
+async def get_result_type_by_id(resulttypeid: str):
+    query = resulttypes_table.select().where(resulttypes_table.c.id == resulttypeid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/resulttypes/name/{resulttypeid}", tags=["resulttypes"])
+async def get_result_type_name_by_id(resulttypeid: str):
+    query = resulttypes_table.select().where(resulttypes_table.c.id == resulttypeid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["name"]
+        return fullname
+    else:
+        return "Unkown Result Type"
+
+
+@app.post("/resulttypes/register", response_model=ResultTypeSchema, tags=["resulttypes"])
+async def register_result_type(resulttype: ResultTypeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = resulttypes_table.insert().values(
+        id=gID,
+        name=resulttype.name,
+        shortcode=resulttype.shortcode,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **resulttype.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/resulttypes/update", response_model=ResultTypeUpdateSchema, tags=["resulttypes"])
+async def update_result_type(resulttype: ResultTypeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = resulttypes_table.update().\
+        where(resulttypes_table.c.id == resulttype.id).\
+        values(
+            name=resulttype.name,
+            shortcode=resulttype.shortcode,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_type_by_id(resulttype.id)
+
+
+@app.put("/resulttypes/archive", response_model=ResultTypeUpdateSchema, tags=["resulttypes"])
+async def archive_result_type(resulttype: ResultTypeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = resulttypes_table.update().\
+        where(resulttypes_table.c.id == resulttype.id).\
+        values(
+            name=resulttype.name,
+            shortcode=resulttype.shortcode,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_type_by_id(resulttype.id)
+
+
+@app.put("/resulttypes/restore", response_model=ResultTypeUpdateSchema, tags=["resulttypes"])
+async def restore_result_type(resulttype: ResultTypeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = resulttypes_table.update().\
+        where(resulttypes_table.c.id == resulttype.id).\
+        values(
+            name=resulttype.name,
+            shortcode=resulttype.shortcode,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_type_by_id(resulttype.id)
+
+
+@app.delete("/resulttypes/{eventid}", tags=["resulttypes"])
+async def delete_result_types(eventid: str):
+    query = resulttypes_table.delete().where(resulttypes_table.c.id == eventid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This result type has been deleted!"
+    }
+
+###################### END RESULT_TYPES ##################
+
+###################### GRADES ######################
+
+@app.get("/grades", response_model=List[GradeSchema], tags=["grades"])
+async def get_all_grades():
+    query = grades_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/grades/{resulttypeid}", response_model=GradeSchema, tags=["grades"])
+async def get_grade_by_id(resulttypeid: str):
+    query = grades_table.select().where(grades_table.c.id == resulttypeid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/grades/name/{resulttypeid}", tags=["grades"])
+async def get_grade_name_by_id(resulttypeid: str):
+    query = grades_table.select().where(grades_table.c.id == resulttypeid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["gradename"]
+        return fullname
+    else:
+        return "Unkown Grade"
+
+
+@app.post("/grades/register", response_model=GradeSchema, tags=["grades"])
+async def register_grade(resulttype: GradeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = grades_table.insert().values(
+        id=gID,
+        name=resulttype.gradename,
+        shortcode=resulttype.shortcode,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **resulttype.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/grades/update", response_model=GradeUpdateSchema, tags=["grades"])
+async def update_grade(resulttype: GradeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = grades_table.update().\
+        where(grades_table.c.id == resulttype.id).\
+        values(
+            name=resulttype.gradename,
+            shortcode=resulttype.shortcode,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_grade_by_id(resulttype.id)
+
+
+@app.put("/grades/archive", response_model=GradeUpdateSchema, tags=["grades"])
+async def archive_grade(resulttype: GradeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = grades_table.update().\
+        where(grades_table.c.id == resulttype.id).\
+        values(
+            name=resulttype.gradename,
+            shortcode=resulttype.shortcode,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_grade_by_id(resulttype.id)
+
+
+@app.put("/grades/restore", response_model=GradeUpdateSchema, tags=["grades"])
+async def restore_grade(grade: GradeUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = grades_table.update().\
+        where(grades_table.c.id == grade.id).\
+        values(
+            name=grade.gradename,
+            shortcode=grade.shortcode,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_grade_by_id(grade.id)
+
+
+@app.delete("/grades/{gradeid}", tags=["grades"])
+async def delete_grade(gradeid: str):
+    query = grades_table.delete().where(grades_table.c.id == gradeid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This grade has been deleted!"
+    }
+
+###################### END GRADES ##################
+
+###################### RESULTS ######################
+
+@app.get("/results", response_model=List[ResultSchema], tags=["results"])
+async def get_all_results():
+    query = results_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/results/{resultid}", response_model=ResultSchema, tags=["results"])
+async def get_result_by_id(resultid: str):
+    query = results_table.select().where(results_table.c.id == resultid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/results/name/{resultid}", tags=["results"])
+async def get_result_name_by_id(resultid: str):
+    query = results_table.select().where(results_table.c.id == resultid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["gradename"]
+        return fullname
+    else:
+        return "Unkown Grade"
+
+@app.post("/results/register", response_model=ResultSchema, tags=["results"])
+async def register_result(result: ResultSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = results_table.insert().values(
+        id=gID,
+        subjectid=result.subjectid,
+        classid=result.classid,
+        gradeid=result.gradeid,
+        teacherid=result.teacherid,
+        studentid=result.studentid,
+        resultypeid=result.resultypeid,
+        mark=result.mark,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **result.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/results/update", response_model=ResultUpdateSchema, tags=["results"])
+async def update_result(result: ResultUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = results_table.update().\
+        where(results_table.c.id == result.id).\
+        values(
+            subjectid=result.subjectid,
+            classid=result.classid,
+            gradeid=result.gradeid,
+            teacherid=result.teacherid,
+            studentid=result.studentid,
+            resultypeid=result.resultypeid,
+            mark=result.mark,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_by_id(result.id)
+
+
+@app.put("/results/archive", response_model=ResultUpdateSchema, tags=["results"])
+async def archive_grade(result: ResultUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = results_table.update().\
+        where(results_table.c.id == result.id).\
+        values(
+            subjectid=result.subjectid,
+            classid=result.classid,
+            gradeid=result.gradeid,
+            teacherid=result.teacherid,
+            studentid=result.studentid,
+            resultypeid=result.resultypeid,
+            mark=result.mark,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_by_id(result.id)
+
+
+@app.put("/results/restore", response_model=ResultUpdateSchema, tags=["results"])
+async def restore_result(result: ResultUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = results_table.update().\
+        where(results_table.c.id == result.id).\
+        values(
+            subjectid=result.subjectid,
+            classid=result.classid,
+            gradeid=result.gradeid,
+            teacherid=result.teacherid,
+            studentid=result.studentid,
+            resultypeid=result.resultypeid,
+            mark=result.mark,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_result_by_id(result.id)
+
+
+@app.delete("/results/{gradeid}", tags=["results"])
+async def delete_result(resultid: str):
+    query = results_table.delete().where(results_table.c.id == resultid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This result has been deleted!"
+    }
+
+###################### END RESULTS ##################
+
 
 ###################### FEES ######################
 

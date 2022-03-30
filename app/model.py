@@ -7,7 +7,7 @@ import databases, sqlalchemy, datetime, uuid
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
 LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
-DATABASE_URL = LIVE_DATABASE_URL
+DATABASE_URL = LOCAL_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
@@ -577,13 +577,196 @@ class DayDeleteSchema(BaseModel):
 
 ##################### END_DAYS ###########################
 
+##################### GRADES ###########################
+class GradeSchema(BaseModel):
+    id          : str = Field(default=None)
+    gradename   : str = Field(default=None)
+    shortcode   : str = Field(default= None)
+    min         : float = Field(default= None)
+    max         : float = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "grade_demo": {
+                "id" : "---",
+                "gradename": "Distinction 1",
+                "shortcode": "D1",
+                "min": 0.0,
+                "max": 0.0,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class GradeUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    gradename        : str = Field(default=None)
+    shortcode   : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "grade_demo": {
+                "id":  "ID",
+                "gradename": "Distinction 1",
+                "shortcode": "D1",
+                "min": 0.0,
+                "max": 0.0,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class GradeDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "grade": {
+                "id" : "---"
+            }
+        }
+
+##################### END_GRADES ###########################
+
+##################### RESULT ###########################
+class ResultSchema(BaseModel):
+    id          : str = Field(default=None)
+    subjectid   : str = Field(default=None)
+    classid     : str = Field(default= None)
+    gradeid     : str = Field(default=None)
+    teacherid   : str = Field(default= None)
+    studentid   : str = Field(default=None)
+    resultypeid : str = Field(default= None)
+    mark        : float = Field(default=None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "result_demo": {
+                "id" : "---",
+                "name": "Beginning of Term",
+                "shortcode": "BoT",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ResultUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    shortcode   : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "result_demo": {
+                "id":  "ID",
+                "name": "Beginning of Term",
+                "shortcode": "BoT",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ResultDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "result": {
+                "id" : "---"
+            }
+        }
+
+##################### END_RESULTS ###########################
+
+
+##################### RESULT TYPES ###########################
+class ResultTypeSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    shortcode   : str = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "name": "Beginning of Term",
+                "shortcode": "BoT",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ResultTypeUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    shortcode   : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "name": "Beginning of Term",
+                "shortcode": "BoT",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ResultTypeDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "result_type": {
+                "id" : "---"
+            }
+        }
+
+##################### END_RESULT_TYPES ###########################
+
 ##################### EVENTS ###########################
 class EventSchema(BaseModel):
     id          : str = Field(default=None)
     name        : str = Field(default=None)
     description : str = Field(default= None)
-    start       : Optional[datetime.datetime] = None
-    end         : Optional[datetime.datetime] = None
+    start       : str = Field(default= None)
+    end         : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -596,8 +779,8 @@ class EventSchema(BaseModel):
                 "id" : "---",
                 "name": "Sports Day",
                 "description": "Annual Sports Day",
-                "start": datetime.datetime,
-                "end": datetime.datetime,
+                "start": "2022-05-25T09:00:00",
+                "end": "2022-05-25T16:00:00",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -610,8 +793,8 @@ class EventUpdateSchema(BaseModel):
     id          : str = Field(default=None)
     name        : str = Field(default=None)
     description : str = Field(default= None)
-    start       : Optional[datetime.datetime] = None
-    end         : Optional[datetime.datetime] = None
+    start       : str = Field(default= None)
+    end         : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -622,8 +805,8 @@ class EventUpdateSchema(BaseModel):
                 "id":  "ID",
                 "name": "Sports Day",
                 "description": "Annual Sports Day",
-                "start": datetime.datetime,
-                "end": datetime.datetime,
+                "start": "2022-05-25T09:00:00",
+                "end": "2022-05-25T16:00:00",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
