@@ -32,9 +32,9 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("lastname"     , sqlalchemy.String),
     sqlalchemy.Column("username"     , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
-    # sqlalchemy.Column("phone"        , sqlalchemy.String),
-    # sqlalchemy.Column("address"      , sqlalchemy.String),
-    # sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("phone"        , sqlalchemy.String),
+    sqlalchemy.Column("address"      , sqlalchemy.String),
+    sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
     sqlalchemy.Column("password"     , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
     sqlalchemy.Column("photo"        , sqlalchemy.String),
@@ -131,7 +131,7 @@ students_table = sqlalchemy.Table(
     sqlalchemy.Column("phone"        , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
-    # sqlalchemy.Column("houseid"      , sqlalchemy.String),
+    sqlalchemy.Column("houseid"      , sqlalchemy.String),
     sqlalchemy.Column("parentone"    , sqlalchemy.String),
     sqlalchemy.Column("parenttwo"    , sqlalchemy.String),
     sqlalchemy.Column("parentthree"  , sqlalchemy.String),
@@ -938,7 +938,7 @@ class PostSchema(BaseModel):
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
     likes       : int = Field(default= 0)
-    likes       : int = Field(default= 0)
+    dislikes    : int = Field(default= 0)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None

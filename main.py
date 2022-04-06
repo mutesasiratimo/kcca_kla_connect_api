@@ -13,15 +13,6 @@ from app.auth.jwt_bearer import jwtBearer
 from decouple import config
 
 
-posts = [
-    {
-        "id": 1,
-        "title": "Penguins",
-        "content": "Penguin content"
-    }
-]
-
-
 app = FastAPI()
 
 
@@ -1553,39 +1544,194 @@ async def delete_news(newsid: str):
     }
 
 ###################### END NEWS ##################
+@app.get("/posts", response_model=List[PostSchema], tags=["posts"])
+async def get_all_posts():
+    query = posts_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/posts/{postid}", response_model=PostSchema, tags=["posts"])
+async def get_post_by_id(postid: str):
+    query = posts_table.select().where(posts_table.c.id == postid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/posts/user/{userid}", tags=["posts"])
+async def get_posts_by_userid(userid: str):
+    query = posts_table.select().where(posts_table.c.createdby == userid)
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "id": result["id"],
+                "title": result["title"],
+                "content": result["content"],
+                "image": result["image"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "likes": result["likes"],
+                "dislikes": result["dislikes"],
+                "datecreated": result["datecreated"],
+                "createdby":  await get_usernames_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"],
+            })
+        return res
+
+    else:
+        return{
+            "error": "User has no posts"
+        }
+
+
+@app.get("/posts/details/{postid}", tags=["posts"])
+async def get_post_details_by_id(postid: str):
+    query = posts_table.select().where(posts_table.c.id == postid)
+    result = await database.fetch_one(query)
+    if result:
+        return{
+            "id": result["id"],
+            "title": result["title"],
+            "content": result["content"],
+            "image": result["image"],
+            "file1": result["file1"],
+            "file2": result["file2"],
+            "file3": result["file3"],
+            "file4": result["file4"],
+            "file5": result["file5"],
+            "likes": result["likes"],
+            "dislikes": result["dislikes"],
+            "datecreated": result["datecreated"],
+            "createdby":  await get_usernames_by_id(result["createdby"]),
+            "dateupdated": result["dateupdated"],
+            "updatedby": result["updatedby"],
+            "status": result["status"],
+        }
+    else:
+        return {
+            "Error": "This post does not exist!"
+        }
+
+
+@app.post("/posts", response_model=PostSchema, tags=["posts"])
+async def add_post(post: PostSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = posts_table.insert().values(
+        id=gID,
+        title=post.title,
+        content=post.content,
+        image=post.image,
+        file1=post.file1,
+        file2=post.file2,
+        file3=post.file3,
+        file4=post.file4,
+        file5=post.file5,
+        likes=post.likes,
+        dislikes=post.dislikes,
+        createdby= post.createdby,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        "id": gID,
+        **post.dict(),
+        "datecreated": gDate
+    }
+
+
+@app.put("/posts/update",  tags=["posts"])
+async def update_post(post: PostUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = posts_table.update().\
+        where(posts_table.c.id == post.id).\
+        values(
+            title=post.title,
+            content=post.content,
+            image=post.image,
+            file1=post.file1,
+            file2=post.file2,
+            file3=post.file3,
+            file4=post.file4,
+            file5=post.file5,
+            likes=post.likes,
+            dislikes=post.dislikes,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_post_by_id(post.id)
+
+
+@app.put("/posts/archive", tags=["posts"])
+async def archive_post(post: PostUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = posts_table.update().\
+        where(posts_table.c.id == post.id).\
+        values(
+            title=post.title,
+            content=post.content,
+            image=post.image,
+            file1=post.file1,
+            file2=post.file2,
+            file3=post.file3,
+            file4=post.file4,
+            file5=post.file5,
+            likes=post.likes,
+            dislikes=post.dislikes,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_post_by_id(post.id)
+
+
+@app.put("/posts/restore", tags=["posts"])
+async def restore_schedule(post: PostUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = posts_table.update().\
+        where(posts_table.c.id == post.id).\
+        values(
+            title=post.title,
+            content=post.content,
+            image=post.image,
+            file1=post.file1,
+            file2=post.file2,
+            file3=post.file3,
+            file4=post.file4,
+            file5=post.file5,
+            likes=post.likes,
+            dislikes=post.dislikes,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_post_by_id(post.id)
+
+
+@app.delete("/posts/{scheduleid}", tags=["posts"])
+async def delete_post(scheduleid: str):
+    query = posts_table.delete().where(posts_table.c.id == scheduleid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This post has been deleted!"
+    }
 
 
 ################### POSTS ###################
 
-# Get all posts
-@app.get("/posts", tags=["posts"])
-def get_posts():
-    return {"data": posts}
-
-# Get post by id
-
-
-@app.get("/posts{id}", tags=["posts"])
-def get_one_post(id: int):
-    if id > len(posts):
-        return {
-            "error": "post does not exist"
-        }
-    for post in posts:
-        if post["id"] == id:
-            return{
-                "data": post
-            }
-
-
-@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"])
-def add_posts(post: PostSchema):
-    """ Function to add new post"""
-    post.id = len(posts) + 1
-    posts.append(post.dict())
-    return{
-        "info": "Post Added!"
-    }
 
 
 ##################### END POSTS ###################
