@@ -784,8 +784,8 @@ class EventSchema(BaseModel):
     id          : str = Field(default=None)
     name        : str = Field(default=None)
     description : str = Field(default= None)
-    start       : Optional[datetime.datetime] = None
-    end         : Optional[datetime.datetime] = None
+    start       : Optional[str] = None
+    end         : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
