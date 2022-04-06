@@ -757,8 +757,10 @@ async def register_event(event: EventSchema):
         id=gID,
         name=event.name,
         description=event.description,
-        start = datetime.datetime.strptime((event.start), "%Y-%m-%dT%H:%M:%S").date(),
-        end =  datetime.datetime.strptime((event.end), "%Y-%m-%dT%H:%M:%S").date(),
+        start=datetime.datetime.strptime(
+            (event.start), "%Y-%m-%dT%H:%M:%S").date(),
+        end=datetime.datetime.strptime(
+            (event.end), "%Y-%m-%dT%H:%M:%S").date(),
         datecreated=gDate,
         status="1"
     )
@@ -779,8 +781,8 @@ async def update_event(event: EventUpdateSchema):
         values(
             name=event.name,
         description=event.description,
-        start = event.start,
-        end = event.end,
+        start=event.start,
+        end=event.end,
             dateupdated=gDate
     )
 
@@ -796,8 +798,8 @@ async def archive_event(event: EventUpdateSchema):
         values(
             name=event.name,
             description=event.description,
-            start = event.start,
-            end = event.end,
+            start=event.start,
+            end=event.end,
             status="0",
             dateupdated=gDate
     )
@@ -814,8 +816,8 @@ async def restore_event(event: EventUpdateSchema):
         values(
             name=event.name,
             description=event.description,
-            start = event.start,
-            end = event.end,
+            start=event.start,
+            end=event.end,
             status="1",
             dateupdated=gDate
     )
@@ -838,6 +840,7 @@ async def delete_events(eventid: str):
 
 ###################### RESULT TYPES ######################
 
+
 @app.get("/resulttypes", response_model=List[ResultTypeSchema], tags=["resulttypes"])
 async def get_all_result_types():
     query = resulttypes_table.select()
@@ -846,14 +849,16 @@ async def get_all_result_types():
 
 @app.get("/resulttypes/{resulttypeid}", response_model=ResultTypeSchema, tags=["resulttypes"])
 async def get_result_type_by_id(resulttypeid: str):
-    query = resulttypes_table.select().where(resulttypes_table.c.id == resulttypeid)
+    query = resulttypes_table.select().where(
+        resulttypes_table.c.id == resulttypeid)
     result = await database.fetch_one(query)
     return result
 
 
 @app.get("/resulttypes/name/{resulttypeid}", tags=["resulttypes"])
 async def get_result_type_name_by_id(resulttypeid: str):
-    query = resulttypes_table.select().where(resulttypes_table.c.id == resulttypeid)
+    query = resulttypes_table.select().where(
+        resulttypes_table.c.id == resulttypeid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["name"]
@@ -942,6 +947,7 @@ async def delete_result_types(eventid: str):
 ###################### END RESULT_TYPES ##################
 
 ###################### GRADES ######################
+
 
 @app.get("/grades", response_model=List[GradeSchema], tags=["grades"])
 async def get_all_grades():
@@ -1048,6 +1054,7 @@ async def delete_grade(gradeid: str):
 
 ###################### RESULTS ######################
 
+
 @app.get("/results", response_model=List[ResultSchema], tags=["results"])
 async def get_all_results():
     query = results_table.select()
@@ -1059,6 +1066,7 @@ async def get_result_by_id(resultid: str):
     query = results_table.select().where(results_table.c.id == resultid)
     result = await database.fetch_one(query)
     return result
+
 
 @app.get("/results/student/{studentid}", tags=["results"])
 async def get_schedule_by_studentid(studentid: str):
@@ -1092,6 +1100,7 @@ async def get_result_name_by_id(resultid: str):
         return fullname
     else:
         return "Unkown Grade"
+
 
 @app.post("/results/register", response_model=ResultSchema, tags=["results"])
 async def register_result(result: ResultSchema):
@@ -1544,10 +1553,30 @@ async def delete_news(newsid: str):
     }
 
 ###################### END NEWS ##################
-@app.get("/posts", response_model=List[PostSchema], tags=["posts"])
+
+
+@app.get("/posts", tags=["posts"])
 async def get_all_posts():
     query = posts_table.select()
-    return await database.fetch_all(query)
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "id": result["id"],
+                "content": result["content"],
+                "dislikes": result["dislikes"],
+                "datecreated": result["datecreated"],
+                "createdby": await get_usernames_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"],
+            })
+        return res
+    else:
+        return {
+            "Error": "This post does not exist!"
+        }
 
 
 @app.get("/posts/{postid}", response_model=PostSchema, tags=["posts"])
@@ -1577,7 +1606,7 @@ async def get_posts_by_userid(userid: str):
                 "likes": result["likes"],
                 "dislikes": result["dislikes"],
                 "datecreated": result["datecreated"],
-                "createdby":  await get_usernames_by_id(result["createdby"]),
+                "createdby": await get_usernames_by_id(result["createdby"]),
                 "dateupdated": result["dateupdated"],
                 "updatedby": result["updatedby"],
                 "status": result["status"],
@@ -1608,7 +1637,7 @@ async def get_post_details_by_id(postid: str):
             "likes": result["likes"],
             "dislikes": result["dislikes"],
             "datecreated": result["datecreated"],
-            "createdby":  await get_usernames_by_id(result["createdby"]),
+            "createdby": await get_usernames_by_id(result["createdby"]),
             "dateupdated": result["dateupdated"],
             "updatedby": result["updatedby"],
             "status": result["status"],
@@ -1635,7 +1664,7 @@ async def add_post(post: PostSchema):
         file5=post.file5,
         likes=post.likes,
         dislikes=post.dislikes,
-        createdby= post.createdby,
+        createdby=post.createdby,
         datecreated=gDate,
         status="1"
     )
@@ -1731,7 +1760,6 @@ async def delete_post(scheduleid: str):
 
 
 ################### POSTS ###################
-
 
 
 ##################### END POSTS ###################
@@ -2170,6 +2198,7 @@ async def get_day_by_id(dayid: str):
     query = days_table.select().where(days_table.c.id == dayid)
     result = await database.fetch_one(query)
     return result
+
 
 @app.get("/days/{dayid}", response_model=NewsSchema, tags=["days"])
 async def get_dayname_by_id(dayid: str):
