@@ -1694,7 +1694,7 @@ async def restore_wallet(wallet: WalletUpdateSchema):
 async def topup_wallet(wallet: WalletTopupSchema):
     gDate = datetime.datetime.now()
     query = userwallet_table.update().\
-        where(userwallet_table.c.id == wallet.id).\
+        where(userwallet_table.c.id == wallet.userwalletid).\
         values(
             availablebalance=wallet.availablebalance,
             currentbalance=wallet.currentbalance,
