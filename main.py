@@ -750,7 +750,7 @@ async def get_eventname_by_id(eventid: str):
 
 
 @app.post("/events/register", response_model=EventSchema, tags=["events"])
-async def register_event(event: EventSchema):
+async def register_event(event: EventAddSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
     query = events_table.insert().values(

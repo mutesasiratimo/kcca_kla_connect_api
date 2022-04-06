@@ -7,7 +7,7 @@ import databases, sqlalchemy, datetime, uuid
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
 LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
-DATABASE_URL = LIVE_DATABASE_URL
+DATABASE_URL = LOCAL_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
@@ -781,6 +781,34 @@ class ResultTypeDeleteSchema(BaseModel):
 
 ##################### EVENTS ###########################
 class EventSchema(BaseModel):
+    id          : str = Field(default=None)
+    name        : str = Field(default=None)
+    description : str = Field(default= None)
+    start       : Optional[datetime.datetime] = None
+    end         : Optional[datetime.datetime] = None
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "name": "Sports Day",
+                "description": "Annual Sports Day",
+                "start": "2022-05-25T09:00:00",
+                "end": "2022-05-25T16:00:00",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class EventAddSchema(BaseModel):
     id          : str = Field(default=None)
     name        : str = Field(default=None)
     description : str = Field(default= None)
