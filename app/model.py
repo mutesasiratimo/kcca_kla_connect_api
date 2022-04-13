@@ -478,6 +478,10 @@ class UserSignUpSchema(BaseModel):
     email       : EmailStr = Field(..., example="johndoe@email.com")
     password    : str = Field(..., example="johndoe")
     gender      : str = Field(..., example="M")
+    address     : str = Field(..., example="Kanjokya House")
+    phone       : str = Field(..., example="+256781777888")
+    photo       : str = Field(..., example="")
+    dateofbirth : str = Field(..., example="1990-03-23")
     status      : str = Field(..., example="1")
 
 ##################### END_USERS ###########################

@@ -11,9 +11,22 @@ from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 from decouple import config
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
+
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
@@ -92,6 +105,11 @@ async def register_user(user: UserSignUpSchema):
         password=user.password,
         firstname=user.firstname,
         lastname=user.lastname,
+        phone = user.phone,
+        dateofbirth = datetime.datetime.strptime(
+            (user.dateofbirth), "%Y-%m-%d").date(),
+        address = user.address,
+        photo = user.photo,
         gender=user.gender,
         datecreated=gDate,
         status="1"
