@@ -72,7 +72,7 @@ async def get_usernames_by_id(userid: str):
 
 @app.post("/user/login", tags=["user"])
 async def user_login(user: UserLoginSchema = Body(default=None)):
-    query = users_table.select().where(users_table.c.username == user.username)
+    query = users_table.select().where(users_table.c.username == user.username or users_table.c.email == user.username)
     result = await database.fetch_one(query)
     if result:
         if result.get("password") == user.password:
@@ -94,6 +94,29 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
             "error": "Invalid login details"
         }
 
+@app.get("/users/emailauth/{email}", tags=["user"])
+async def user_email_authentication(email: EmailStr):
+    query = users_table.select().where(users_table.c.email == email)
+    result = await database.fetch_one(query)
+    if result:
+        return {
+            "userid": result.get("id"),
+            "firstname": result.get("firstname"),
+            "lastname": result.get("lastname"),
+            "firstname": result.get("firstname"),
+            "username": result.get("username"),
+            "email": result.get("email"),
+            "gender": result.get("gender"),
+            "photo": result.get("photo"),
+            "roleid": result.get("roleid"),
+            "token": signJWT(result.get("username")),
+            "status": result.get("status")
+        }
+    else:
+        return{
+            "error": "Invalid login details"
+        }
+
 
 @app.post("/users/signup", response_model=UserSignUpSchema, tags=["user"])
 async def register_user(user: UserSignUpSchema):
@@ -110,6 +133,7 @@ async def register_user(user: UserSignUpSchema):
             (user.dateofbirth), "%Y-%m-%d").date(),
         address = user.address,
         photo = user.photo,
+        email = user.email,
         gender=user.gender,
         datecreated=gDate,
         status="1"
