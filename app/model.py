@@ -391,6 +391,8 @@ class UserSchema(BaseModel):
     firstname   : str = Field(default=None)
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
+    phone       : str = Field(default= None)
+    address     : str = Field(default= None)
     email       : EmailStr = Field(default= None)
     password    : str = Field(default=None)
     gender      : str = Field(default=None)
@@ -408,6 +410,8 @@ class UserSchema(BaseModel):
                 "firstname": "John",
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
+                "phone" : "0775111222",
+                "address": "Kampala, Uganda",
                 "password": "1234",
                 "gender": "Male",
                 "roleid": "1",
