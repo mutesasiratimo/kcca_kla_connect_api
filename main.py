@@ -6,12 +6,15 @@ from typing import List
 from unittest import result
 from xmlrpc.client import DateTime
 import uvicorn
-from fastapi import FastAPI, Body, Depends
+from fastapi import FastAPI, Body, Depends, HTTPException
 from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_login import LoginManager
+from fastapi.security import OAuth2PasswordRequestForm
+
 
 
 app = FastAPI()
@@ -72,6 +75,7 @@ async def get_usernames_by_id(userid: str):
 
 @app.post("/user/login", tags=["user"])
 async def user_login(user: UserLoginSchema = Body(default=None)):
+    # data: OAuth2PasswordRequestForm = Depends()
     query = users_table.select().where(users_table.c.username == user.username or users_table.c.email == user.username)
     result = await database.fetch_one(query)
     if result:
@@ -1381,14 +1385,20 @@ async def delete_fee(feeid: str):
 async def get_all_students():
     query = students_table.select()
     results = await database.fetch_all(query)
-    return results
+    if results:
+        return results
+    else:
+        raise HTTPException(status_code=404, detail="No students found")
 
 
 @app.get("/students/{studentid}", response_model=StudentSchema, tags=["fees"])
 async def get_student_by_id(studentid: str):
     query = students_table.select().where(students_table.c.id == studentid)
     result = await database.fetch_one(query)
-    return result
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=404, detail="Student not found")
 
 
 @app.get("/students/name/{studentid}", tags=["fees"])
@@ -1410,9 +1420,7 @@ async def get_parent_students(parentid: str):
         return results
 
     else:
-        return{
-            "error": "Parent has no Students"
-        }
+        raise HTTPException(status_code=404, detail="No students found")
 
 
 @app.post("/students/signup", response_model=StudentSignUpSchema, tags=["students"])
@@ -1903,10 +1911,10 @@ async def restore_wallet(wallet: WalletUpdateSchema):
     )
 
     await database.execute(query)
-    return await get_wallet_by_id(wallet.id)
+    return await get_wallet_by_id(wallet.id) 
 
 
-@app.put("/wallet/topup", response_model=WalletTopupSchema, tags=["wallet"])
+@app.put("/wallet/topup", response_model=WalletTopupSchema, tags=["wallet"], dependencies=[Depends(jwtBearer())])
 async def topup_wallet(wallet: WalletTopupSchema):
     gDate = datetime.datetime.now()
     query = userwallet_table.update().\
