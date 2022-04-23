@@ -12,7 +12,6 @@ from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_login import LoginManager
 from fastapi.security import OAuth2PasswordRequestForm
 
 
