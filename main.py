@@ -96,9 +96,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "status": result.get("status")
             }
     else:
-        return{
-            "error": "Invalid login details"
-        }
+        raise HTTPException(status_code='401', details='Not Authorized')
 
 @app.get("/users/emailauth/{email}", tags=["user"])
 async def user_email_authentication(email: EmailStr):
@@ -106,22 +104,23 @@ async def user_email_authentication(email: EmailStr):
     result = await database.fetch_one(query)
     if result:
         return {
-            "userid": result.get("id"),
-            "firstname": result.get("firstname"),
-            "lastname": result.get("lastname"),
-            "firstname": result.get("firstname"),
-            "username": result.get("username"),
-            "email": result.get("email"),
-            "gender": result.get("gender"),
-            "photo": result.get("photo"),
-            "roleid": result.get("roleid"),
-            "token": signJWT(result.get("username")),
-            "status": result.get("status")
-        }
+                "userid": result.get("id"),
+                "firstname": result.get("firstname"),
+                "lastname": result.get("lastname"),
+                "firstname": result.get("firstname"),
+                "username": result.get("username"),
+                "email": result.get("email"),
+                "gender": result.get("gender"),
+                "phone": result.get("phone"),
+                "address": result.get("address"),
+                "dateofbirth": result.get("dateofbirth"),
+                "photo": result.get("photo"),
+                "roleid": result.get("roleid"),
+                "token": signJWT(result.get("username")),
+                "status": result.get("status")
+            }
     else:
-        return{
-            "error": "Invalid login details"
-        }
+        raise HTTPException(status_code='401', details='Not Authorized')
 
 
 @app.post("/users/signup", response_model=UserSignUpSchema, tags=["user"])
