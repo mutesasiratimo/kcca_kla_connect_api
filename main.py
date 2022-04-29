@@ -23,11 +23,11 @@ origins = [
 ]
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+CORSMiddleware,
+allow_origins=["*"], # Allows all origins
+allow_credentials=True,
+allow_methods=["*"], # Allows all methods
+allow_headers=["*"], # Allows all headers
 )
 
 
@@ -51,14 +51,46 @@ def greet():
 @app.get("/get_users", response_model=List[UserSchema], tags=["user"])
 async def get_all_users():
     query = users_table.select()
-    return await database.fetch_all(query)
+    result =  await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code='404', details= 'No users found')
+
+@app.get("/get_teachers", response_model=List[UserSchema], tags=["user"])
+async def get_all_teachers():
+    query = users_table.select().where(users_table.c.isteacher == True)
+    result =  await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code='404', details= 'No teachers found')
+
+@app.get("/get_class_teachers/available", tags=["user"])
+async def get_available_class_teachers():
+    query = users_table.select().where(users_table.c.isteacher == True)
+    
+    results =  await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            query2 = classes_table.select().where(classes_table.c.classteacherid == result.get("id"))
+            results2 =  await database.fetch_all(query2)
+            if not results2:
+                res.append(result)
+        return res
+    else:
+        raise HTTPException(status_code='404', details= 'No teachers found')
 
 
 @app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
 async def get_user_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(query)
-    return result
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code='404', details= 'User not found')
 
 
 @app.get("/users/name/{userid}", tags=["user"])
@@ -79,6 +111,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
     result = await database.fetch_one(query)
     if result:
         if result.get("password") == user.password:
+            print(result.get("id"))
             return {
                 "userid": result.get("id"),
                 "firstname": result.get("firstname"),
@@ -91,6 +124,9 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "address": result.get("address"),
                 "dateofbirth": result.get("dateofbirth"),
                 "photo": result.get("photo"),
+                "isadmin": result.get("isadmin"),
+                "isparent": result.get("isparent"),
+                "isteacher": result.get("isteacher"),
                 "roleid": result.get("roleid"),
                 "token": signJWT(user.username),
                 "status": result.get("status")
@@ -115,6 +151,9 @@ async def user_email_authentication(email: EmailStr):
                 "address": result.get("address"),
                 "dateofbirth": result.get("dateofbirth"),
                 "photo": result.get("photo"),
+                "isadmin": result.get("isadmin"),
+                "isparent": result.get("isparent"),
+                "isteacher": result.get("isteacher"),
                 "roleid": result.get("roleid"),
                 "token": signJWT(result.get("username")),
                 "status": result.get("status")
@@ -140,6 +179,9 @@ async def register_user(user: UserSignUpSchema):
         photo = user.photo,
         email = user.email,
         gender=user.gender,
+        isteacher = user.isteacher,
+        isparent = user.isparent,
+        isadmin = user.isadmin,
         datecreated=gDate,
         status="1"
     )
@@ -368,6 +410,8 @@ async def register_subject(subject: SubjectSchema):
         id=gID,
         subjectname=subject.subjectname,
         shortcode=subject.shortcode,
+        requireskit = subject.requireskit,
+        kitdescription = subject.kitdescription,
         datecreated=gDate,
         status="1"
     )
@@ -442,10 +486,28 @@ async def delete_subject(subjectid: str):
 ###################### CLASSES ######################
 
 
-@app.get("/classes", response_model=List[ClassSchema], tags=["class"])
+@app.get("/classes", tags=["class"])
 async def get_all_classes():
     query = classes_table.select()
-    return await database.fetch_all(query)
+    results =  await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            teachername = await get_usernames_by_id(result.get("classteacherid"))
+   
+            res.append(         {
+                "id": result.get("id"),
+                "classname": result.get("classname"),
+                "shortcode": result.get("shortcode"),
+                "classteacherid": result.get("classteacherid"),
+                "classteachername": teachername,
+                "datecreated": result.get("datecreated"),
+                "createdby": result.get("createdby"),
+                "dateupdated": result.get("dateupdated"),
+                "updatedby": result.get("updatedby"),
+                "status": result.get("status")
+            })
+        return res
 
 
 @app.get("/classes/{classid}", response_model=ClassSchema, tags=["class"])
@@ -467,13 +529,14 @@ async def get_classname_by_id(classid: str):
 
 
 @app.post("/classes/register", response_model=ClassSchema, tags=["class"])
-async def register_class(subject: ClassSchema):
+async def register_class(classobj: ClassSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
     query = classes_table.insert().values(
         id=gID,
-        classname=subject.classname,
-        shortcode=subject.shortcode,
+        classname=classobj.classname,
+        shortcode=classobj.shortcode,
+        classteacherid = classobj.classteacherid,
         datecreated=gDate,
         status="1"
     )
@@ -481,7 +544,7 @@ async def register_class(subject: ClassSchema):
     await database.execute(query)
     return {
         "id": gID,
-        **subject.dict(),
+        **classobj.dict(),
         "datecreated": gDate
     }
 
@@ -1433,7 +1496,8 @@ async def register_student(student: StudentSignUpSchema):
         firstname=student.firstname,
         lastname=student.lastname,
         othernames=student.othernames,
-        # dateofbirth=student.dateofbirth,
+        dateofbirth = datetime.datetime.strptime(
+            (student.dateofbirth), "%Y-%m-%d").date(),
         classid=student.classid,
         studentid=student.studentid,
         photo=student.photo,

@@ -39,6 +39,9 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("gender"       , sqlalchemy.String),
     sqlalchemy.Column("photo"        , sqlalchemy.String),
     sqlalchemy.Column("roleid"       , sqlalchemy.String),
+    sqlalchemy.Column("isparent"     , sqlalchemy.Boolean),
+    sqlalchemy.Column("isteacher"    , sqlalchemy.Boolean),
+    sqlalchemy.Column("isadmin"      , sqlalchemy.Boolean),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -151,14 +154,16 @@ students_table = sqlalchemy.Table(
 subjects_table = sqlalchemy.Table(
     "subjects",
     metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("subjectname"     , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"  , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("id"            , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("subjectname"   , sqlalchemy.String),
+    sqlalchemy.Column("shortcode"     , sqlalchemy.String),
+    sqlalchemy.Column("requireskit"   , sqlalchemy.Boolean),
+    sqlalchemy.Column("kitdescription", sqlalchemy.String),
+    sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"     , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"     , sqlalchemy.String),
+    sqlalchemy.Column("status"        , sqlalchemy.CHAR),
 )
 
 classteachersubjects_table = sqlalchemy.Table(
@@ -397,6 +402,9 @@ class UserSchema(BaseModel):
     password    : str = Field(default=None)
     gender      : str = Field(default=None)
     roleid      : Optional[str] = None
+    isparent    : bool = Field(default=True)
+    isteacher   : bool = Field(default=False)
+    isadmin     : bool = Field(default=False)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -415,6 +423,9 @@ class UserSchema(BaseModel):
                 "password": "1234",
                 "gender": "Male",
                 "roleid": "1",
+                "isteacher": False,
+                "isparent": True,
+                "isadmin": False,
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -486,6 +497,9 @@ class UserSignUpSchema(BaseModel):
     phone       : str = Field(..., example="+256781777888")
     photo       : str = Field(..., example="")
     dateofbirth : str = Field(..., example="1990-03-23")
+    isparent    : bool = Field(..., example=True)
+    isteacher   : bool = Field(..., example=False)
+    isadmin     : bool = Field(..., example=False)
     status      : str = Field(..., example="1")
 
 ##################### END_USERS ###########################
@@ -1056,6 +1070,8 @@ class SubjectSchema(BaseModel):
     id          : str = Field(default=None)
     subjectname : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    requireskit : bool = Field(default= False)
+    kitdescription : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1068,6 +1084,8 @@ class SubjectSchema(BaseModel):
                 "id" : "---",
                 "subjectname": "Subject",
                 "shortcode": "SBJ",
+                "requireskit": False,
+                "kitdescription": "Sports Wear and",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1092,6 +1110,8 @@ class SubjectUpdateSchema(BaseModel):
                 "id" : "---",
                 "subjectname": "Subject",
                 "shortcode": "SBJ",
+                "requireskit": False,
+                "kitdescription": "Sports Wear and",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1607,7 +1627,7 @@ class StudentSignUpSchema(BaseModel):
     firstname   : str = Field(..., example="John")
     lastname    : str = Field(..., example="Doe")
     othernames  : str = Field(..., example="Alex")
-    dateofbirth : Optional[datetime.datetime] = None
+    dateofbirth : str = Field(..., example="2015-07-11")
     photo       : str = Field(..., example="-----")
     phone       : str = Field(..., example="0771000111")
     email       : EmailStr = Field(..., example="email@gmail.com")
