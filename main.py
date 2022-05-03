@@ -55,7 +55,7 @@ async def get_all_users():
     if result:
         return result
     else:
-        raise HTTPException(status_code='404', details= 'No users found')
+        raise HTTPException(status_code=404, details= 'No users found')
 
 @app.get("/get_teachers", response_model=List[UserSchema], tags=["user"])
 async def get_all_teachers():
@@ -64,7 +64,7 @@ async def get_all_teachers():
     if result:
         return result
     else:
-        raise HTTPException(status_code='404', details= 'No teachers found')
+        raise HTTPException(status_code=404, details= 'No teachers found')
 
 @app.get("/get_class_teachers/available", tags=["user"])
 async def get_available_class_teachers():
@@ -80,7 +80,7 @@ async def get_available_class_teachers():
                 res.append(result)
         return res
     else:
-        raise HTTPException(status_code='404', details= 'No teachers found')
+        raise HTTPException(status_code=404, details= 'No teachers found')
 
 
 @app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
@@ -90,7 +90,7 @@ async def get_user_by_id(userid: str):
     if result:
         return result
     else:
-        raise HTTPException(status_code='404', details= 'User not found')
+        raise HTTPException(status_code=404, details= 'User not found')
 
 
 @app.get("/users/name/{userid}", tags=["user"])
@@ -132,7 +132,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "status": result.get("status")
             }
     else:
-        raise HTTPException(status_code='401', details='Not Authorized')
+        raise HTTPException(status_code=401, details='Not Authorized')
 
 @app.get("/users/emailauth/{email}", tags=["user"])
 async def user_email_authentication(email: EmailStr):
@@ -159,7 +159,16 @@ async def user_email_authentication(email: EmailStr):
                 "status": result.get("status")
             }
     else:
-        raise HTTPException(status_code='401', details='Not Authorized')
+        raise HTTPException(status_code=401, details='Not Authorized')
+
+@app.get("/users/checkexistence/{email}", tags=["user"])
+async def check_if_user_exists(email: str):
+    query = users_table.select().where(users_table.c.email == email or users_table.c.phone == email)
+    result = await database.fetch_one(query)
+    if result:
+        return True
+    else:
+        return False
 
 
 @app.post("/users/signup", response_model=UserSignUpSchema, tags=["user"])
@@ -185,16 +194,59 @@ async def register_user(user: UserSignUpSchema):
         datecreated=gDate,
         status="1"
     )
+    exists = await check_if_user_exists(user.phone)
+    student_exists = await check_if_student_exists(user.studentid)
+    if exists:
+        raise HTTPException(status_code=409, detail="User already exists with this phone/email.")
+    elif not student_exists:
+        raise HTTPException(status_code=404, detail="No student with this student number exists.")
+    else:
+        await database.execute(query)
+        await register_wallet(gID)
+        return {
+            **user.dict(),            
+            "id": gID,
+            "datecreated": gDate,
+            "token": signJWT(user.username),
+            "status": "1"
+        }  
 
-    await database.execute(query)
-    await register_wallet(gID)
-    return {
-        "id": gID,
-        **user.dict(),
-        "datecreated": gDate,
-        "token": signJWT(user.username),
-        "status": "1"
-    }
+@app.post("/users/register", response_model=UserSignUpSchema, tags=["user"])
+async def register_non_app_user(user: UserSignUpSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = users_table.insert().values(
+        id=gID,
+        username=user.username,
+        password=user.password,
+        firstname=user.firstname,
+        lastname=user.lastname,
+        phone = user.phone,
+        dateofbirth = datetime.datetime.strptime(
+            (user.dateofbirth), "%Y-%m-%d").date(),
+        address = user.address,
+        photo = user.photo,
+        email = user.email,
+        gender=user.gender,
+        isteacher = user.isteacher,
+        isparent = user.isparent,
+        isadmin = user.isadmin,
+        datecreated=gDate,
+        status="1"
+    )
+    exists = await check_if_user_exists(user.phone)
+    if exists:
+        raise HTTPException(status_code=409, detail="User already exists with this phone/email.")
+    else:
+        await database.execute(query)
+        await register_wallet(gID)
+        return {
+            **user.dict(),
+            "id": gID,
+            "datecreated": gDate,
+            "token": signJWT(user.username),
+            "status": "1"
+        }  
 
 
 @app.put("/users/update", response_model=UserUpdateSchema, tags=["user"])
@@ -310,8 +362,8 @@ async def register_role(role: RoleSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **role.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -418,8 +470,8 @@ async def register_subject(subject: SubjectSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **subject.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -543,8 +595,8 @@ async def register_class(classobj: ClassSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **classobj.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -641,8 +693,8 @@ async def register_teacherclasssubject(tcs: TeacherClassSubjectSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **tcs.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -755,8 +807,8 @@ async def register_club(club: ClubSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **club.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -877,8 +929,8 @@ async def register_event(event: EventAddSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **event.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -991,8 +1043,8 @@ async def register_result_type(resulttype: ResultTypeSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **resulttype.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1097,8 +1149,8 @@ async def register_grade(resulttype: GradeSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **resulttype.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1231,8 +1283,8 @@ async def register_result(result: ResultSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **result.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1359,8 +1411,8 @@ async def register_fee(fee: FeesSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **fee.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1455,7 +1507,7 @@ async def get_all_students():
         raise HTTPException(status_code=404, detail="No students found")
 
 
-@app.get("/students/{studentid}", response_model=StudentSchema, tags=["fees"])
+@app.get("/students/{studentid}", response_model=StudentSchema, tags=["students"])
 async def get_student_by_id(studentid: str):
     query = students_table.select().where(students_table.c.id == studentid)
     result = await database.fetch_one(query)
@@ -1465,7 +1517,7 @@ async def get_student_by_id(studentid: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
 
-@app.get("/students/name/{studentid}", tags=["fees"])
+@app.get("/students/name/{studentid}", tags=["students"])
 async def get_studentname_by_id(studentid: str):
     query = students_table.select().where(students_table.c.id == studentid)
     result = await database.fetch_one(query)
@@ -1474,6 +1526,16 @@ async def get_studentname_by_id(studentid: str):
         return fullname
     else:
         return "Unknown Student"
+
+@app.get("/students/checkexistence/{studentno}", tags=["students"])
+async def check_if_student_exists(studentno: str):
+    query = students_table.select().where(students_table.c.studentid == studentno)
+    result = await database.fetch_one(query)
+    print(result)
+    if result:
+        return True
+    else:
+        return False
 
 
 @app.get("/students/parent/{parentid}", tags=["students"])
@@ -1514,8 +1576,8 @@ async def register_student(student: StudentSignUpSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **student.dict(),
+        "id": gID,
         "datecreated": gDate,
     }
 
@@ -1586,8 +1648,8 @@ async def post_news_article(news: NewsSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **news.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1786,8 +1848,8 @@ async def add_post(post: PostSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **post.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -1917,6 +1979,8 @@ async def register_wallet(userid: str):
     )
 
     await database.execute(query)
+    await create_walletlog(0, "IN", "Wallet Created", userid, gID)
+
     return {
         "id": gID,
         "userid": userid,
@@ -2039,13 +2103,11 @@ async def get_walletlog_by_userid(userid: str):
         return results
 
     else:
-        return{
-            "error": "User has no previous transactions."
-        }
+        raise HTTPException(status_code=404, details= 'No transactions found')
 
 
 @app.post("/walletlogs/create", response_model=WalletLogSchema, tags=["walletlogs"])
-async def create_walletlog(amount: float, type: str, description: str, userid: str, userwalletid: str):
+async def create_walletlog(amount: float, type: str, description: str, userid: str, userwalletid: str): 
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
     query = userwalletlog_table.insert().values(
@@ -2215,8 +2277,8 @@ async def add_schedule(schedule: ScheduleSchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **schedule.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
@@ -2339,8 +2401,8 @@ async def post_day(day: DaySchema):
 
     await database.execute(query)
     return {
-        "id": gID,
         **day.dict(),
+        "id": gID,
         "datecreated": gDate
     }
 
