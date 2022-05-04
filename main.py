@@ -131,8 +131,10 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "token": signJWT(user.username),
                 "status": result.get("status")
             }
+        else:
+            raise HTTPException(status_code=401, details='Not authorized')
     else:
-        raise HTTPException(status_code=401, details='Not Authorized')
+        raise HTTPException(status_code=404, details='User does not exist')
 
 @app.get("/users/emailauth/{email}", tags=["user"])
 async def user_email_authentication(email: EmailStr):
@@ -1543,7 +1545,35 @@ async def get_parent_students(parentid: str):
     query = students_table.select().where(students_table.c.parentone == parentid)
     results = await database.fetch_all(query)
     if results:
-        return results
+        # return results
+        res = []
+        for result in results:
+            res.append( {
+                "id":result.get("id"),
+                "firstname":result.get("firstname"),
+                "lastname":result.get("lastname"),
+                "othernames":result.get("othernames"),
+                "photo":result.get("photo"),
+                "phone":result.get("phone"),
+                "email":result.get("email"),
+                "gender":result.get("gender"),
+                "houseid":result.get("houseid"),
+                "parentone":result.get("parentone"),
+                "parenttwo":result.get("parenttwo"),
+                "parentthree":result.get("parentthree"),
+                "dateofbirth":result.get("dateofbirth"),
+                "address":result.get("address"),
+                "weight":result.get("weight"),
+                "height":result.get("height"),
+                "studentid":result.get("studentid"),
+                "classid": await get_classname_by_id(result.get("classid")),
+                "datecreated":result.get("datecreated"),
+                "createdby":result.get("createdby"),
+                "dateupdated":result.get("dateupdated"),
+                "updatedby":result.get("updatedby"),
+                "status":"1"})
+
+        return res
 
     else:
         raise HTTPException(status_code=404, detail="No students found")
@@ -1589,7 +1619,7 @@ async def update_student(student: StudentSchema):
     query = students_table.update().\
         where(students_table.c.id == student.id).\
         values(
-            firtname=student.firstname,
+            firstname=student.firstname,
             lastname=student.lastname,
             othernames=student.othernames,
             dateofbirth=student.dateofbirth,
@@ -1751,9 +1781,7 @@ async def get_all_posts():
             })
         return res
     else:
-        return {
-            "Error": "This post does not exist!"
-        }
+        raise HTTPException(status_code=404, details='There are no posts')
 
 
 @app.get("/posts/{postid}", response_model=PostSchema, tags=["posts"])
