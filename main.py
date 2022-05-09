@@ -1233,7 +1233,7 @@ async def get_result_by_id(resultid: str):
 
 
 @app.get("/results/student/{studentid}", tags=["results"])
-async def get_schedule_by_studentid(studentid: str):
+async def get_result_by_studentid(studentid: str):
     query = results_table.select().where(results_table.c.studentid == studentid)
     results = await database.fetch_all(query)
     if results:
@@ -1773,6 +1773,7 @@ async def get_all_posts():
             res.append({
                 "id": result["id"],
                 "content": result["content"],
+                "likes": result["likes"],
                 "dislikes": result["dislikes"],
                 "datecreated": result["datecreated"],
                 "createdby": await get_usernames_by_id(result["createdby"]),
@@ -1931,7 +1932,7 @@ async def archive_post(post: PostUpdateSchema):
 
 
 @app.put("/posts/restore", tags=["posts"])
-async def restore_schedule(post: PostUpdateSchema):
+async def restore_post(post: PostUpdateSchema):
     gDate = datetime.datetime.now()
     query = posts_table.update().\
         where(posts_table.c.id == post.id).\
@@ -2244,6 +2245,28 @@ async def get_schedule_by_id(scheduleid: str):
 @app.get("/timetable/class/{classid}", tags=["timetable"])
 async def get_schedule_by_classid(classid: str):
     query = schedules_table.select().where(schedules_table.c.classid == classid)
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "subjectname": await get_subjectname_by_id(result["subjectid"]),
+                "classname": await get_classname_by_id(result["classid"]),
+                "teachername": await get_usernames_by_id(result["userid"]),
+                "dayname": await get_dayname_by_id(result["dayid"]),
+                "start": result["start"],
+                "end": result["end"],
+            })
+        return res
+
+    else:
+        raise HTTPException(status_code=404, detail='No timetable for this class')
+
+@app.get("/timetable/classandday/{classid}/{dayid}", tags=["timetable"])
+async def get_schedule_by_classid_and_dayid(classid: str, dayid: str):
+    print("Class id: "+classid)
+    print("Day id: "+dayid)
+    query = schedules_table.select().where(schedules_table.c.classid == classid).where(schedules_table.c.dayid == dayid)
     results = await database.fetch_all(query)
     if results:
         res = []
