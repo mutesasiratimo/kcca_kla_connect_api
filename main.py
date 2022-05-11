@@ -262,6 +262,7 @@ async def update_user(user: UserUpdateSchema):
             gender=user.gender,
             password=user.password,
             roleid=user.roleid,
+            photo=user.photo,
             email=user.email,
             status=user.status,
             dateupdated=gDate
@@ -323,6 +324,111 @@ async def delete_user(userid: str):
 
 
 ################### END USERS ###################
+
+###################### SCHOOL ######################
+
+@app.get("/schools", response_model=List[SchoolSchema], tags=["school"])
+async def get_all_schools():
+    query = schools_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/schools/{schoolid}", response_model=SchoolSchema, tags=["school"])
+async def get_school_by_id(schoolid: str):
+    query = schools_table.select().where(schools_table.c.id == schoolid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/schools/name/{schoolid}", tags=["school"])
+async def get_schoolname_by_id(schoolid: str):
+    query = schools_table.select().where(schools_table.c.id == schoolid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["schoolname"]
+        return fullname
+    else:
+        return "Unkown School"
+
+
+@app.post("/schools/register", response_model=RoleSchema, tags=["school"])
+async def register_school(role: RoleSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = schools_table.insert().values(
+        id=gID,
+        rolename=role.rolename,
+        description=role.description,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **role.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/schools/update", response_model=SchoolUpdateSchema, tags=["school"])
+async def update_school(school: SchoolUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = schools_table.update().\
+        where(schools_table.c.id == school.id).\
+        values(
+            schoolname=school.schoolname,
+            slogan=school.slogan,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_school_by_id(school.id)
+
+
+@app.put("/schools/archive", response_model=SchoolUpdateSchema, tags=["school"])
+async def archive_school(school: SchoolUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = schools_table.update().\
+        where(schools_table.c.id == school.id).\
+        values(
+            schoolname=school.schoolname,
+            slogan=school.slogan,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_school_by_id(school.id)
+
+
+@app.put("/schools/restore", response_model=SchoolUpdateSchema, tags=["school"])
+async def restore_school(school: SchoolUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = schools_table.update().\
+        where(schools_table.c.id == school.id).\
+        values(
+            schoolname=school.schoolname,
+            slogan=school.slogan,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_school_by_id(school.id)
+
+
+@app.delete("/schools/{schoolid}", tags=["school"])
+async def delete_school(schoolid: str):
+    query = schools_table.delete().where(schools_table.c.id == schoolid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This school has been deleted!"
+    }
+
+###################### END SCHOOL ##################
 
 ###################### ROLES ######################
 

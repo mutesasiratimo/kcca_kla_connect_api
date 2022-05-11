@@ -11,6 +11,25 @@ DATABASE_URL = LIVE_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
+schools_table = sqlalchemy.Table(
+    "schools",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("schoolname"   , sqlalchemy.String),
+    sqlalchemy.Column("schoolcode"   , sqlalchemy.String),
+    sqlalchemy.Column("slogan"       , sqlalchemy.String),
+    sqlalchemy.Column("logo"         , sqlalchemy.String),
+    sqlalchemy.Column("banner"       , sqlalchemy.String),
+    sqlalchemy.Column("address"      , sqlalchemy.String),
+    sqlalchemy.Column("phonenumber"  , sqlalchemy.String),
+    sqlalchemy.Column("email"        , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 roles_table = sqlalchemy.Table(
     "roles",
     metadata,
@@ -397,6 +416,7 @@ class UserSchema(BaseModel):
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
     phone       : str = Field(default= None)
+    photo       : str = Field(default= None)
     address     : str = Field(default= None)
     email       : EmailStr = Field(default= None)
     password    : str = Field(default=None)
@@ -419,6 +439,7 @@ class UserSchema(BaseModel):
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
                 "phone" : "0775111222",
+                "photo" : "https://picsum.photos/200/300",
                 "address": "Kampala, Uganda",
                 "password": "1234",
                 "gender": "Male",
@@ -441,6 +462,8 @@ class UserUpdateSchema(BaseModel):
     username    : str = Field(default= None)
     email       : EmailStr = Field(default= None)
     password    : str = Field(default=None)
+    phone       : str = Field(default= None)
+    photo       : str = Field(default= None)
     gender      : str = Field(default=None)
     roleid      : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -455,6 +478,8 @@ class UserUpdateSchema(BaseModel):
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
                 "password": "1234",
+                "phone" : "0775111222",
+                "photo" : "https://picsum.photos/200/300",
                 "gender": "Male",
                 "roleid": "1",
                 "dateupdated": datetime.datetime,
@@ -504,6 +529,87 @@ class UserSignUpSchema(BaseModel):
     status      : str = Field(..., example="1")
 
 ##################### END_USERS ###########################
+
+##################### SCHOOL ###########################
+class SchoolSchema(BaseModel):
+    id           : str = Field(default=None)
+    schoolname   : str = Field(default=None)
+    schoolcode   : str = Field(default= None)
+    slogan       : str = Field(default=None)
+    logo         : str = Field(default= None)
+    banner       : str = Field(default= None)
+    address      : str = Field(default=None)
+    phonenumber  : str = Field(default= None)
+    email        : str = Field(default=None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "schoolname": "Name",
+                "schoolcode": "SCH",
+                "slogan": "Future Leaders",
+                "logo": "Base64Img",
+                "banner": "Base64Img",
+                "address": "Kampala",
+                "phonenumber": "0414000111",
+                "email": "school@mail.com",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class SchoolUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    schoolname   : str = Field(default=None)
+    schoolcode   : str = Field(default= None)
+    slogan       : str = Field(default=None)
+    logo         : str = Field(default= None)
+    banner       : str = Field(default= None)
+    address      : str = Field(default=None)
+    phonenumber  : str = Field(default= None)
+    email        : str = Field(default=None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "schoolname": "Name",
+                "schoolcode": "SCH",
+                "slogan": "Future Leaders",
+                "logo": "Base64Img",
+                "banner": "Base64Img",
+                "address": "Kampala",
+                "phonenumber": "0414000111",
+                "email": "school@mail.com",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class RoleDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "role": {
+                "id" : "---"
+            }
+        }
+
+##################### END_SCHOOL ###########################
 
 ##################### ROLES ###########################
 class RoleSchema(BaseModel):
