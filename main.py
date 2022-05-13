@@ -1356,9 +1356,7 @@ async def get_result_by_studentid(studentid: str):
         return res
 
     else:
-        return{
-            "error": "Class has no schedules"
-        }
+        raise HTTPException(status_code=404, detail="No student results found")
 
 
 @app.get("/results/name/{resultid}", tags=["results"])
