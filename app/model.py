@@ -350,6 +350,8 @@ results_table = sqlalchemy.Table(
     sqlalchemy.Column("teacherid"    , sqlalchemy.String),
     sqlalchemy.Column("studentid"    , sqlalchemy.String),
     sqlalchemy.Column("resultypeid"  , sqlalchemy.String),
+    sqlalchemy.Column("resulttitle"  , sqlalchemy.String),
+    sqlalchemy.Column("resultperiod" , sqlalchemy.String),
     sqlalchemy.Column("mark"         , sqlalchemy.Float),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
@@ -797,6 +799,8 @@ class ResultSchema(BaseModel):
     teacherid   : str = Field(default= None)
     studentid   : str = Field(default=None)
     resultypeid : str = Field(default= None)
+    resulttitle : str = Field(default= None)
+    resultperiod : str = Field(default= None)
     mark        : float = Field(default=None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
@@ -808,8 +812,14 @@ class ResultSchema(BaseModel):
         the_schema = {
             "result_demo": {
                 "id" : "---",
-                "name": "Beginning of Term",
-                "shortcode": "BoT",
+                "subjectid": "Subject",
+                "classid": "Class",
+                "gradeid": "Grade",
+                "teacherid": "Teacher",
+                "studentid": "Student",
+                "resulttypeid": "",
+                "resulttitle": "BOT Exam",
+                "resultperiod": "2nd Term",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -820,8 +830,15 @@ class ResultSchema(BaseModel):
 
 class ResultUpdateSchema(BaseModel):
     id          : str = Field(default=None)
-    name        : str = Field(default=None)
-    shortcode   : str = Field(default= None)
+    subjectid   : str = Field(default=None)
+    classid     : str = Field(default= None)
+    gradeid     : str = Field(default=None)
+    teacherid   : str = Field(default= None)
+    studentid   : str = Field(default=None)
+    resultypeid : str = Field(default= None)
+    resulttitle : str = Field(default= None)
+    resultperiod : str = Field(default= None)
+    mark        : float = Field(default=None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -830,8 +847,14 @@ class ResultUpdateSchema(BaseModel):
         the_schema = {
             "result_demo": {
                 "id":  "ID",
-                "name": "Beginning of Term",
-                "shortcode": "BoT",
+                "subjectid": "Subject",
+                "classid": "Class",
+                "gradeid": "Grade",
+                "teacherid": "Teacher",
+                "studentid": "Student",
+                "resulttypeid": "",
+                "resulttitle": "BOT Exam",
+                "resultperiod": "2nd Term",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
