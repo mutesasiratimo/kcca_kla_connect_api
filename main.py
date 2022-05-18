@@ -263,6 +263,7 @@ async def register_non_app_user(user: UserSignUpSchema):
 
 @app.put("/users/update", response_model=UserUpdateSchema, tags=["user"])
 async def update_user(user: UserUpdateSchema):
+    # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
     gDate = datetime.datetime.now()
     query = users_table.update().\
         where(users_table.c.id == user.id).\
@@ -270,10 +271,11 @@ async def update_user(user: UserUpdateSchema):
             firstname=user.firstname,
             lastname=user.lastname,
             gender=user.gender,
-            password=user.password,
+            password=user.password,            
             roleid=user.roleid,
             photo=user.photo,
             email=user.email,
+            address = user.address,
             status=user.status,
             dateupdated=gDate
     )
@@ -1897,6 +1899,8 @@ async def delete_news(newsid: str):
 ###################### END NEWS ##################
 
 
+################### POSTS ###################
+
 @app.get("/posts", tags=["posts"])
 async def get_all_posts():
     query = posts_table.select()
@@ -1907,9 +1911,34 @@ async def get_all_posts():
             res.append({
                 "id": result["id"],
                 "content": result["content"],
-                "likes": result["likes"],
-                "dislikes": result["dislikes"],
+                "likes": await get_post_likes_count_by_id(result["id"]),
+                "dislikes": await get_post_dislikes_count_by_id(result["id"]),
+                "commentscount": await get_post_comments_count_by_id(result["id"]),
                 "datecreated": result["datecreated"],
+                "createdby": await get_usernames_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"],
+            })
+        return res
+    else:
+        raise HTTPException(status_code=404, details='There are no posts')
+
+@app.get("/posts/likedetails/{userid}", tags=["posts"])
+async def get_posts_with_like_details(userid: str):
+    query = posts_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "id": result["id"],
+                "content": result["content"],
+                "likes": await get_post_likes_count_by_id(result["id"]),
+                "dislikes": await get_post_dislikes_count_by_id(result["id"]),
+                "commentscount": await get_post_comments_count_by_id(result["id"]),
+                "datecreated": result["datecreated"],
+                "diduserlike": await check_if_user_liked_post(result["id"], userid),
                 "createdby": await get_usernames_by_id(result["createdby"]),
                 "dateupdated": result["dateupdated"],
                 "updatedby": result["updatedby"],
@@ -2099,9 +2128,172 @@ async def delete_post(scheduleid: str):
         "message": "This post has been deleted!"
     }
 
+@app.post("/posts/comments", response_model=CommentSchema, tags=["posts"])
+async def add_comment(comment: CommentSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = comments_table.insert().values(
+        id=gID,
+        comment=comment.comment,
+        postid=comment.postid,
+        file1=comment.file1,
+        file2=comment.file2,
+        file3=comment.file3,
+        file4=comment.file4,
+        file5=comment.file5,
+        createdby=comment.createdby,
+        datecreated=gDate,
+        status="1"
+    )
 
-################### POSTS ###################
+    await database.execute(query)
+    return {
+        **comment.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
 
+@app.get("/posts/comments/{postid}", tags=["posts"])
+async def get_post_comments_by_id(postid: str):
+    query = comments_table.select().where(comments_table.c.postid == postid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append({
+            "id": result["id"],
+            "postid": result["postid"],
+            "comment": result["comment"],
+            "file1": result["file1"],
+            "file2": result["file2"],
+            "file3": result["file3"],
+            "file4": result["file4"],
+            "file5": result["file5"],
+            "datecreated": result["datecreated"],
+            "createdby": await get_usernames_by_id(result["createdby"]),
+            "dateupdated": result["dateupdated"],
+            "updatedby": result["updatedby"],
+            "status": result["status"]
+            })
+        
+        return res
+    else:
+        raise HTTPException(status_code=204, details='No comments found')
+
+@app.get("/posts/commentscount/{postid}", tags=["posts"])
+async def get_post_comments_count_by_id(postid: str):
+    counter = 0
+    query = comments_table.select().where(comments_table.c.postid == postid)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.post("/posts/like", tags=["posts"])
+async def like_post(like: LikeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
+    resultlikes = await database.fetch_all(querylikes)
+    if resultlikes:
+        query = likes_table.update().\
+        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
+        values(
+            userid=like.userid,
+            postid=like.postid,
+            isliked=True,
+            updatedby=like.userid,
+            status="1",
+            dateupdated=gDate
+    )
+    else:
+        query = likes_table.insert().values(
+            id=gID,
+            userid=like.userid,
+            postid=like.postid,
+            isliked=True,
+            createdby=like.userid,
+            datecreated=gDate,
+            status="1"
+        )
+
+    await database.execute(query)
+    return {
+        **like.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+@app.post("/posts/dislike", tags=["posts"])
+async def dislike_post(like: LikeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
+    resultlikes = await database.fetch_all(querylikes)
+    if resultlikes:
+        query = likes_table.update().\
+        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
+        values(
+            userid=like.userid,
+            postid=like.postid,
+            isliked=False,
+            updatedby=like.userid,
+            status="1",
+            dateupdated=gDate
+    )
+    else:
+        query = likes_table.insert().values(
+            id=gID,
+            userid=like.userid,
+            postid=like.postid,
+            isliked=False,
+            createdby=like.userid,
+            datecreated=gDate,
+            status="1"
+        )
+
+    await database.execute(query)
+    return {
+        **like.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+@app.get("/posts/likes/{postid}", tags=["posts"])
+async def get_post_likes_count_by_id(postid: str):
+    counter = 0
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == True)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.get("/posts/dislikes/{postid}", tags=["posts"])
+async def get_post_dislikes_count_by_id(postid: str):
+    counter = 0
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == False)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.post("/posts/userliked/{postid}/{userid}", tags=["posts"])
+async def check_if_user_liked_post(postid: str, userid: str):
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.userid == userid)
+    result = await database.fetch_one(query)
+    if result:
+        if(result["isliked"]):
+            return "yes"
+        else:
+            return "no"
+    else:
+        return "none"
 
 ##################### END POSTS ###################
 
