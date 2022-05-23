@@ -13,6 +13,8 @@ from app.auth.jwt_bearer import jwtBearer
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import desc
+from sqlalchemy import asc
 
 
 app = FastAPI()
@@ -54,7 +56,7 @@ async def get_all_users():
     if result:
         return result
     else:
-        raise HTTPException(status_code=404, details='No users found')
+        raise HTTPException(status_code=204, detail='No users found')
 
 
 @app.get("/get_teachers", response_model=List[UserSchema], tags=["user"])
@@ -64,7 +66,7 @@ async def get_all_teachers():
     if result:
         return result
     else:
-        raise HTTPException(status_code=404, details='No teachers found')
+        raise HTTPException(status_code=204, detail='No teachers found')
 
 
 @app.get("/get_class_teachers/available", tags=["user"])
@@ -82,7 +84,7 @@ async def get_available_class_teachers():
                 res.append(result)
         return res
     else:
-        raise HTTPException(status_code=404, details='No teachers found')
+        raise HTTPException(status_code=404, detail='No teachers found')
 
 
 @app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
@@ -92,7 +94,7 @@ async def get_user_by_id(userid: str):
     if result:
         return result
     else:
-        raise HTTPException(status_code=404, details='User not found')
+        raise HTTPException(status_code=404, detail='User not found')
 
 
 @app.get("/users/name/{userid}", tags=["user"])
@@ -135,9 +137,9 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "status": result.get("status")
             }
         else:
-            raise HTTPException(status_code=401, details='Not authorized')
+            raise HTTPException(status_code=401, detail='Not authorized')
     else:
-        raise HTTPException(status_code=404, details='User does not exist')
+        raise HTTPException(status_code=404, detail='User does not exist')
 
 
 @app.get("/users/emailauth/{email}", tags=["user"])
@@ -165,7 +167,7 @@ async def user_email_authentication(email: EmailStr):
             "status": result.get("status")
         }
     else:
-        raise HTTPException(status_code=401, details='Not Authorized')
+        raise HTTPException(status_code=401, detail='Not Authorized')
 
 
 @app.get("/users/checkexistence/{email}", tags=["user"])
@@ -656,6 +658,133 @@ async def delete_subject(subjectid: str):
 
 ###################### END SUBJECTS ##################
 
+###################### CLASS LEVELS ######################
+
+
+@app.get("/classlevels", tags=["classlevels"])
+async def get_all_class_levels():
+    query = classlevels_table.select()
+    results = await database.fetch_all(query)
+    if results:        
+        return results
+    else:
+        raise HTTPException(status_code=204, detail="No class levels found")
+
+
+@app.get("/classlevels/{classlevelid}", response_model=ClassLevelSchema, tags=["classlevels"])
+async def get_class_level_by_id(classid: str):
+    query = classlevels_table.select().where(classlevels_table.c.id == classid)
+    result = await database.fetch_one(query)
+    if result:        
+        return result
+    else:
+        raise HTTPException(status_code=204, detail="No class level found")
+
+
+@app.get("/classlevels/name/{classlevelid}", tags=["classlevels"])
+async def get_classlevelname_by_id(classlevelid: str):
+    query = classlevels_table.select().where(classlevels_table.c.id == classlevelid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["levelname"]
+        return fullname
+    else:
+        return "Unknown Class"
+
+@app.get("/classlevels/fees/{classlevelid}", tags=["classlevels"])
+async def get_classlevelfees_by_id(classlevelid: str):
+    query = classlevels_table.select().where(classlevels_table.c.id == classlevelid)
+    result = await database.fetch_one(query)
+    if result:
+        fees = result["fees"]
+        return fees
+    else:
+        return 0
+
+
+@app.post("/classlevels/register", response_model=ClassLevelSchema, tags=["classlevels"])
+async def register_class_level(classlevelobj: ClassLevelSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = classlevels_table.insert().values(
+        id=gID,
+        levelname=classlevelobj.levelname,
+        shortcode=classlevelobj.shortcode,
+        fees=classlevelobj.fees,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **classlevelobj.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/classlevels/update", response_model=ClassLevelUpdateSchema, tags=["classlevels"])
+async def update_class_level(classlevel: ClassLevelUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = classlevels_table.update().\
+        where(classlevels_table.c.id == classlevel.id).\
+        values(
+            levelname=classlevel.levelname,
+            shortcode=classlevel.shortcode,
+            fees = classlevel.fees,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_class_level_by_id(classlevel.id)
+
+
+@app.put("/classlevels/archive", response_model=ClassLevelUpdateSchema, tags=["classlevels"])
+async def archive_class_level(classlevel: ClassLevelUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = classlevels_table.update().\
+        where(classlevels_table.c.id == classlevel.id).\
+        values(
+            levelname=classlevel.levelname,
+            shortcode=classlevel.shortcode,
+            fees = classlevel.fees,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_class_level_by_id(classlevel.id)
+
+
+@app.put("/classlevels/restore", response_model=ClassLevelUpdateSchema, tags=["classlevels"])
+async def restore_class_level(classlevel: ClassLevelUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = classlevels_table.update().\
+        where(classlevels_table.c.id == classlevel.id).\
+        values(
+            levelname=classlevel.levelname,
+            shortcode=classlevel.shortcode,
+            fees = classlevel.fees,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_class_level_by_id(classlevel.id)
+
+
+@app.delete("/classlevels/{classlevelid}", tags=["classlevels"])
+async def delete_class_level(classlevelid: str):
+    query = classlevels_table.delete().where(classlevels_table.c.id == classlevelid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This class level has been deleted!"
+    }
+
+###################### END CLASS LEVELS ##################
+
 ###################### CLASSES ######################
 
 
@@ -667,12 +796,16 @@ async def get_all_classes():
     if results:
         for result in results:
             teachername = await get_usernames_by_id(result.get("classteacherid"))
+            classlevelname = await get_classlevelname_by_id(result.get("classlevelid"))
+            classfees = await get_classlevelfees_by_id(result.get("classlevelid"))
 
             res.append({
                 "id": result.get("id"),
-                "classname": result.get("classname"),
-                "shortcode": result.get("shortcode"),
+                "classname": classlevelname +" "+ result.get("classname"),
+                "classfees": classfees,
+                # "shortcode": result.get("shortcode"),
                 "classteacherid": result.get("classteacherid"),
+                "classlevelid": result.get("classlevelid"),
                 "classteachername": teachername,
                 "datecreated": result.get("datecreated"),
                 "createdby": result.get("createdby"),
@@ -708,7 +841,7 @@ async def register_class(classobj: ClassSchema):
     query = classes_table.insert().values(
         id=gID,
         classname=classobj.classname,
-        shortcode=classobj.shortcode,
+        classlevelid=classobj.classlevelid,
         classteacherid=classobj.classteacherid,
         datecreated=gDate,
         status="1"
@@ -723,55 +856,58 @@ async def register_class(classobj: ClassSchema):
 
 
 @app.put("/classes/update", response_model=ClassUpdateSchema, tags=["class"])
-async def update_class(classs: ClassUpdateSchema):
+async def update_class(classobj: ClassUpdateSchema):
     gDate = datetime.datetime.now()
     query = classes_table.update().\
-        where(classes_table.c.id == classs.id).\
+        where(classes_table.c.id == classobj.id).\
         values(
-            classname=classs.classname,
-            shortcode=classs.shortcode,
+            classname=classobj.classname,
+            classlevelid=classobj.classlevelid,
+            classteacherid=classobj.classteacherid,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_class_by_id(classs.id)
+    return await get_class_by_id(classobj.id)
 
 
 @app.put("/classes/archive", response_model=ClassUpdateSchema, tags=["class"])
-async def archive_class(classs: ClassUpdateSchema):
+async def archive_class(classobj: ClassUpdateSchema):
     gDate = datetime.datetime.now()
     query = classes_table.update().\
-        where(classes_table.c.id == classs.id).\
+        where(classes_table.c.id == classobj.id).\
         values(
-            classname=classs.classname,
-            shortcode=classs.shortcode,
+            classname=classobj.classname,
+            classlevelid=classobj.classlevelid,
+            classteacherid=classobj.classteacherid,
             status="0",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_class_by_id(classs.id)
+    return await get_class_by_id(classobj.id)
 
 
 @app.put("/classes/restore", response_model=ClassUpdateSchema, tags=["class"])
-async def restore_class(classs: ClassUpdateSchema):
+async def restore_class(classobj: ClassUpdateSchema):
     gDate = datetime.datetime.now()
     query = classes_table.update().\
-        where(classes_table.c.id == classs.id).\
+        where(classes_table.c.id == classobj.id).\
         values(
-            classname=classs.classname,
-            shortcode=classs.shortcode,
+            classname=classobj.classname,
+            classlevelid=classobj.classlevelid,
+            classteacherid=classobj.classteacherid,
             status="1",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_class_by_id(classs.id)
+    return await get_class_by_id(classobj.id)
 
 
-@app.delete("/classes/{subjectid}", tags=["class"])
-async def delete_class(subjectid: str):
-    query = classes_table.delete().where(classes_table.c.id == subjectid)
+@app.delete("/classes/{classid}", tags=["class"])
+async def delete_class(classid: str):
+    query = classes_table.delete().where(classes_table.c.id == classid)
     result = await database.execute(query)
 
     return {
@@ -921,7 +1057,7 @@ async def register_club(club: ClubSchema):
         description=club.description,
         patronid=club.patronid,
         asstpatronid=club.asstpatronid,
-        feesid=club.feesid,
+        fees=club.fees,
         datecreated=gDate,
         status="1"
     )
@@ -945,7 +1081,7 @@ async def update_club(club: ClubUpdateSchema):
             description=club.description,
             patronid=club.patronid,
             asstpatronid=club.asstpatronid,
-            feesid=club.feesid,
+            fees=club.fees,
             dateupdated=gDate
     )
 
@@ -964,7 +1100,7 @@ async def archive_club(club: ClubUpdateSchema):
             description=club.description,
             patronid=club.patronid,
             asstpatronid=club.asstpatronid,
-            feesid=club.feesid,
+            fees=club.fees,
             status="0",
             dateupdated=gDate
     )
@@ -984,7 +1120,7 @@ async def restore_club(club: ClubUpdateSchema):
             description=club.description,
             patronid=club.patronid,
             asstpatronid=club.asstpatronid,
-            feesid=club.feesid,
+            fees=club.fees,
             status="1",
             dateupdated=gDate
     )
@@ -1501,135 +1637,261 @@ async def delete_result(resultid: str):
 ###################### END RESULTS ##################
 
 
-###################### FEES ######################
+###################### FEES PAYMENTS ######################
 
 
-@app.get("/fees", response_model=List[FeesSchema], tags=["fees"])
-async def get_all_fees():
-    query = fees_table.select()
+@app.get("/feespayments", response_model=List[FeesPaymentSchema], tags=["payments"])
+async def get_all_fees_payments():
+    query = feespayments_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/fees/{feeid}", response_model=FeesSchema, tags=["fees"])
-async def get_fee_by_id(feeid: str):
-    query = fees_table.select().where(fees_table.c.id == feeid)
+@app.get("/feespayments/{feespaymentid}", response_model=FeesPaymentSchema, tags=["payments"])
+async def get_fees_payment_by_id(feespaymentid: str):
+    query = feespayments_table.select().where(feespayments_table.c.id == feespaymentid)
     result = await database.fetch_one(query)
     return result
 
 
-@app.get("/fees/name/{feeid}", tags=["fees"])
-async def get_feename_by_id(feeid: str):
-    query = fees_table.select().where(fees_table.c.id == feeid)
+@app.get("/feespayments/ref/{feespaymentid}", tags=["payments"])
+async def get_feespaymentref_by_id(feespaymentid: str):
+    query = feespayments_table.select().where(feespayments_table.c.id == feespaymentid)
     result = await database.fetch_one(query)
     if result:
-        fullname = result["feesname"]
+        fullname = result["paymentref"]
         return fullname
     else:
-        return "Unknown Fee"
+        return "Unknown Payment"
 
 
-@app.post("/fees/register", response_model=FeesSchema, tags=["fees"])
-async def register_fee(fee: FeesSchema):
+@app.post("/feespayments/register", response_model=FeesPaymentSchema, tags=["payments"])
+async def register_fees_payment(feespayment: FeesPaymentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
-    query = fees_table.insert().values(
+    query = feespayments_table.insert().values(
         id=gID,
-        feesname=fee.feesname,
-        type=fee.type,
-        description=fee.description,
-        interval=fee.interval,
-        startdate=fee.startdate,
-        enddate=fee.enddate,
-        duedate=fee.duedate,
-        amount=fee.amount,
+        paymentref=feespayment.paymentref,
+        academicperiodid=feespayment.academicperiodid,
+        studentid=feespayment.studentid,
+        classid=feespayment.classid,
+        transamount=feespayment.transamount,
+        feesamount=feespayment.feesamount,
+        amountpaid=feespayment.amountpaid,
         datecreated=gDate,
         status="1"
     )
 
     await database.execute(query)
     return {
-        **fee.dict(),
+        **feespayment.dict(),
         "id": gID,
         "datecreated": gDate
     }
 
 
-@app.put("/fees/update", response_model=FeesUpdateSchema, tags=["fees"])
-async def update_fee(fee: FeesUpdateSchema):
+@app.put("/feespayments/update", response_model=FeesPaymentUpdateSchema, tags=["payments"])
+async def update_fees_payment(feespayment: FeesPaymentUpdateSchema):
     gDate = datetime.datetime.now()
-    query = fees_table.update().\
-        where(fees_table.c.id == fee.id).\
+    query = feespayments_table.update().\
+        where(feespayments_table.c.id == feespayment.id).\
         values(
-            feesname=fee.feesname,
-            type=fee.type,
-            description=fee.description,
-            interval=fee.interval,
-            startdate=fee.startdate,
-            enddate=fee.enddate,
-            duedate=fee.duedate,
-            amount=fee.amount,
+            paymentref=feespayment.paymentref,
+            academicperiodid=feespayment.academicperiodid,
+            studentid=feespayment.studentid,
+            classid=feespayment.classid,
+            transamount=feespayment.transamount,
+            feesamount=feespayment.feesamount,
+            amountpaid=feespayment.amountpaid,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_fee_by_id(fee.id)
+    return await get_fees_payment_by_id(feespayment.id)
 
 
-@app.put("/fees/archive", response_model=FeesUpdateSchema, tags=["fees"])
-async def archive_fee(fee: FeesUpdateSchema):
+@app.put("/feespayments/archive", response_model=FeesPaymentUpdateSchema, tags=["payments"])
+async def archive_fees_payment(feespayment: FeesPaymentUpdateSchema):
     gDate = datetime.datetime.now()
-    query = fees_table.update().\
-        where(fees_table.c.id == fee.id).\
+    query = feespayments_table.update().\
+        where(feespayments_table.c.id == feespayment.id).\
         values(
-            feesname=fee.feesname,
-            type=fee.type,
-            description=fee.description,
-            interval=fee.interval,
-            startdate=fee.startdate,
-            enddate=fee.enddate,
-            duedate=fee.duedate,
-            amount=fee.amount,
+            paymentref=feespayment.paymentref,
+            academicperiodid=feespayment.academicperiodid,
+            studentid=feespayment.studentid,
+            classid=feespayment.classid,
+            transamount=feespayment.transamount,
+            feesamount=feespayment.feesamount,
+            amountpaid=feespayment.amountpaid,
             status="0",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_fee_by_id(fee.id)
+    return await get_fees_payment_by_id(feespayment.id)
 
 
-@app.put("/fees/restore", response_model=FeesUpdateSchema, tags=["fees"])
-async def restore_fee(fee: FeesUpdateSchema):
+@app.put("/feespayments/restore", response_model=FeesPaymentUpdateSchema, tags=["payments"])
+async def restore_fees_payment(feespayment: FeesPaymentUpdateSchema):
     gDate = datetime.datetime.now()
-    query = fees_table.update().\
-        where(fees_table.c.id == fee.id).\
+    query = feespayments_table.update().\
+        where(feespayments_table.c.id == feespayment.id).\
         values(
-            feesname=fee.feesname,
-            type=fee.type,
-            description=fee.description,
-            interval=fee.interval,
-            startdate=fee.startdate,
-            enddate=fee.enddate,
-            duedate=fee.duedate,
-            amount=fee.amount,
+            paymentref=feespayment.paymentref,
+            academicperiodid=feespayment.academicperiodid,
+            studentid=feespayment.studentid,
+            classid=feespayment.classid,
+            transamount=feespayment.transamount,
+            feesamount=feespayment.feesamount,
+            amountpaid=feespayment.amountpaid,
             status="1",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_club_by_id(fee.id)
+    return await get_fees_payment_by_id(feespayment.id)
 
 
-@app.delete("/fees/{feeid}", tags=["fees"])
-async def delete_fee(feeid: str):
-    query = fees_table.delete().where(fees_table.c.id == feeid)
+@app.delete("/feespayments/{feespaymentid}", tags=["payments"])
+async def delete_fees_payment(feespaymentid: str):
+    query = feespayments_table.delete().where(feespayments_table.c.id == feespaymentid)
     result = await database.execute(query)
 
     return {
         "status": True,
-        "message": "This fee has been deleted!"
+        "message": "This fees payment has been deleted!"
     }
 
-###################### END FEES ##################
+###################### END FEES PAYMENTS ##################
+
+###################### CLUB PAYMENTS ######################
+
+
+@app.get("/clubpayments", response_model=List[ClubsPaymentSchema], tags=["payments"])
+async def get_all_club_payments():
+    query = clubpayments_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/clubpayments/{clubpaymentid}", response_model=ClubsPaymentSchema, tags=["payments"])
+async def get_club_payment_by_id(clubpaymentid: str):
+    query = clubpayments_table.select().where(clubpayments_table.c.id == clubpaymentid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/clubpayments/ref/{clubpaymentid}", tags=["payments"])
+async def get_clubpaymentref_by_id(clubpaymentid: str):
+    query = clubpayments_table.select().where(clubpayments_table.c.id == clubpaymentid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["paymentref"]
+        return fullname
+    else:
+        return "Unknown Club Payment"
+
+
+@app.post("/clubpayments/register", response_model=ClubsPaymentSchema, tags=["payments"])
+async def register_club_payment(clubpayment: ClubsPaymentSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = clubpayments_table.insert().values(
+        id=gID,
+        paymentref=clubpayment.paymentref,
+        academicperiodid=clubpayment.academicperiodid,
+        studentid=clubpayment.studentid,
+        classid=clubpayment.classid,
+        clubid=clubpayment.clubid,
+        transamount=clubpayment.transamount,
+        feesamount=clubpayment.feesamount,
+        amountpaid=clubpayment.amountpaid,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **clubpayment.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/clubpayments/update", response_model=ClubsPaymentUpdateSchema, tags=["payments"])
+async def update_club_payment(clubpayment: ClubsPaymentUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = clubpayments_table.update().\
+        where(clubpayments_table.c.id == clubpayment.id).\
+        values(
+            paymentref=clubpayment.paymentref,
+            academicperiodid=clubpayment.academicperiodid,
+            studentid=clubpayment.studentid,
+            classid=clubpayment.classid,
+            clubid=clubpayment.clubid,
+            transamount=clubpayment.transamount,
+            feesamount=clubpayment.feesamount,
+            amountpaid=clubpayment.amountpaid,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_club_payment_by_id(clubpayment.id)
+
+
+@app.put("/clubpayments/archive", response_model=ClubsPaymentUpdateSchema, tags=["payments"])
+async def archive_club_payment(clubpayment: ClubsPaymentUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = clubpayments_table.update().\
+        where(clubpayments_table.c.id == clubpayment.id).\
+        values(
+            paymentref=clubpayment.paymentref,
+            academicperiodid=clubpayment.academicperiodid,
+            studentid=clubpayment.studentid,
+            classid=clubpayment.classid,
+            clubid=clubpayment.clubid,
+            transamount=clubpayment.transamount,
+            feesamount=clubpayment.feesamount,
+            amountpaid=clubpayment.amountpaid,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_club_payment_by_id(clubpayment.id)
+
+
+@app.put("/clubpayments/restore", response_model=ClubsPaymentUpdateSchema, tags=["payments"])
+async def restore_club_payment(clubpayment: ClubsPaymentUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = clubpayments_table.update().\
+        where(clubpayments_table.c.id == clubpayment.id).\
+        values(
+            paymentref=clubpayment.paymentref,
+            academicperiodid=clubpayment.academicperiodid,
+            studentid=clubpayment.studentid,
+            classid=clubpayment.classid,
+            clubid=clubpayment.clubid,
+            transamount=clubpayment.transamount,
+            feesamount=clubpayment.feesamount,
+            amountpaid=clubpayment.amountpaid,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_club_payment_by_id(clubpayment.id)
+
+
+@app.delete("/clubpayments/{clubpaymentid}", tags=["payments"])
+async def delete_club_payment(clubpaymentid: str):
+    query = clubpayments_table.delete().where(clubpayments_table.c.id == clubpaymentid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This club payment has been deleted!"
+    }
+
+###################### END CLUB PAYMENTS ##################
 
 
 ################### STUDENTS ###################
@@ -1675,15 +1937,48 @@ async def check_if_student_exists(studentno: str):
     else:
         return False
 
+@app.get("/students/feesstatus/{studentid}/{academicperiodid}", tags=["students"])
+async def get_student_fees_status(studentid: str, academicperiodid: str):
+    query = feespayments_table.select().where(feespayments_table.c.studentid == studentid).where(feespayments_table.c.academicperiodid == academicperiodid).order_by(desc(feespayments_table.c.datecreated))
+    result = await database.fetch_one(query)
+    if result:
+        status = "partially paid"
+        if ( result["amountpaid"] >= result["feesamount"]):
+            status = "fully paid"
+        
+        res = {
+            "lastpayment": result["transamount"],
+            "feesamount": result["feesamount"],
+            "amountpaid": result["amountpaid"], 
+            "feesstatus": status           
+        }
+        return res
+    else:
+        return{
+            "lastpayment": 0,
+            "feesamount": 0,
+            "amountpaid": 0, 
+            "feesstatus": "not paid"
+        }
+        # raise HTTPException(status_code=204, detail="Student not found")
+
 
 @app.get("/students/parent/{parentid}", tags=["students"])
 async def get_parent_students(parentid: str):
+    academicperiodid =""
+    periodquery = academicperiods_table.select().where(academicperiods_table.c.startdate < datetime.datetime.now()).where(academicperiods_table.c.enddate > datetime.datetime.now())
+    periodresults = await database.fetch_one(periodquery)
+    if periodresults:
+        print("It is "+ periodresults["periodname"])
+        academicperiodid = periodresults["id"]
+
     query = students_table.select().where(students_table.c.parentone == parentid)
     results = await database.fetch_all(query)
     if results:
         # return results
         res = []
-        for result in results:
+        for result in results:            
+            payment_dict = await get_student_fees_status(result.get("id"), academicperiodid)
             res.append({
                 "id": result.get("id"),
                 "firstname": result.get("firstname"),
@@ -1704,11 +1999,18 @@ async def get_parent_students(parentid: str):
                 "studentid": result.get("studentid"),
                 "classid": result.get("classid"),
                 "classname": await get_classname_by_id(result.get("classid")),
+                "lastpayment": payment_dict["lastpayment"],
+                "feesamount": payment_dict["feesamount"],
+                "amountpaid": payment_dict["amountpaid"],
+                "feesstatus": payment_dict["feesstatus"],
                 "datecreated": result.get("datecreated"),
                 "createdby": result.get("createdby"),
                 "dateupdated": result.get("dateupdated"),
                 "updatedby": result.get("updatedby"),
-                "status": "1"})
+                "status": "1"}
+                # .update(payment_dict)
+                )
+                
 
         return res
 
@@ -1922,7 +2224,7 @@ async def get_all_posts():
             })
         return res
     else:
-        raise HTTPException(status_code=404, details='There are no posts')
+        raise HTTPException(status_code=404, detail='There are no posts')
 
 @app.get("/posts/likedetails/{userid}", tags=["posts"])
 async def get_posts_with_like_details(userid: str):
@@ -1946,7 +2248,7 @@ async def get_posts_with_like_details(userid: str):
             })
         return res
     else:
-        raise HTTPException(status_code=404, details='There are no posts')
+        raise HTTPException(status_code=404, detail='There are no posts')
 
 
 @app.get("/posts/{postid}", response_model=PostSchema, tags=["posts"])
@@ -2178,7 +2480,7 @@ async def get_post_comments_by_id(postid: str):
         
         return res
     else:
-        raise HTTPException(status_code=204, details='No comments found')
+        raise HTTPException(status_code=204, detail='No comments found')
 
 @app.get("/posts/commentscount/{postid}", tags=["posts"])
 async def get_post_comments_count_by_id(postid: str):
@@ -2459,7 +2761,7 @@ async def get_walletlog_by_userid(userid: str):
         return results
 
     else:
-        raise HTTPException(status_code=404, details='No transactions found')
+        raise HTTPException(status_code=404, detail='No transactions found')
 
 
 @app.post("/walletlogs/create", response_model=WalletLogSchema, tags=["walletlogs"])
@@ -2804,7 +3106,7 @@ async def update_day(day: DayUpdateSchema):
 
 
 @app.put("/days/archive", response_model=DayUpdateSchema, tags=["days"])
-async def archive_news(day: DayUpdateSchema):
+async def archive_day(day: DayUpdateSchema):
     gDate = datetime.datetime.now()
     query = days_table.update().\
         where(days_table.c.id == day.id).\
@@ -2820,7 +3122,7 @@ async def archive_news(day: DayUpdateSchema):
 
 
 @app.put("/days/restore", response_model=DayUpdateSchema, tags=["days"])
-async def restore_news(day: DayUpdateSchema):
+async def restore_day(day: DayUpdateSchema):
     gDate = datetime.datetime.now()
     query = days_table.update().\
         where(days_table.c.id == day.id).\
@@ -2846,3 +3148,118 @@ async def delete_day(dayid: str):
     }
 
 ###################### END DAYS ##################
+
+
+###################### ACADEMIC PERIODS ######################
+
+
+@app.get("/academicperiods", response_model=List[AcademicPeriodSchema], tags=["academics"])
+async def get_all_academic_periods():
+    query = academicperiods_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/academicperiods/{periodid}", response_model=AcademicPeriodSchema, tags=["academics"])
+async def get_academic_period_by_id(periodid: str):
+    query = academicperiods_table.select().where(academicperiods_table.c.id == periodid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/academicperiods/{periodid}", response_model=AcademicPeriodSchema, tags=["academics"])
+async def get_academic_period_name_by_id(periodid: str):
+    query = academicperiods_table.select().where(academicperiods_table.c.id == periodid)
+    result = await database.fetch_one(query)
+    if result:
+        return result["periodname"]
+    else:
+        return "Unknown Academic Period"
+
+
+@app.post("/academicperiods/", response_model=AcademicPeriodInsertSchema, tags=["academics"])
+async def register_academic_period(period: AcademicPeriodInsertSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = academicperiods_table.insert().values(
+        id=gID,
+        periodname=period.periodname,
+        description = period.description,
+        startdate = datetime.datetime.strptime((period.startdate), "%Y-%m-%d").date(),
+        enddate = datetime.datetime.strptime((period.enddate), "%Y-%m-%d").date(),
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **period.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/academicperiods/update", response_model=AcademicPeriodUpdateSchema, tags=["academics"])
+async def update_academic_period(period: AcademicPeriodUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = academicperiods_table.update().\
+        where(academicperiods_table.c.id == period.id).\
+        values(
+            periodname=period.periodname,
+            description = period.description,
+            startdate = datetime.datetime.strptime((period.startdate), "%Y-%m-%d").date(),
+            enddate = datetime.datetime.strptime((period.enddate), "%Y-%m-%d").date(),
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_academic_period_by_id(period.id)
+
+
+@app.put("/academicperiods/archive", response_model=AcademicPeriodUpdateSchema, tags=["academics"])
+async def archive_academic_period(period: AcademicPeriodUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = academicperiods_table.update().\
+        where(academicperiods_table.c.id == period.id).\
+        values(
+            periodname=period.periodname,
+            description = period.description,
+            startdate = datetime.datetime.strptime((period.startdate), "%Y-%m-%d").date(),
+            enddate = datetime.datetime.strptime((period.enddate), "%Y-%m-%d").date(),
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_academic_period_by_id(period.id)
+
+
+@app.put("/academicperiods/restore", response_model=AcademicPeriodUpdateSchema, tags=["academics"])
+async def restore_academic_period(period: AcademicPeriodUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = academicperiods_table.update().\
+        where(academicperiods_table.c.id == period.id).\
+        values(
+            periodname=period.periodname,
+            description = period.description,
+            startdate = datetime.datetime.strptime((period.startdate), "%Y-%m-%d").date(),
+            enddate = datetime.datetime.strptime((period.enddate), "%Y-%m-%d").date(),
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_academic_period_by_id(period.id)
+
+
+@app.delete("/academicperiods/{periodid}", tags=["academics"])
+async def delete_academic_period(periodid: str):
+    query = academicperiods_table.delete().where(academicperiods_table.c.id == periodid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This academic period has been deleted!"
+    }
+
+###################### END ACADEMIC PERIODS ##################
+
