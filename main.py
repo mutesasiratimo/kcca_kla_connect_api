@@ -1,3 +1,4 @@
+from asyncio import streams
 from collections import UserList
 from email.mime import image
 import hashlib
@@ -828,10 +829,26 @@ async def get_classname_by_id(classid: str):
     query = classes_table.select().where(classes_table.c.id == classid)
     result = await database.fetch_one(query)
     if result:
-        fullname = result["classname"]
+        classlevelname = await get_classlevelname_by_id(result.get("classlevelid"))
+        fullname = classlevelname +" "+result["classname"]
         return fullname
     else:
         return "Unknown Class"
+
+@app.get("/classes/schoolfees/{classid}", tags=["class"])
+async def get_school_fees_by_classid(classid: str):
+    query = classes_table.select().where(classes_table.c.id == classid)
+    result = await database.fetch_one(query)
+    if result:
+        classlevelid = result.get("classlevelid")
+        queryclasslevel = classlevels_table.select().where(classlevels_table.c.id == classlevelid)
+        resultclasslevel = await database.fetch_one(queryclasslevel)
+        if resultclasslevel:
+            return resultclasslevel["fees"]
+        else:
+            return 0
+    else:
+        return 0
 
 
 @app.post("/classes/register", response_model=ClassSchema, tags=["class"])
@@ -1663,6 +1680,43 @@ async def get_feespaymentref_by_id(feespaymentid: str):
     else:
         return "Unknown Payment"
 
+@app.get("/feespayments/classlevel/{classlevelid}", tags=["payments"])
+async def get_student_payments_at_class_level(classlevelid: str):
+    
+    fees_paid = 0
+    query = classes_table.select().where(classes_table.c.classlevelid == classlevelid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            queryclass = feespayments_table.select().where(feespayments_table.c.classid == result["id"])
+            resultsclass = await database.fetch_all(queryclass)
+            if resultsclass:
+                for resultclass in resultsclass:
+                    fees_paid += resultclass["transamount"]
+                return fees_paid
+
+@app.get("/paymentclasslevels", tags=["payments"])
+async def get_all_payment_class_levels():
+    query = classlevels_table.select()
+    results = await database.fetch_all(query)
+    res = [] 
+    if results:        
+        for result in results:
+            studentcount = await get_students_at_class_level(result["id"])
+            fees_expected = result["fees"] * studentcount
+            fees_paid = await get_student_payments_at_class_level(result["id"])
+            res.append({
+                "classlevelid": result["id"],
+                "classlevelname": result["levelname"],
+                "fees": result["fees"],
+                "studentcount": studentcount,
+                "totalfeesexpected": fees_expected,
+                "totalfeescollected": fees_paid,
+            })
+        return res
+    else:
+        raise HTTPException(status_code=204, detail="No class levels found")
 
 @app.post("/feespayments/register", response_model=FeesPaymentSchema, tags=["payments"])
 async def register_fees_payment(feespayment: FeesPaymentSchema):
@@ -1937,6 +1991,21 @@ async def check_if_student_exists(studentno: str):
     else:
         return False
 
+@app.get("/students/classlevel/{classlevelid}", tags=["students"])
+async def get_students_at_class_level(classlevelid: str):
+    studentCount = 0
+    query = classes_table.select().where(classes_table.c.classlevelid == classlevelid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            queryclass = students_table.select().where(students_table.c.classid == result["id"])
+            resultsclass = await database.fetch_all(queryclass)
+            if resultsclass:
+                for resultclass in resultsclass:
+                    studentCount += 1
+    return studentCount
+
 @app.get("/students/feesstatus/{studentid}/{academicperiodid}", tags=["students"])
 async def get_student_fees_status(studentid: str, academicperiodid: str):
     query = feespayments_table.select().where(feespayments_table.c.studentid == studentid).where(feespayments_table.c.academicperiodid == academicperiodid).order_by(desc(feespayments_table.c.datecreated))
@@ -1978,7 +2047,15 @@ async def get_parent_students(parentid: str):
         # return results
         res = []
         for result in results:            
+            classlevelname = await get_classlevelname_by_id(result.get("classlevelid"))
+            classname = await get_classname_by_id(result.get("classid"))
             payment_dict = await get_student_fees_status(result.get("id"), academicperiodid)
+            fees_amount = 0
+            if(payment_dict["feesamount"] == 0):
+                fees_amount = await get_school_fees_by_classid(result.get("classid"))
+            else:
+                fees_amount = payment_dict["feesamount"]
+
             res.append({
                 "id": result.get("id"),
                 "firstname": result.get("firstname"),
@@ -1998,9 +2075,9 @@ async def get_parent_students(parentid: str):
                 "height": result.get("height"),
                 "studentid": result.get("studentid"),
                 "classid": result.get("classid"),
-                "classname": await get_classname_by_id(result.get("classid")),
+                "classname": classname,
                 "lastpayment": payment_dict["lastpayment"],
-                "feesamount": payment_dict["feesamount"],
+                "feesamount": fees_amount,
                 "amountpaid": payment_dict["amountpaid"],
                 "feesstatus": payment_dict["feesstatus"],
                 "datecreated": result.get("datecreated"),
