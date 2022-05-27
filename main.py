@@ -1494,7 +1494,11 @@ async def delete_grade(gradeid: str):
 @app.get("/results", response_model=List[ResultSchema], tags=["results"])
 async def get_all_results():
     query = results_table.select()
-    return await database.fetch_all(query)
+    results = await database.fetch_all(query)
+    if results:
+        return results
+    else:
+        raise HTTPException(status_code=204, detail="No data found")
 
 
 @app.get("/results/{resultid}", response_model=ResultSchema, tags=["results"])
@@ -1502,6 +1506,83 @@ async def get_result_by_id(resultid: str):
     query = results_table.select().where(results_table.c.id == resultid)
     result = await database.fetch_one(query)
     return result
+
+# TO-DO: GET SUBJECT AVERAGE PER STREAM, 
+# GET BEST PERFORMERS PER CLASS LEVEL, 
+# GET RESULT GRADES
+# UPLOAD EXCEL RESULTS INTO DB
+
+@app.get("/results/class/{classid}", tags=["results"])
+async def get_result_by_classid(classid: str):
+
+    queryclass = students_table.select().where(students_table.c.classid == classid)
+    resultsclass = await database.fetch_all(queryclass)
+    res = []
+    if resultsclass:
+        for resultclass in resultsclass:
+            studentid = resultclass["id"]
+    
+            query = results_table.select().where(results_table.c.studentid == studentid)
+            results = await database.fetch_all(query)
+            if results:
+                result_sets = []
+                for resulttit in results:
+                    result_title = resulttit["resulttitle"]
+                    result_period = resulttit["resultperiod"]  
+                    if result_title not in result_sets:
+                        result_sets.append(result_title)
+                
+                for result_set in result_sets:
+                    marks = {}
+                    student_name = await get_studentname_by_id(studentid)
+                    for result in results:            
+                        subjectname = await get_subjectname_by_id(result["subjectid"])                
+                        if not subjectname in marks and result["resulttitle"] == result_set:
+                            marks.update( {subjectname : result["mark"]} )
+                    if not any(d['student_name'] == student_name for d in res):
+                        res.append({
+                            "result_title": result_set+" "+result_period,
+                            "student_name": student_name,
+                            "class_name": await get_classname_by_id(result["classid"]),
+                            "average": sum(marks.values()) / len(marks),
+                            "details": marks
+                        })
+        return sorted(res, key=lambda k : k['average'], reverse=True) 
+
+    else:
+        raise HTTPException(status_code=404, detail="No student results found")
+
+@app.get("/results/class/subject/{classid}", tags=["results"])
+async def get_subject_average_by_classid(classid: str):
+
+    querysubject = subjects_table.select()
+    resultssubject = await database.fetch_all(querysubject)
+    res = {}
+    if resultssubject:
+        print("We have subjects")
+        for resultsubject in resultssubject:
+            subjectid = resultsubject["id"]
+            subjectname = resultsubject["subjectname"]
+            print(subjectname)
+    
+            query = results_table.select().where(results_table.c.classid == classid).where(results_table.c.subjectid == subjectid)
+            results = await database.fetch_all(query)
+            counter = 0
+            subject_total = 0
+            subject_average = 0
+            if results:      
+                for result in results:          
+                    counter += 1
+                    subject_total += result["mark"]
+                    subject_average = subject_total/counter
+                res.update({
+                    subjectname  : subject_average,
+                })
+        # return sorted(res, key=lambda k : k['average'], reverse=True) 
+        return res
+
+    else:
+        raise HTTPException(status_code=404, detail="No student results found")
 
 
 @app.get("/results/student/{studentid}", tags=["results"])
@@ -1512,6 +1593,7 @@ async def get_result_by_studentid(studentid: str):
         result_sets = []
         for resulttit in results:
             result_title = resulttit["resulttitle"]
+            result_period = resulttit["resultperiod"]  
             if result_title not in result_sets:
                 result_sets.append(result_title)
         
@@ -1523,22 +1605,15 @@ async def get_result_by_studentid(studentid: str):
                 if not subjectname in marks and result["resulttitle"] == result_set:
                     marks.update( {subjectname : result["mark"]} )
             res.append({
-                "result_title": result_set,
+                "result_title": result_set+" "+result_period,
+                "student_name": await get_studentname_by_id(studentid),
+                "average": sum(marks.values()) / len(marks),
                 "details": marks
             })
         return res
 
     else:
         raise HTTPException(status_code=404, detail="No student results found")
-
-# {
-            #         "subjectname": await get_subjectname_by_id(result["subjectid"]),
-            #         "classname": await get_classname_by_id(result["classid"]),
-            #         "teachername": await get_usernames_by_id(result["teacherid"]),
-            #         "resulttype": await get_result_type_name_by_id(result["resultypeid"]),
-            #         "mark": result["mark"],
-            #         "dateadded": result["datecreated"]
-            #     }
 
 
 @app.get("/results/name/{resultid}", tags=["results"])
@@ -1705,7 +1780,13 @@ async def get_all_payment_class_levels():
         for result in results:
             studentcount = await get_students_at_class_level(result["id"])
             fees_expected = result["fees"] * studentcount
-            fees_paid = await get_student_payments_at_class_level(result["id"])
+            fees_collected = 0            
+            percentage_collected = 0
+            fees_paid  = await get_student_payments_at_class_level(result["id"])
+            if(fees_paid != None):
+                fees_collected = fees_paid
+            # if(fees_paid > 0):
+                percentage_collected = round((fees_collected * 100)/fees_expected)
             res.append({
                 "classlevelid": result["id"],
                 "classlevelname": result["levelname"],
@@ -1713,6 +1794,7 @@ async def get_all_payment_class_levels():
                 "studentcount": studentcount,
                 "totalfeesexpected": fees_expected,
                 "totalfeescollected": fees_paid,
+                "percentagecollected": percentage_collected,
             })
         return res
     else:
