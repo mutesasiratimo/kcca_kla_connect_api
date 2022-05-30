@@ -367,20 +367,26 @@ async def get_schoolname_by_id(schoolid: str):
 
 
 @app.post("/schools/register", response_model=SchoolSchema, tags=["school"])
-async def register_school(role: SchoolSchema):
+async def register_school(school: SchoolSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
     query = schools_table.insert().values(
         id=gID,
-        rolename=role.rolename,
-        description=role.description,
+        schoolname=school.schoolname,
+        schoolcode=school.schoolcode,
+        slogan=school.slogan,
+        logo=school.logo,
+        banner=school.banner,
+        address=school.address,
+        phonenumber=school.phonenumber,
+        email=school.email,
         datecreated=gDate,
         status="1"
     )
 
     await database.execute(query)
     return {
-        **role.dict(),
+        **school.dict(),
         "id": gID,
         "datecreated": gDate
     }
