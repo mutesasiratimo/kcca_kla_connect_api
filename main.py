@@ -366,7 +366,7 @@ async def get_schoolname_by_id(schoolid: str):
         return "Unkown School"
 
 
-@app.post("/schools/register", response_model=RoleSchema, tags=["school"])
+@app.post("/schools/register", response_model=SchoolSchema, tags=["school"])
 async def register_school(role: RoleSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
