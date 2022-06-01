@@ -21,6 +21,8 @@ schools_table = sqlalchemy.Table(
     sqlalchemy.Column("slogan"       , sqlalchemy.String),
     sqlalchemy.Column("logo"         , sqlalchemy.String),
     sqlalchemy.Column("banner"       , sqlalchemy.String),
+    sqlalchemy.Column("country"      , sqlalchemy.String),
+    sqlalchemy.Column("city"         , sqlalchemy.String),
     sqlalchemy.Column("address"      , sqlalchemy.String),
     sqlalchemy.Column("phonenumber"  , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
@@ -58,6 +60,7 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("password"     , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
     sqlalchemy.Column("photo"        , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("roleid"       , sqlalchemy.String),
     sqlalchemy.Column("isparent"     , sqlalchemy.Boolean),
     sqlalchemy.Column("isteacher"    , sqlalchemy.Boolean),
@@ -76,6 +79,7 @@ classlevels_table = sqlalchemy.Table(
     sqlalchemy.Column("levelname"    , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
     sqlalchemy.Column("fees"         , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -91,6 +95,7 @@ classes_table = sqlalchemy.Table(
     sqlalchemy.Column("classlevelid" , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
     sqlalchemy.Column("classteacherid", sqlalchemy.String),
+    sqlalchemy.Column("schoolid"      , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -121,6 +126,7 @@ schedules_table = sqlalchemy.Table(
     sqlalchemy.Column("dayid"        , sqlalchemy.String),
     sqlalchemy.Column("start"        , sqlalchemy.Time),
     sqlalchemy.Column("end"          , sqlalchemy.Time),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -136,6 +142,7 @@ events_table = sqlalchemy.Table(
     sqlalchemy.Column("description"  , sqlalchemy.String),
     sqlalchemy.Column("start"        , sqlalchemy.DateTime),
     sqlalchemy.Column("end"          , sqlalchemy.DateTime),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -151,6 +158,7 @@ houses_table = sqlalchemy.Table(
     sqlalchemy.Column("color"        , sqlalchemy.String),
     sqlalchemy.Column("patronid"     , sqlalchemy.String),
     sqlalchemy.Column("asstpatronid" , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -179,6 +187,7 @@ students_table = sqlalchemy.Table(
     sqlalchemy.Column("height"       , sqlalchemy.Float),
     sqlalchemy.Column("studentid"    , sqlalchemy.String),
     sqlalchemy.Column("classid"      , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -194,6 +203,7 @@ subjects_table = sqlalchemy.Table(
     sqlalchemy.Column("shortcode"     , sqlalchemy.String),
     sqlalchemy.Column("requireskit"   , sqlalchemy.Boolean),
     sqlalchemy.Column("kitdescription", sqlalchemy.String),
+    sqlalchemy.Column("schoolid"      , sqlalchemy.String),
     sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"     , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
@@ -208,6 +218,7 @@ classteachersubjects_table = sqlalchemy.Table(
     sqlalchemy.Column("subjectid"    , sqlalchemy.String),
     sqlalchemy.Column("classid"      , sqlalchemy.String),
     sqlalchemy.Column("userid"       , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -225,6 +236,7 @@ clubs_table = sqlalchemy.Table(
     sqlalchemy.Column("patronid"     , sqlalchemy.String),
     sqlalchemy.Column("asstpatronid" , sqlalchemy.String),
     sqlalchemy.Column("fees"         , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -241,6 +253,7 @@ academicperiods_table = sqlalchemy.Table(
     sqlalchemy.Column("startdate"    , sqlalchemy.DateTime),
     sqlalchemy.Column("enddate"      , sqlalchemy.DateTime),
     sqlalchemy.Column("paymentdeadline" , sqlalchemy.DateTime),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -259,6 +272,7 @@ feespayments_table = sqlalchemy.Table(
     sqlalchemy.Column("transamount"  , sqlalchemy.Float),
     sqlalchemy.Column("feesamount"   , sqlalchemy.Float),
     sqlalchemy.Column("amountpaid"   , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -278,6 +292,7 @@ clubpayments_table = sqlalchemy.Table(
     sqlalchemy.Column("transamount"  , sqlalchemy.Float),
     sqlalchemy.Column("feesamount"   , sqlalchemy.Float),
     sqlalchemy.Column("amountpaid"   , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -329,6 +344,7 @@ news_table = sqlalchemy.Table(
     sqlalchemy.Column("file3"        , sqlalchemy.Text),
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -350,6 +366,7 @@ posts_table = sqlalchemy.Table(
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
     sqlalchemy.Column("likes"        , sqlalchemy.Integer),
     sqlalchemy.Column("dislikes"        , sqlalchemy.Integer),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -364,6 +381,7 @@ likes_table = sqlalchemy.Table(
     sqlalchemy.Column("postid"       , sqlalchemy.String),
     sqlalchemy.Column("isliked"      , sqlalchemy.Boolean),
     sqlalchemy.Column("userid"       , sqlalchemy.Text),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -382,6 +400,7 @@ comments_table = sqlalchemy.Table(
     sqlalchemy.Column("file3"        , sqlalchemy.Text),
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -395,8 +414,10 @@ grades_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("gradename"    , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("weight"       , sqlalchemy.String),
     sqlalchemy.Column("min"          , sqlalchemy.Float),
     sqlalchemy.Column("max"          , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -417,6 +438,7 @@ results_table = sqlalchemy.Table(
     sqlalchemy.Column("resulttitle"  , sqlalchemy.String),
     sqlalchemy.Column("resultperiod" , sqlalchemy.String),
     sqlalchemy.Column("mark"         , sqlalchemy.Float),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -430,6 +452,7 @@ resulttypes_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -489,6 +512,7 @@ class UserSchema(BaseModel):
     gender      : str = Field(default=None)
     dateofbirth : Optional[datetime.datetime] = None
     roleid      : Optional[str] = None
+    schoolid    : Optional[str] = None
     isparent    : bool = Field(default=True)
     isteacher   : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
@@ -512,6 +536,7 @@ class UserSchema(BaseModel):
                 "gender": "Male",
                 "dateofbirth": "",
                 "roleid": "1",
+                "schoolid": "",
                 "isteacher": False,
                 "isparent": True,
                 "isadmin": False,
@@ -536,6 +561,7 @@ class UserUpdateSchema(BaseModel):
     gender      : str = Field(default=None)
     dateofbirth : Optional[str] = None
     roleid      : Optional[str] = None
+    schoolid    : Optional[str] = None
     isparent    : bool = Field(default=True)
     isteacher   : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
@@ -556,6 +582,7 @@ class UserUpdateSchema(BaseModel):
                 "gender": "Male",
                 "dateofbirth": "",
                 "roleid": "1",
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -595,6 +622,7 @@ class UserSignUpSchema(BaseModel):
     address     : str = Field(..., example="Kanjokya House")
     phone       : str = Field(..., example="+256781777888")
     photo       : str = Field(..., example="")
+    schoolid    : str = Field(..., example="")
     dateofbirth : str = Field(..., example="1990-03-23")
     studentid   : str = Field(..., example="SCH001")
     isparent    : bool = Field(..., example=True)
@@ -688,8 +716,8 @@ class RoleDeleteSchema(BaseModel):
 ##################### ROLES ###########################
 class RoleSchema(BaseModel):
     id          : str = Field(default=None)
-    rolename   : str = Field(default=None)
-    description    : str = Field(default= None)
+    rolename    : str = Field(default=None)
+    description : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -804,8 +832,10 @@ class GradeSchema(BaseModel):
     id          : str = Field(default=None)
     gradename   : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    weight      : int = Field(default=None)
     min         : float = Field(default= None)
     max         : float = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -818,6 +848,8 @@ class GradeSchema(BaseModel):
                 "id" : "---",
                 "gradename": "Distinction 1",
                 "shortcode": "D1",
+                "weight"  : 1,
+                "schoolid": "",
                 "min": 0.0,
                 "max": 0.0,
                 "datecreated": datetime.datetime,
@@ -830,8 +862,12 @@ class GradeSchema(BaseModel):
 
 class GradeUpdateSchema(BaseModel):
     id          : str = Field(default=None)
-    gradename        : str = Field(default=None)
+    gradename   : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    weight      : int = Field(default=None)
+    min         : float = Field(default= None)
+    max         : float = Field(default= None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -842,6 +878,8 @@ class GradeUpdateSchema(BaseModel):
                 "id":  "ID",
                 "gradename": "Distinction 1",
                 "shortcode": "D1",
+                "weight"  : 1,
+                "schoolid": "",
                 "min": 0.0,
                 "max": 0.0,
                 "dateupdated": datetime.datetime,
@@ -874,6 +912,7 @@ class ResultSchema(BaseModel):
     resulttitle : str = Field(default= None)
     resultperiod : str = Field(default= None)
     mark        : float = Field(default=None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -892,6 +931,8 @@ class ResultSchema(BaseModel):
                 "resulttypeid": "",
                 "resulttitle": "BOT Exam",
                 "resultperiod": "2nd Term",
+                "mark": 0,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -911,6 +952,7 @@ class ResultUpdateSchema(BaseModel):
     resulttitle : str = Field(default= None)
     resultperiod : str = Field(default= None)
     mark        : float = Field(default=None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -927,6 +969,8 @@ class ResultUpdateSchema(BaseModel):
                 "resulttypeid": "",
                 "resulttitle": "BOT Exam",
                 "resultperiod": "2nd Term",
+                "mark": 0,
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -1010,6 +1054,7 @@ class EventSchema(BaseModel):
     description : str = Field(default= None)
     start       : Optional[datetime.datetime] = None
     end         : Optional[datetime.datetime] = None
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1024,6 +1069,7 @@ class EventSchema(BaseModel):
                 "description": "Annual Sports Day",
                 "start": "2022-05-25T09:00:00",
                 "end": "2022-05-25T16:00:00",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1038,6 +1084,7 @@ class EventAddSchema(BaseModel):
     description : str = Field(default= None)
     start       : Optional[str] = None
     end         : Optional[str] = None
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1052,6 +1099,7 @@ class EventAddSchema(BaseModel):
                 "description": "Annual Sports Day",
                 "start": "2022-05-25T09:00:00",
                 "end": "2022-05-25T16:00:00",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1066,6 +1114,7 @@ class EventUpdateSchema(BaseModel):
     description : str = Field(default= None)
     start       : str = Field(default= None)
     end         : str = Field(default= None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -1078,6 +1127,7 @@ class EventUpdateSchema(BaseModel):
                 "description": "Annual Sports Day",
                 "start": "2022-05-25T09:00:00",
                 "end": "2022-05-25T16:00:00",
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -1107,6 +1157,7 @@ class NewsSchema(BaseModel):
     file3       : str = Field(default= None)
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1125,6 +1176,7 @@ class NewsSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1143,6 +1195,7 @@ class NewsUpdateSchema(BaseModel):
     file3       : str = Field(default= None)
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -1159,6 +1212,7 @@ class NewsUpdateSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
+                "schoolid": "",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
@@ -1191,6 +1245,7 @@ class PostSchema(BaseModel):
     file5       : str = Field(default= None)
     likes       : int = Field(default= 0)
     dislikes    : int = Field(default= 0)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1211,6 +1266,7 @@ class PostSchema(BaseModel):
                 "file5": "File",
                 "likes": 0,
                 "disikes": 0,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1231,6 +1287,7 @@ class PostUpdateSchema(BaseModel):
     file5       : str = Field(default= None)
     likes       : int = Field(default= 0)
     likes       : int = Field(default= 0)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -1249,6 +1306,7 @@ class PostUpdateSchema(BaseModel):
                 "file5": "File",
                 "likes": 0,
                 "disikes": 0,
+                "schoolid": "",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
@@ -1274,6 +1332,7 @@ class CommentSchema(BaseModel):
     file3       : str = Field(default= None)
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : Optional[datetime.datetime] = None
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1291,6 +1350,7 @@ class CommentSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1303,6 +1363,7 @@ class LikeSchema(BaseModel):
     id          : str = Field(default=None)
     postid      : str = Field(default=None)
     userid      : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1315,6 +1376,7 @@ class LikeSchema(BaseModel):
                 "id" : "---",
                 "postid": "ID",
                 "userid": "ID",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1333,6 +1395,7 @@ class AcademicPeriodSchema(BaseModel):
     startdate           : Optional[datetime.datetime] = None
     enddate             : Optional[datetime.datetime] = None
     paymentdeadline     : Optional[datetime.datetime] = None
+    schoolid            : Optional[str] = None
     datecreated         : datetime.datetime
     createdby           : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
@@ -1348,6 +1411,7 @@ class AcademicPeriodSchema(BaseModel):
                 "startdate": datetime.datetime,
                 "enddate": datetime.datetime,
                 "paymentdeadline": datetime.datetime,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1363,6 +1427,7 @@ class AcademicPeriodInsertSchema(BaseModel):
     startdate           : Optional[str] = None
     enddate             : Optional[str] = None
     paymentdeadline     : Optional[str] = None
+    schoolid            : Optional[str] = None
     datecreated         : datetime.datetime
     createdby           : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
@@ -1378,6 +1443,7 @@ class AcademicPeriodInsertSchema(BaseModel):
                 "startdate": datetime.datetime,
                 "enddate": datetime.datetime,
                 "paymentdeadline": datetime.datetime,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1393,6 +1459,7 @@ class AcademicPeriodUpdateSchema(BaseModel):
     startdate           : Optional[str] = None
     enddate             : Optional[str] = None
     paymentdeadline     : Optional[str] = None
+    schoolid            : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -1407,6 +1474,7 @@ class AcademicPeriodUpdateSchema(BaseModel):
                 "startdate": "2022-01-20",
                 "enddate": "2022-04-30",
                 "paymentdeadline": "2022-04-15",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
@@ -1433,6 +1501,7 @@ class SubjectSchema(BaseModel):
     shortcode   : str = Field(default= None)
     requireskit : bool = Field(default= False)
     kitdescription : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1447,6 +1516,7 @@ class SubjectSchema(BaseModel):
                 "shortcode": "SBJ",
                 "requireskit": False,
                 "kitdescription": "Sports Wear and",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1459,6 +1529,7 @@ class SubjectUpdateSchema(BaseModel):
     id          : str = Field(default=None)
     subjectname : str = Field(default=None)
     shortcode   : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1471,6 +1542,7 @@ class SubjectUpdateSchema(BaseModel):
                 "id" : "---",
                 "subjectname": "Subject",
                 "shortcode": "SBJ",
+                "schoolid": "",
                 "requireskit": False,
                 "kitdescription": "Sports Wear and",
                 "datecreated": datetime.datetime,
@@ -1499,6 +1571,7 @@ class ClassLevelSchema(BaseModel):
     levelname   : str = Field(default=None)
     shortcode   : str = Field(default= None)
     fees        : float = Field(default= 0)
+    schoolid    : Optional[str] = None
     # datecreated : datetime.datetime
     # createdby   : Optional[str] = None
     # dateupdated : Optional[datetime.datetime] = None
@@ -1512,6 +1585,7 @@ class ClassLevelSchema(BaseModel):
                 "levelname": "Primary 7",
                 "shortcode": "P.7",
                 "fees": 0,
+                "schoolid": "",
                 # "datecreated": datetime.datetime,
                 # "createdby": "1",
                 # "dateupdated": None,
@@ -1525,6 +1599,7 @@ class ClassLevelUpdateSchema(BaseModel):
     levelname   : str = Field(default=None)
     shortcode   : str = Field(default= None)
     fees        : float = Field(default= 0)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -1536,6 +1611,7 @@ class ClassLevelUpdateSchema(BaseModel):
                 "levelname": "Primary 7",
                 "shortcode": "P.7",
                 "fees": 0,
+                "schoolid": "",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
@@ -1561,6 +1637,7 @@ class ClassSchema(BaseModel):
     shortcode   : str = Field(default= None)
     classlevelid : str = Field(default=None)
     classteacherid : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1575,6 +1652,7 @@ class ClassSchema(BaseModel):
                 "shortcode": "Y",
                 "classlevelid": "-",
                 "classteacherid": "-",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1589,6 +1667,7 @@ class ClassUpdateSchema(BaseModel):
     shortcode   : str = Field(default= None)
     classlevelid : str = Field(default=None)
     classteacherid : str = Field(default= None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -1601,6 +1680,7 @@ class ClassUpdateSchema(BaseModel):
                 "shortcode": "G",
                 "classlevelid": "-",
                 "classteacherid": "-",
+                "schoolid": "",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
@@ -1625,6 +1705,7 @@ class TeacherClassSubjectSchema(BaseModel):
     subjectid   : str = Field(default=None)
     classid     : str = Field(default= None)
     userid      : str = Field(default= None)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1638,6 +1719,7 @@ class TeacherClassSubjectSchema(BaseModel):
                 "subjectid": "Subject Id",
                 "classid": "Class Id",
                 "userid": "Teacher User Id",
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1651,6 +1733,7 @@ class TeacherClassSubjectUpdateSchema(BaseModel):
     subjectid   : str = Field(default=None)
     classid     : str = Field(default= None)
     userid      : str = Field(default= None)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -1662,6 +1745,7 @@ class TeacherClassSubjectUpdateSchema(BaseModel):
                 "subjectid": "Subject Id",
                 "classid": "Class Id",
                 "userid": "Teacher User Id",
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -1689,6 +1773,7 @@ class ClubSchema(BaseModel):
     patronid    : str = Field(default= None)
     asstpatronid: str = Field(default= None)
     fees        : float = Field(default= 0)
+    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1705,6 +1790,7 @@ class ClubSchema(BaseModel):
                 "patronid": "Patron Id",
                 "asstpatronid": "Asst. Patron Id",
                 "fees": 0,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1721,6 +1807,7 @@ class ClubUpdateSchema(BaseModel):
     patronid    : str = Field(default= None)
     asstpatronid: str = Field(default= None)
     fees        : float = Field(default= 0)
+    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -1735,6 +1822,7 @@ class ClubUpdateSchema(BaseModel):
                 "patronid": "Patron Id",
                 "asstpatronid": "Asst. Patron Id",
                 "fees": 0,
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -1923,6 +2011,7 @@ class FeesPaymentSchema(BaseModel):
     transamount         : Optional[float] = None
     feesamount          : Optional[float] = None
     amountpaid          : Optional[float] = None
+    schoolid            : Optional[str] = None
     datecreated         : Optional[datetime.datetime] = None
     createdby           : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
@@ -1940,6 +2029,7 @@ class FeesPaymentSchema(BaseModel):
                 "transamount": 0,
                 "feesamount": 0,
                 "amountpaid" : 0,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1957,6 +2047,7 @@ class FeesPaymentUpdateSchema(BaseModel):
     transamount         : Optional[float] = None
     feesamount          : Optional[float] = None
     amountpaid          : Optional[float] = None
+    schoolid            : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -1972,6 +2063,7 @@ class FeesPaymentUpdateSchema(BaseModel):
                 "transamount": 0,
                 "feesamount": 0,
                 "amountpaid" : 0,
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -2220,6 +2312,7 @@ class StudentSignUpSchema(BaseModel):
     parentthree : str = Field(..., example="Parent")
     classid     : str = Field(..., example="Class Id")
     studentid   : str = Field(..., example="Student Id")
+    schoolid   : str = Field(..., example="")
     gender      : str = Field(..., example="M")
     address     : str = Field(..., example="First Street, City")
     createdby   : Optional[str] = None
@@ -2261,6 +2354,7 @@ class ScheduleSchema(BaseModel):
     dayid               : str = Field(default=None)
     start               : datetime.time = Field(default= None)
     end                 : datetime.time = Field(default= None)
+    schoolid            : Optional[str] = None
     datecreated         : Optional[datetime.datetime] = None
     createdby           : Optional[str] = None
     dateupdated         : Optional[datetime.datetime] = None
@@ -2277,6 +2371,7 @@ class ScheduleSchema(BaseModel):
                 "dayid": "Day ID",
                 "start": datetime.time,
                 "end": datetime.time,
+                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -2284,15 +2379,6 @@ class ScheduleSchema(BaseModel):
                 "status": "1"
             }
         }
-
-async def get_subjectname_by_id(subjectid: str):
-    query = subjects_table.select().where(subjects_table.c.id == subjectid)
-    result = await database.fetch_one(query)
-    if result:
-        fullname = result["subjectname"]
-        return fullname
-    else:
-        return "Unkown Subject"
 
 class ScheduleDetailsSchema(BaseModel):
     id                  : str = Field(default=None)
@@ -2334,6 +2420,7 @@ class ScheduleUpdateSchema(BaseModel):
     dayid               : str = Field(default=None)
     start               : datetime.time = Field(default= None)
     end                 : datetime.time = Field(default= None)
+    schoolid            : Optional[str] = None
     dateupdated         : datetime.datetime
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -2348,6 +2435,7 @@ class ScheduleUpdateSchema(BaseModel):
                 "dayid": "Day ID",
                 "start": datetime.time,
                 "end": datetime.time,
+                "schoolid": "",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"

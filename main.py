@@ -59,10 +59,28 @@ async def get_all_users():
     else:
         raise HTTPException(status_code=204, detail='No users found')
 
+@app.get("/get_school_users/{schoolid}", response_model=List[UserSchema], tags=["user"])
+async def get_all_school_users(schoolid: str):
+    query = users_table.select().where(users_table.c.schoolid == schoolid)
+    result = await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=204, detail='No teachers found')
+
 
 @app.get("/get_teachers", response_model=List[UserSchema], tags=["user"])
 async def get_all_teachers():
     query = users_table.select().where(users_table.c.isteacher == True)
+    result = await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=204, detail='No teachers found')
+
+@app.get("/get_school_teachers/{schoolid}", response_model=List[UserSchema], tags=["user"])
+async def get_all_school_teachers(schoolid: str):
+    query = users_table.select().where(users_table.c.isteacher == True).where(users_table.c.schoolid == schoolid)
     result = await database.fetch_all(query)
     if result:
         return result
@@ -130,10 +148,12 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "address": result.get("address"),
                 "dateofbirth": result.get("dateofbirth"),
                 "photo": result.get("photo"),
+                "schoolid": result.get("schoolid"),
                 "isadmin": result.get("isadmin"),
                 "isparent": result.get("isparent"),
                 "isteacher": result.get("isteacher"),
                 "roleid": result.get("roleid"),
+                "schoolid": result.get("schoolid"),
                 "token": signJWT(user.username),
                 "status": result.get("status")
             }
@@ -164,6 +184,7 @@ async def user_email_authentication(email: EmailStr):
             "isparent": result.get("isparent"),
             "isteacher": result.get("isteacher"),
             "roleid": result.get("roleid"),
+            "schoolid": result.get("schoolid"),
             "token": signJWT(result.get("username")),
             "status": result.get("status")
         }
@@ -246,6 +267,7 @@ async def register_non_app_user(user: UserSignUpSchema):
         isparent=user.isparent,
         isadmin=user.isadmin,
         datecreated=gDate,
+        schoolid = user.schoolid,
         status="1"
     )
     exists = await check_if_user_exists(user.phone)
@@ -399,7 +421,13 @@ async def update_school(school: SchoolUpdateSchema):
         where(schools_table.c.id == school.id).\
         values(
             schoolname=school.schoolname,
+            schoolcode=school.schoolcode,
             slogan=school.slogan,
+            logo=school.logo,
+            banner=school.banner,
+            address=school.address,
+            phonenumber=school.phonenumber,
+            email=school.email,
             dateupdated=gDate
     )
 
@@ -414,7 +442,13 @@ async def archive_school(school: SchoolUpdateSchema):
         where(schools_table.c.id == school.id).\
         values(
             schoolname=school.schoolname,
-            slogan=school.slogan,
+        schoolcode=school.schoolcode,
+        slogan=school.slogan,
+        logo=school.logo,
+        banner=school.banner,
+        address=school.address,
+        phonenumber=school.phonenumber,
+        email=school.email,
             status="0",
             dateupdated=gDate
     )
@@ -565,6 +599,11 @@ async def get_all_subjects():
     query = subjects_table.select()
     return await database.fetch_all(query)
 
+@app.get("/subjects/school/{schoolid}", response_model=List[SubjectSchema], tags=["subject"])
+async def get_all_school_subjects(schoolid: str):
+    query = subjects_table.select().where(subjects_table.c.id == schoolid)
+    return await database.fetch_all(query)
+
 
 @app.get("/subjects/{subjectid}", response_model=SubjectSchema, tags=["subject"])
 async def get_subject_by_id(subjectid: str):
@@ -594,6 +633,7 @@ async def register_subject(subject: SubjectSchema):
         shortcode=subject.shortcode,
         requireskit=subject.requireskit,
         kitdescription=subject.kitdescription,
+        schoolid = subject.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -614,6 +654,9 @@ async def update_subject(subject: SubjectSchema):
         values(
             subjectname=subject.subjectname,
             shortcode=subject.shortcode,
+            requireskit=subject.requireskit,
+            kitdescription=subject.kitdescription,
+            schoolid = subject.schoolid,
             dateupdated=gDate
     )
 
@@ -677,6 +720,15 @@ async def get_all_class_levels():
     else:
         raise HTTPException(status_code=204, detail="No class levels found")
 
+@app.get("/classlevels/school/{schoolid}", response_model=ClassLevelSchema, tags=["classlevels"])
+async def get_class_levels_by_schoolid(schoolid: str):
+    query = classlevels_table.select().where(classlevels_table.c.schoolid == schoolid)
+    result = await database.fetch_all(query)
+    if result:        
+        return result
+    else:
+        raise HTTPException(status_code=204, detail="No class level found")
+
 
 @app.get("/classlevels/{classlevelid}", response_model=ClassLevelSchema, tags=["classlevels"])
 async def get_class_level_by_id(classid: str):
@@ -718,6 +770,7 @@ async def register_class_level(classlevelobj: ClassLevelSchema):
         levelname=classlevelobj.levelname,
         shortcode=classlevelobj.shortcode,
         fees=classlevelobj.fees,
+        schoolid = classlevelobj.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -739,6 +792,7 @@ async def update_class_level(classlevel: ClassLevelUpdateSchema):
             levelname=classlevel.levelname,
             shortcode=classlevel.shortcode,
             fees = classlevel.fees,
+            schoolid = classlevel.schoolid,
             dateupdated=gDate
     )
 
@@ -822,6 +876,33 @@ async def get_all_classes():
             })
         return res
 
+@app.get("/classes/school/{classid}", tags=["class"])
+async def get_all_school_classes(schoolid: str):
+    query = classes_table.select()
+    results = await database.fetch_all(query).where(classes_table.c.schoolid == schoolid)
+    res = []
+    if results:
+        for result in results:
+            teachername = await get_usernames_by_id(result.get("classteacherid"))
+            classlevelname = await get_classlevelname_by_id(result.get("classlevelid"))
+            classfees = await get_classlevelfees_by_id(result.get("classlevelid"))
+
+            res.append({
+                "id": result.get("id"),
+                "classname": classlevelname +" "+ result.get("classname"),
+                "classfees": classfees,
+                # "shortcode": result.get("shortcode"),
+                "classteacherid": result.get("classteacherid"),
+                "classlevelid": result.get("classlevelid"),
+                "classteachername": teachername,
+                "datecreated": result.get("datecreated"),
+                "createdby": result.get("createdby"),
+                "dateupdated": result.get("dateupdated"),
+                "updatedby": result.get("updatedby"),
+                "status": result.get("status")
+            })
+        return res
+
 
 @app.get("/classes/{classid}", response_model=ClassSchema, tags=["class"])
 async def get_class_by_id(classid: str):
@@ -866,6 +947,7 @@ async def register_class(classobj: ClassSchema):
         classname=classobj.classname,
         classlevelid=classobj.classlevelid,
         classteacherid=classobj.classteacherid,
+        schoolid = classobj.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -1050,6 +1132,11 @@ async def get_all_clubs():
     query = clubs_table.select()
     return await database.fetch_all(query)
 
+@app.get("/clubs/school/{schoolid}", response_model=List[ClubSchema], tags=["club"])
+async def get_all_school_clubs(schoolid: str):
+    query = clubs_table.select().where(clubs_table.c.schoolid == schoolid)
+    return await database.fetch_all(query)
+
 
 @app.get("/clubs/{clubid}", response_model=ClubSchema, tags=["club"])
 async def get_club_by_id(clubid: str):
@@ -1080,6 +1167,7 @@ async def register_club(club: ClubSchema):
         description=club.description,
         patronid=club.patronid,
         asstpatronid=club.asstpatronid,
+        schoolid = club.schoolid,
         fees=club.fees,
         datecreated=gDate,
         status="1"
@@ -1104,6 +1192,7 @@ async def update_club(club: ClubUpdateSchema):
             description=club.description,
             patronid=club.patronid,
             asstpatronid=club.asstpatronid,
+            schoolid = club.schoolid,
             fees=club.fees,
             dateupdated=gDate
     )
@@ -1172,6 +1261,11 @@ async def get_all_events():
     query = events_table.select()
     return await database.fetch_all(query)
 
+@app.get("/events/school/{schoolid}", response_model=List[EventSchema], tags=["events"])
+async def get_all_school_events(schoolid: str):
+    query = events_table.select().where(events_table.c.schoolid == schoolid)
+    return await database.fetch_all(query)
+
 
 @app.get("/events/{eventid}", response_model=EventSchema, tags=["events"])
 async def get_event_by_id(eventid: str):
@@ -1199,6 +1293,7 @@ async def register_event(event: EventAddSchema):
         id=gID,
         name=event.name,
         description=event.description,
+        schoolid = event.schoolid,
         start=datetime.datetime.strptime(
             (event.start), "%Y-%m-%dT%H:%M:%S").date(),
         end=datetime.datetime.strptime(
@@ -1396,6 +1491,11 @@ async def get_all_grades():
     query = grades_table.select()
     return await database.fetch_all(query)
 
+@app.get("/grades/school/{schoolid}", response_model=List[GradeSchema], tags=["grades"])
+async def get_all_grades(schoolid: str):
+    query = grades_table.select().where(grades_table.c.schoolid == schoolid)
+    return await database.fetch_all(query)
+
 
 @app.get("/grades/{resulttypeid}", response_model=GradeSchema, tags=["grades"])
 async def get_grade_by_id(resulttypeid: str):
@@ -1423,6 +1523,7 @@ async def register_grade(resulttype: GradeSchema):
         id=gID,
         name=resulttype.gradename,
         shortcode=resulttype.shortcode,
+        schoolid = resulttype.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -1513,8 +1614,8 @@ async def get_result_by_id(resultid: str):
     result = await database.fetch_one(query)
     return result
 
-# TO-DO: GET SUBJECT AVERAGE PER STREAM, 
-# GET BEST PERFORMERS PER CLASS LEVEL, 
+# TO-DO: GET SUBJECT AVERAGE PER STREAM, done
+# GET BEST PERFORMERS PER CLASS LEVEL, done
 # GET RESULT GRADES
 # UPLOAD EXCEL RESULTS INTO DB
 
@@ -1648,6 +1749,7 @@ async def register_result(result: ResultSchema):
         studentid=result.studentid,
         resultypeid=result.resultypeid,
         mark=result.mark,
+        schoolid = result.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -1743,6 +1845,10 @@ async def get_all_fees_payments():
     query = feespayments_table.select()
     return await database.fetch_all(query)
 
+@app.get("/feespayments/school/{schoolid}", response_model=List[FeesPaymentSchema], tags=["payments"])
+async def get_all_fees_payments(schoolid: str):
+    query = feespayments_table.select().where(feespayments_table.c.schoolid == schoolid)
+    return await database.fetch_all(query)
 
 @app.get("/feespayments/{feespaymentid}", response_model=FeesPaymentSchema, tags=["payments"])
 async def get_fees_payment_by_id(feespaymentid: str):
@@ -1806,6 +1912,35 @@ async def get_all_payment_class_levels():
     else:
         raise HTTPException(status_code=204, detail="No class levels found")
 
+@app.get("/paymentclasslevels/school/{schoolid}", tags=["payments"])
+async def get_all_school_payment_class_levels(schoolid: str):
+    query = classlevels_table.select().where(classlevels_table.c.schoolid == schoolid)
+    results = await database.fetch_all(query)
+    res = [] 
+    if results:        
+        for result in results:
+            studentcount = await get_students_at_class_level(result["id"])
+            fees_expected = result["fees"] * studentcount
+            fees_collected = 0            
+            percentage_collected = 0
+            fees_paid  = await get_student_payments_at_class_level(result["id"])
+            if(fees_paid != None):
+                fees_collected = fees_paid
+            # if(fees_paid > 0):
+                percentage_collected = round((fees_collected * 100)/fees_expected)
+            res.append({
+                "classlevelid": result["id"],
+                "classlevelname": result["levelname"],
+                "fees": result["fees"],
+                "studentcount": studentcount,
+                "totalfeesexpected": fees_expected,
+                "totalfeescollected": fees_paid,
+                "percentagecollected": percentage_collected,
+            })
+        return res
+    else:
+        raise HTTPException(status_code=204, detail="No class levels found")
+
 @app.post("/feespayments/register", response_model=FeesPaymentSchema, tags=["payments"])
 async def register_fees_payment(feespayment: FeesPaymentSchema):
     gID = str(uuid.uuid1())
@@ -1819,6 +1954,7 @@ async def register_fees_payment(feespayment: FeesPaymentSchema):
         transamount=feespayment.transamount,
         feesamount=feespayment.feesamount,
         amountpaid=feespayment.amountpaid,
+        schoolid = feespayment.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -1844,6 +1980,7 @@ async def update_fees_payment(feespayment: FeesPaymentUpdateSchema):
             transamount=feespayment.transamount,
             feesamount=feespayment.feesamount,
             amountpaid=feespayment.amountpaid,
+            schoolid = feespayment.schoolid,
             dateupdated=gDate
     )
 
@@ -2045,7 +2182,16 @@ async def get_all_students():
     if results:
         return results
     else:
-        raise HTTPException(status_code=404, detail="No students found")
+        raise HTTPException(status_code=204, detail="No students found")
+
+@app.get("/students/school/{schoolid}", tags=["students"])
+async def get_all_school_students(schoolid: str):
+    query = students_table.select().where(students_table.c.schoolid == schoolid)
+    results = await database.fetch_all(query)
+    if results:
+        return results
+    else:
+        raise HTTPException(status_code=204, detail="No students found")
 
 
 @app.get("/students/{studentid}", response_model=StudentSchema, tags=["students"])
@@ -2126,7 +2272,6 @@ async def get_parent_students(parentid: str):
     periodquery = academicperiods_table.select().where(academicperiods_table.c.startdate < datetime.datetime.now()).where(academicperiods_table.c.enddate > datetime.datetime.now())
     periodresults = await database.fetch_one(periodquery)
     if periodresults:
-        print("It is "+ periodresults["periodname"])
         academicperiodid = periodresults["id"]
 
     query = students_table.select().where(students_table.c.parentone == parentid)
@@ -2204,6 +2349,7 @@ async def register_student(student: StudentSignUpSchema):
         parentthree=student.parentthree,
         gender=student.gender,
         address=student.address,
+        schoolid = student.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -2237,6 +2383,7 @@ async def update_student(student: StudentSchema):
             parentthree=student.parentthree,
             gender=student.gender,
             address=student.address,
+            schoolid = student.schoolid,
             status=student.status,
             dateupdated=gDate
     )
@@ -2253,6 +2400,12 @@ async def update_student(student: StudentSchema):
 async def get_all_news():
     query = news_table.select()
     return await database.fetch_all(query)
+
+@app.get("/news/school/{schoolid}", response_model=NewsSchema, tags=["news"])
+async def get_all_school_news(schoolid: str):
+    query = news_table.select().where(news_table.c.schoolid == schoolid)
+    result = await database.fetch_alls(query)
+    return result
 
 
 @app.get("/news/{newsid}", response_model=NewsSchema, tags=["news"])
@@ -2276,6 +2429,7 @@ async def post_news_article(news: NewsSchema):
         file3=news.file3,
         file4=news.file4,
         file5=news.file5,
+        schoolid = news.schoolid,
         datecreated=gDate,
         status="1"
     )
@@ -2415,6 +2569,31 @@ async def get_posts_with_like_details(userid: str):
     else:
         raise HTTPException(status_code=404, detail='There are no posts')
 
+@app.get("/posts/likedetails/{userid}", tags=["posts"])
+async def get_posts_with_like_details(userid: str):
+    query = posts_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        res = []
+        for result in results:
+            res.append({
+                "id": result["id"],
+                "content": result["content"],
+                "likes": await get_post_likes_count_by_id(result["id"]),
+                "dislikes": await get_post_dislikes_count_by_id(result["id"]),
+                "commentscount": await get_post_comments_count_by_id(result["id"]),
+                "datecreated": result["datecreated"],
+                "diduserlike": await check_if_user_liked_post(result["id"], userid),
+                "schoolid": await get_schoolname_by_id(result["schoolid"]),
+                "createdby": await get_usernames_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"],
+            })
+        return res
+    else:
+        raise HTTPException(status_code=404, detail='There are no posts')
+
 
 @app.get("/posts/{postid}", response_model=PostSchema, tags=["posts"])
 async def get_post_by_id(postid: str):
@@ -2442,6 +2621,7 @@ async def get_posts_by_userid(userid: str):
                 "file5": result["file5"],
                 "likes": result["likes"],
                 "dislikes": result["dislikes"],
+                "schoolid": await get_schoolname_by_id(result["schoolid"]),
                 "datecreated": result["datecreated"],
                 "createdby": await get_usernames_by_id(result["createdby"]),
                 "dateupdated": result["dateupdated"],
@@ -2473,6 +2653,7 @@ async def get_post_details_by_id(postid: str):
             "file5": result["file5"],
             "likes": result["likes"],
             "dislikes": result["dislikes"],
+            "schoolid": await get_schoolname_by_id(result["schoolid"]),
             "datecreated": result["datecreated"],
             "createdby": await get_usernames_by_id(result["createdby"]),
             "dateupdated": result["dateupdated"],
@@ -2501,6 +2682,7 @@ async def add_post(post: PostSchema):
         file5=post.file5,
         likes=post.likes,
         dislikes=post.dislikes,
+        schoolid=post.schoolid,
         createdby=post.createdby,
         datecreated=gDate,
         status="1"
@@ -2608,6 +2790,7 @@ async def add_comment(comment: CommentSchema):
         file3=comment.file3,
         file4=comment.file4,
         file5=comment.file5,
+        schoolid=comment.schoolid,
         createdby=comment.createdby,
         datecreated=gDate,
         status="1"
