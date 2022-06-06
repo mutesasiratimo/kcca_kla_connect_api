@@ -6,8 +6,8 @@ import databases, sqlalchemy, datetime, uuid
 
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
-LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
-# LIVE_DATABASE_URL = "postgresql://postgres:password@164.92.157.80:5432/schoolsapp"
+# LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
+LIVE_DATABASE_URL = "postgresql://postgres:password@164.92.157.80:5432/schoolsapp"
 DATABASE_URL = LIVE_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
