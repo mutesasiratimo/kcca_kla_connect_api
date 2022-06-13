@@ -7,7 +7,7 @@ import databases, sqlalchemy, datetime, uuid
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
-LIVE_DATABASE_URL = "postgresql://postgres:password@164.92.157.80:5432/schoolsapp"
+LIVE_DATABASE_URL = "postgresql://timo:password@164.92.157.80:5432/schoolsapp"
 DATABASE_URL = LIVE_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
@@ -39,6 +39,19 @@ roles_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("rolename"     , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+userschools_table = sqlalchemy.Table(
+    "userschools",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("userid"       , sqlalchemy.String),
+    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),

@@ -867,6 +867,7 @@ async def get_all_classes():
                 # "shortcode": result.get("shortcode"),
                 "classteacherid": result.get("classteacherid"),
                 "classlevelid": result.get("classlevelid"),
+                "schoolid": result.get("schoolid"),
                 "classteachername": teachername,
                 "datecreated": result.get("datecreated"),
                 "createdby": result.get("createdby"),
@@ -876,7 +877,7 @@ async def get_all_classes():
             })
         return res
 
-@app.get("/classes/school/{classid}", tags=["class"])
+@app.get("/classes/school/{schoolid}", tags=["class"])
 async def get_all_school_classes(schoolid: str):
     query = classes_table.select()
     results = await database.fetch_all(query).where(classes_table.c.schoolid == schoolid)
@@ -894,6 +895,34 @@ async def get_all_school_classes(schoolid: str):
                 # "shortcode": result.get("shortcode"),
                 "classteacherid": result.get("classteacherid"),
                 "classlevelid": result.get("classlevelid"),
+                "schoolid": result.get("schoolid"),
+                "classteachername": teachername,
+                "datecreated": result.get("datecreated"),
+                "createdby": result.get("createdby"),
+                "dateupdated": result.get("dateupdated"),
+                "updatedby": result.get("updatedby"),
+                "status": result.get("status")
+            })
+        return res
+
+@app.get("/classes/level/{levelid}", tags=["class"])
+async def get_all_classes_by_levelid(levelid: str):
+    query = classes_table.select().where(classes_table.c.classlevelid == levelid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            teachername = await get_usernames_by_id(result.get("classteacherid"))
+            classlevelname = await get_classlevelname_by_id(result.get("classlevelid"))
+            classfees = await get_classlevelfees_by_id(result.get("classlevelid"))
+
+            res.append({
+                "id": result.get("id"),
+                "classname": classlevelname +" "+ result.get("classname"),
+                "classfees": classfees,
+                "classteacherid": result.get("classteacherid"),
+                "classlevelid": result.get("classlevelid"),
+                "schoolid": result.get("schoolid"),
                 "classteachername": teachername,
                 "datecreated": result.get("datecreated"),
                 "createdby": result.get("createdby"),
