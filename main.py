@@ -87,6 +87,25 @@ async def get_all_school_teachers(schoolid: str):
     else:
         raise HTTPException(status_code=204, detail='No teachers found')
 
+@app.get("/get_parents", response_model=List[UserSchema], tags=["user"])
+async def get_all_parents():
+    query = users_table.select().where(users_table.c.isparent == True)
+    result = await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=204, detail='No parents found')
+
+@app.get("/get_school_parents/{schoolid}", response_model=List[UserSchema], tags=["user"])
+async def get_all_school_parents(schoolid: str):
+    query = users_table.select().where(users_table.c.isparent == True).where(users_table.c.schoolid == schoolid)
+    result = await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=204, detail='No parents found')
+
+
 
 @app.get("/get_class_teachers/available", tags=["user"])
 async def get_available_class_teachers():
