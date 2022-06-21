@@ -154,7 +154,12 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
     result = await database.fetch_one(query)
     if result:
         if result.get("password") == user.password:
-            print(result.get("id"))
+            # schools = []
+            # queryschools = userschools_table.select().where(userschools_table.c.userid == result.get("id"))
+            # resultsschools = await database.fetch_all(queryschools)
+            # if resultsschools:
+            #     for resultschool in resultsschools:
+            #         schools.append(await get_school_by_id(resultschool["schoolid"]))
             return {
                 "userid": result.get("id"),
                 "firstname": result.get("firstname"),
@@ -167,7 +172,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "address": result.get("address"),
                 "dateofbirth": result.get("dateofbirth"),
                 "photo": result.get("photo"),
-                "schoolid": result.get("schoolid"),
+                "schoolid": "",
                 "isadmin": result.get("isadmin"),
                 "isparent": result.get("isparent"),
                 "isteacher": result.get("isteacher"),
@@ -418,6 +423,8 @@ async def register_school(school: SchoolSchema):
         slogan=school.slogan,
         logo=school.logo,
         banner=school.banner,
+        country=school.country,
+        city=school.city,
         address=school.address,
         phonenumber=school.phonenumber,
         email=school.email,
@@ -444,6 +451,8 @@ async def update_school(school: SchoolUpdateSchema):
             slogan=school.slogan,
             logo=school.logo,
             banner=school.banner,
+            country=school.country,
+            city=school.city,
             address=school.address,
             phonenumber=school.phonenumber,
             email=school.email,
@@ -455,41 +464,31 @@ async def update_school(school: SchoolUpdateSchema):
 
 
 @app.put("/schools/archive", response_model=SchoolUpdateSchema, tags=["school"])
-async def archive_school(school: SchoolUpdateSchema):
+async def archive_school(schoolid: str):
     gDate = datetime.datetime.now()
     query = schools_table.update().\
-        where(schools_table.c.id == school.id).\
+        where(schools_table.c.id == schoolid).\
         values(
-            schoolname=school.schoolname,
-        schoolcode=school.schoolcode,
-        slogan=school.slogan,
-        logo=school.logo,
-        banner=school.banner,
-        address=school.address,
-        phonenumber=school.phonenumber,
-        email=school.email,
             status="0",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_school_by_id(school.id)
+    return await get_school_by_id(schoolid)
 
 
 @app.put("/schools/restore", response_model=SchoolUpdateSchema, tags=["school"])
-async def restore_school(school: SchoolUpdateSchema):
+async def restore_school(schoolid: str):
     gDate = datetime.datetime.now()
     query = schools_table.update().\
-        where(schools_table.c.id == school.id).\
+        where(schools_table.c.id == schoolid).\
         values(
-            schoolname=school.schoolname,
-            slogan=school.slogan,
             status="1",
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_school_by_id(school.id)
+    return await get_school_by_id(schoolid)
 
 
 @app.delete("/schools/{schoolid}", tags=["school"])
@@ -503,6 +502,125 @@ async def delete_school(schoolid: str):
     }
 
 ###################### END SCHOOL ##################
+
+###################### USER-SCHOOLS ######################
+
+@app.get("/userschools", response_model=List[UserSchoolSchema], tags=["userschools"])
+async def get_all_user_schools():
+    query = userschools_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/userschools/{schoolid}", response_model=UserSchoolSchema, tags=["userschools"])
+async def get_user_school_by_id(schoolid: str):
+    query = userschools_table.select().where(userschools_table.c.id == schoolid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/userschools/user/{userid}", tags=["userschools"])
+async def get_user_schools_by_userid(userid: str):
+    query = userschools_table.select().where(userschools_table.c.userid == userid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append(await get_school_by_id(result["schoolid"]))
+            # res.append({
+            #     "id": result["id"],
+            #     "schoolid": result["schoolid"],
+            #     "schoolname": await get_schoolname_by_id(result["schoolid"]),
+            #     "userid": result["userid"]
+            # })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="User isn't attached to any school.")
+    
+
+
+@app.post("/userschools/register", response_model=UserSchoolSchema, tags=["userschools"])
+async def add_user_school(userschool: UserSchoolSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = userschools_table.insert().values(
+        id=gID,
+        userid=userschool.userid,
+        schoolid=userschool.schoolid,
+        issuperadmin=userschool.issuperadmin,
+        isadmin=userschool.isadmin,
+        isparent=userschool.isparent,
+        isteacher=userschool.isteacher,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **userschool.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/userschools/update", response_model=UserSchoolUpdateSchema, tags=["userschools"])
+async def update_user_school(userschool: UserSchoolUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = userschools_table.update().\
+        where(userschools_table.c.id == userschool.id).\
+        values(
+            schoolid=userschool.schoolid,
+            userid=userschool.userid,
+            issuperadmin=userschool.issuperadmin,
+            isadmin=userschool.isadmin,
+            isparent=userschool.isparent,
+            isteacher=userschool.isteacher,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_school_by_id(userschool.id)
+
+
+@app.put("/userschools/archive", response_model=SchoolUpdateSchema, tags=["userschools"])
+async def archive_user_school(userschoolid: str):
+    gDate = datetime.datetime.now()
+    query = userschools_table.update().\
+        where(userschools_table.c.id == userschoolid).\
+        values(
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_school_by_id(userschoolid)
+
+
+@app.put("/userschools/restore", response_model=SchoolUpdateSchema, tags=["userschools"])
+async def restore_user_school(userschoolid: str):
+    gDate = datetime.datetime.now()
+    query = userschools_table.update().\
+        where(userschools_table.c.id == userschoolid).\
+        values(
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_school_by_id(userschoolid)
+
+
+@app.delete("/userschools/{schoolid}", tags=["userschools"])
+async def delete_user_school(userschoolid: str):
+    query = userschools_table.delete().where(userschools_table.c.id == userschoolid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This user-school relation has been deleted!"
+    }
+
+###################### END USER-SCHOOLS ##################
 
 ###################### ROLES ######################
 

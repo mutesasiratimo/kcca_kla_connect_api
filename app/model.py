@@ -52,6 +52,10 @@ userschools_table = sqlalchemy.Table(
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("userid"       , sqlalchemy.String),
     sqlalchemy.Column("schoolid"     , sqlalchemy.String),
+    sqlalchemy.Column("issuperadmin"     , sqlalchemy.Boolean),
+    sqlalchemy.Column("isparent"     , sqlalchemy.Boolean),
+    sqlalchemy.Column("isteacher"    , sqlalchemy.Boolean),
+    sqlalchemy.Column("isadmin"      , sqlalchemy.Boolean),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -653,6 +657,8 @@ class SchoolSchema(BaseModel):
     slogan       : str = Field(default=None)
     logo         : str = Field(default= None)
     banner       : str = Field(default= None)
+    country      : str = Field(default=None)
+    city         : str = Field(default=None)
     address      : str = Field(default=None)
     phonenumber  : str = Field(default= None)
     email        : str = Field(default=None)
@@ -671,7 +677,9 @@ class SchoolSchema(BaseModel):
                 "slogan": "Future Leaders",
                 "logo": "Base64Img",
                 "banner": "Base64Img",
-                "address": "Kampala",
+                "country": "Uganda",
+                "city": "Kampala",
+                "address": "Bukoto Street",
                 "phonenumber": "0414000111",
                 "email": "school@mail.com",
                 "datecreated": datetime.datetime,
@@ -689,6 +697,8 @@ class SchoolUpdateSchema(BaseModel):
     slogan       : str = Field(default=None)
     logo         : str = Field(default= None)
     banner       : str = Field(default= None)
+    country      : str = Field(default=None)
+    city         : str = Field(default=None)
     address      : str = Field(default=None)
     phonenumber  : str = Field(default= None)
     email        : str = Field(default=None)
@@ -705,6 +715,9 @@ class SchoolUpdateSchema(BaseModel):
                 "slogan": "Future Leaders",
                 "logo": "Base64Img",
                 "banner": "Base64Img",
+                "country": "Uganda",
+                "city": "Kampala",
+                "address": "Bukoto Street",
                 "address": "Kampala",
                 "phonenumber": "0414000111",
                 "email": "school@mail.com",
@@ -714,7 +727,7 @@ class SchoolUpdateSchema(BaseModel):
             }
         }
 
-class RoleDeleteSchema(BaseModel):
+class SchoolDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
         orm_mode = True
@@ -725,6 +738,80 @@ class RoleDeleteSchema(BaseModel):
         }
 
 ##################### END_SCHOOL ###########################
+
+######################## USER_SCHOOL #############################
+
+class UserSchoolSchema(BaseModel):
+    id           : str = Field(default=None)
+    userid       : str = Field(default=None)
+    schoolid     : str = Field(default= None)
+    issuperadmin : bool = Field(default= False)
+    isadmin      : bool = Field(default= False)
+    isparent     : bool = Field(default= False)
+    isteacher    : bool = Field(default= False)
+    datecreated  : datetime.datetime
+    createdby    : Optional[str] = None
+    dateupdated  : Optional[datetime.datetime] = None
+    updatedby    : Optional[str] = None
+    status       : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "userid": "UserID",
+                "schoolid": "SchoolID",
+                "issuperadmin": False,
+                "isadmin": False,
+                "isparent": False,
+                "isteacher": False,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class UserSchoolUpdateSchema(BaseModel):
+    id           : str = Field(default=None)
+    userid       : str = Field(default=None)
+    schoolid     : str = Field(default= None)
+    issuperadmin : bool = Field(default= False)
+    isadmin      : bool = Field(default= False)
+    isparent     : bool = Field(default= False)
+    isteacher    : bool = Field(default= False)
+    dateupdated  : Optional[datetime.datetime] = None
+    updatedby    : Optional[str] = None
+    status       : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "userid": "UserID",
+                "schoolid": "SchoolID",
+                "issuperadmin": False,
+                "isadmin": False,
+                "isparent": False,
+                "isteacher": False,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class UserSchoolDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "role": {
+                "id" : "---"
+            }
+        }
+
+######################## END USER_SCHOOL #########################
 
 ##################### ROLES ###########################
 class RoleSchema(BaseModel):
