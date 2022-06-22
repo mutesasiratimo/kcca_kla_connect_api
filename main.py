@@ -39,13 +39,6 @@ app.add_middleware(
 async def startup():
     await database.connect()
 
-if __name__ == "__main__":
-    uvicorn.run(
-        app, host="127.0.0.1",
-        port=9000
-    )
-
-
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
