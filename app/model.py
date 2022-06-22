@@ -5,63 +5,12 @@ from pydantic import BaseModel, Field, EmailStr
 import databases, sqlalchemy, datetime, uuid  
 
 ## Postgres Database 
-LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/schoolsapp"
-# LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/schoolsapp?sslmode=require"
-LIVE_DATABASE_URL = "postgresql://timo:password@164.92.157.80:5432/schoolsapp"
-DATABASE_URL = LIVE_DATABASE_URL
+LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconnect"
+LIVE_DATABASE_URL = "postgresql://timo:password@164.92.157.80:5432/kccaklaconnect"
+DATABASE_URL = LOCAL_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
-schools_table = sqlalchemy.Table(
-    "schools",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("schoolname"   , sqlalchemy.String),
-    sqlalchemy.Column("schoolcode"   , sqlalchemy.String),
-    sqlalchemy.Column("slogan"       , sqlalchemy.String),
-    sqlalchemy.Column("logo"         , sqlalchemy.String),
-    sqlalchemy.Column("banner"       , sqlalchemy.String),
-    sqlalchemy.Column("country"      , sqlalchemy.String),
-    sqlalchemy.Column("city"         , sqlalchemy.String),
-    sqlalchemy.Column("address"      , sqlalchemy.String),
-    sqlalchemy.Column("phonenumber"  , sqlalchemy.String),
-    sqlalchemy.Column("email"        , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-roles_table = sqlalchemy.Table(
-    "roles",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("rolename"     , sqlalchemy.String),
-    sqlalchemy.Column("description"  , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-userschools_table = sqlalchemy.Table(
-    "userschools",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("userid"       , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("issuperadmin"     , sqlalchemy.Boolean),
-    sqlalchemy.Column("isparent"     , sqlalchemy.Boolean),
-    sqlalchemy.Column("isteacher"    , sqlalchemy.Boolean),
-    sqlalchemy.Column("isadmin"      , sqlalchemy.Boolean),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
 
 users_table = sqlalchemy.Table(
     "users",
@@ -72,16 +21,20 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("username"     , sqlalchemy.String),
     sqlalchemy.Column("email"        , sqlalchemy.String),
     sqlalchemy.Column("phone"        , sqlalchemy.String),
+    sqlalchemy.Column("mobile"       , sqlalchemy.String),
     sqlalchemy.Column("address"      , sqlalchemy.String),
+    sqlalchemy.Column("addresslat"   , sqlalchemy.Float),
+    sqlalchemy.Column("addresslong"  , sqlalchemy.Float),
     sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
     sqlalchemy.Column("password"     , sqlalchemy.String),
     sqlalchemy.Column("gender"       , sqlalchemy.String),
-    sqlalchemy.Column("photo"        , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
+    sqlalchemy.Column("photo"        , sqlalchemy.Text),
+    sqlalchemy.Column("nin"          , sqlalchemy.String),
     sqlalchemy.Column("roleid"       , sqlalchemy.String),
-    sqlalchemy.Column("isparent"     , sqlalchemy.Boolean),
-    sqlalchemy.Column("isteacher"    , sqlalchemy.Boolean),
+    sqlalchemy.Column("iscitizen"    , sqlalchemy.Boolean),
+    sqlalchemy.Column("isclerk"      , sqlalchemy.Boolean),
     sqlalchemy.Column("isadmin"      , sqlalchemy.Boolean),
+    sqlalchemy.Column("issuperadmin" , sqlalchemy.Boolean),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -89,77 +42,12 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
-classlevels_table = sqlalchemy.Table(
-    "classlevels",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("levelname"    , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
-    sqlalchemy.Column("fees"         , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-classes_table = sqlalchemy.Table(
-    "classes",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("classname"    , sqlalchemy.String),
-    sqlalchemy.Column("classlevelid" , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
-    sqlalchemy.Column("classteacherid", sqlalchemy.String),
-    sqlalchemy.Column("schoolid"      , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-days_table = sqlalchemy.Table(
-    "days",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("dayname"     , sqlalchemy.String),
-    sqlalchemy.Column("daycode"  , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-schedules_table = sqlalchemy.Table(
-    "schedules",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("subjectid"    , sqlalchemy.String),
-    sqlalchemy.Column("userid"       , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("dayid"        , sqlalchemy.String),
-    sqlalchemy.Column("start"        , sqlalchemy.Time),
-    sqlalchemy.Column("end"          , sqlalchemy.Time),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-events_table = sqlalchemy.Table(
-    "events",
+incidentcategories_table = sqlalchemy.Table(
+    "incidentcategories",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
-    sqlalchemy.Column("start"        , sqlalchemy.DateTime),
-    sqlalchemy.Column("end"          , sqlalchemy.DateTime),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -167,44 +55,22 @@ events_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
-houses_table = sqlalchemy.Table(
-    "houses",
+incidents_table = sqlalchemy.Table(
+    "incidents",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("housename"    , sqlalchemy.String),
-    sqlalchemy.Column("color"        , sqlalchemy.String),
-    sqlalchemy.Column("patronid"     , sqlalchemy.String),
-    sqlalchemy.Column("asstpatronid" , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-students_table = sqlalchemy.Table(
-    "students",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("firstname"    , sqlalchemy.String),
-    sqlalchemy.Column("lastname"     , sqlalchemy.String),
-    sqlalchemy.Column("othernames"   , sqlalchemy.String),
-    sqlalchemy.Column("photo"        , sqlalchemy.String),
-    sqlalchemy.Column("phone"        , sqlalchemy.String),
-    sqlalchemy.Column("email"        , sqlalchemy.String),
-    sqlalchemy.Column("gender"       , sqlalchemy.String),
-    sqlalchemy.Column("houseid"      , sqlalchemy.String),
-    sqlalchemy.Column("parentone"    , sqlalchemy.String),
-    sqlalchemy.Column("parenttwo"    , sqlalchemy.String),
-    sqlalchemy.Column("parentthree"  , sqlalchemy.String),
-    sqlalchemy.Column("dateofbirth"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("name"         , sqlalchemy.String),
+    sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("isemergency"  , sqlalchemy.Boolean),
+    sqlalchemy.Column("incidentcategoryid" , sqlalchemy.String),
     sqlalchemy.Column("address"      , sqlalchemy.String),
-    sqlalchemy.Column("weight"       , sqlalchemy.Float),
-    sqlalchemy.Column("height"       , sqlalchemy.Float),
-    sqlalchemy.Column("studentid"    , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
+    sqlalchemy.Column("addresslat"   , sqlalchemy.Float),
+    sqlalchemy.Column("addresslong"  , sqlalchemy.Float),
+    sqlalchemy.Column("file1"        , sqlalchemy.Text),
+    sqlalchemy.Column("file2"        , sqlalchemy.Text),
+    sqlalchemy.Column("file3"        , sqlalchemy.Text),
+    sqlalchemy.Column("file4"        , sqlalchemy.Text),
+    sqlalchemy.Column("file5"        , sqlalchemy.Text),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -212,15 +78,28 @@ students_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
-subjects_table = sqlalchemy.Table(
-    "subjects",
+designations_table = sqlalchemy.Table(
+    "designations",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("designationname", sqlalchemy.String),
+    sqlalchemy.Column("roledescription", sqlalchemy.String),
+    sqlalchemy.Column("linemanagerid", sqlalchemy.String),
+    sqlalchemy.Column("departmentid" , sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+departments_table = sqlalchemy.Table(
+    "departments",
     metadata,
     sqlalchemy.Column("id"            , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("subjectname"   , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"     , sqlalchemy.String),
-    sqlalchemy.Column("requireskit"   , sqlalchemy.Boolean),
-    sqlalchemy.Column("kitdescription", sqlalchemy.String),
-    sqlalchemy.Column("schoolid"      , sqlalchemy.String),
+    sqlalchemy.Column("departmentname", sqlalchemy.String),
+    sqlalchemy.Column("description"   , sqlalchemy.String),
+    sqlalchemy.Column("hodid      "   , sqlalchemy.String),
     sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"     , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
@@ -228,120 +107,12 @@ subjects_table = sqlalchemy.Table(
     sqlalchemy.Column("status"        , sqlalchemy.CHAR),
 )
 
-classteachersubjects_table = sqlalchemy.Table(
-    "classteachersubjects",
+languages_table = sqlalchemy.Table(
+    "languages",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("subjectid"    , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("userid"       , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-clubs_table = sqlalchemy.Table(
-    "clubs",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("clubname"     , sqlalchemy.String),
+    sqlalchemy.Column("languagename" , sqlalchemy.String),
     sqlalchemy.Column("shortcode"    , sqlalchemy.String),
-    sqlalchemy.Column("description"    , sqlalchemy.String),
-    sqlalchemy.Column("patronid"     , sqlalchemy.String),
-    sqlalchemy.Column("asstpatronid" , sqlalchemy.String),
-    sqlalchemy.Column("fees"         , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-academicperiods_table = sqlalchemy.Table(
-    "academicperiods",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("periodname"   , sqlalchemy.String),
-    sqlalchemy.Column("description"  , sqlalchemy.String),
-    sqlalchemy.Column("startdate"    , sqlalchemy.DateTime),
-    sqlalchemy.Column("enddate"      , sqlalchemy.DateTime),
-    sqlalchemy.Column("paymentdeadline" , sqlalchemy.DateTime),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-feespayments_table = sqlalchemy.Table(
-    "feespayments",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("paymentref"   , sqlalchemy.String),
-    sqlalchemy.Column("academicperiodid", sqlalchemy.String),
-    sqlalchemy.Column("studentid"    , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("transamount"  , sqlalchemy.Float),
-    sqlalchemy.Column("feesamount"   , sqlalchemy.Float),
-    sqlalchemy.Column("amountpaid"   , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-clubpayments_table = sqlalchemy.Table(
-    "clubpayments",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("paymentref"   , sqlalchemy.String),
-    sqlalchemy.Column("academicperiodid", sqlalchemy.String),
-    sqlalchemy.Column("studentid"    , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("clubid"       , sqlalchemy.String),
-    sqlalchemy.Column("transamount"  , sqlalchemy.Float),
-    sqlalchemy.Column("feesamount"   , sqlalchemy.Float),
-    sqlalchemy.Column("amountpaid"   , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-userwallet_table = sqlalchemy.Table(
-    "userwallet",
-    metadata,
-    sqlalchemy.Column("id"                  , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("userid"              , sqlalchemy.String),
-    sqlalchemy.Column("availablebalance"    , sqlalchemy.Float),
-    sqlalchemy.Column("currentbalance"      , sqlalchemy.Float),
-    sqlalchemy.Column("totalincoming"       , sqlalchemy.Float),
-    sqlalchemy.Column("totaloutgoing"       , sqlalchemy.Float),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-userwalletlog_table = sqlalchemy.Table(
-    "userwalletlog",
-    metadata,
-    sqlalchemy.Column("id"                  , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("userid"              , sqlalchemy.String),
-    sqlalchemy.Column("userwalletid"        , sqlalchemy.String),
-    sqlalchemy.Column("amount"              , sqlalchemy.Float),
-    sqlalchemy.Column("type"                , sqlalchemy.String),
-    sqlalchemy.Column("description"         , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -369,150 +140,10 @@ news_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
-posts_table = sqlalchemy.Table(
-    "posts",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("title"        , sqlalchemy.String),
-    sqlalchemy.Column("content"      , sqlalchemy.String),
-    sqlalchemy.Column("image"        , sqlalchemy.Text),
-    sqlalchemy.Column("file1"        , sqlalchemy.Text),
-    sqlalchemy.Column("file2"        , sqlalchemy.Text),
-    sqlalchemy.Column("file3"        , sqlalchemy.Text),
-    sqlalchemy.Column("file4"        , sqlalchemy.Text),
-    sqlalchemy.Column("file5"        , sqlalchemy.Text),
-    sqlalchemy.Column("likes"        , sqlalchemy.Integer),
-    sqlalchemy.Column("dislikes"        , sqlalchemy.Integer),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.String),
-)
-
-likes_table = sqlalchemy.Table(
-    "likes",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("postid"       , sqlalchemy.String),
-    sqlalchemy.Column("isliked"      , sqlalchemy.Boolean),
-    sqlalchemy.Column("userid"       , sqlalchemy.Text),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.String),
-)
-
-comments_table = sqlalchemy.Table(
-    "comments",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("postid"       , sqlalchemy.String),
-    sqlalchemy.Column("comment"      , sqlalchemy.String),
-    sqlalchemy.Column("file1"        , sqlalchemy.Text),
-    sqlalchemy.Column("file2"        , sqlalchemy.Text),
-    sqlalchemy.Column("file3"        , sqlalchemy.Text),
-    sqlalchemy.Column("file4"        , sqlalchemy.Text),
-    sqlalchemy.Column("file5"        , sqlalchemy.Text),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.String),
-)
-
-grades_table = sqlalchemy.Table(
-    "grades",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("gradename"    , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
-    sqlalchemy.Column("weight"       , sqlalchemy.String),
-    sqlalchemy.Column("min"          , sqlalchemy.Float),
-    sqlalchemy.Column("max"          , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-results_table = sqlalchemy.Table(
-    "results",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("subjectid"    , sqlalchemy.String),
-    sqlalchemy.Column("classid"      , sqlalchemy.String),
-    sqlalchemy.Column("gradeid"      , sqlalchemy.String),
-    sqlalchemy.Column("teacherid"    , sqlalchemy.String),
-    sqlalchemy.Column("studentid"    , sqlalchemy.String),
-    sqlalchemy.Column("resultypeid"  , sqlalchemy.String),
-    sqlalchemy.Column("resulttitle"  , sqlalchemy.String),
-    sqlalchemy.Column("resultperiod" , sqlalchemy.String),
-    sqlalchemy.Column("mark"         , sqlalchemy.Float),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
-resulttypes_table = sqlalchemy.Table(
-    "resulttypes",
-    metadata,
-    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("name"         , sqlalchemy.String),
-    sqlalchemy.Column("shortcode"    , sqlalchemy.String),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
-
 engine = sqlalchemy.create_engine(
     DATABASE_URL
 )
 metadata.create_all(engine)
-
-# class PostSchema(BaseModel):
-#     id          : str = Field(default=None)
-#     title       : str = Field(default=None)
-#     content     : str = Field(default= None)
-#     thumbnail   : str = Field(default= None)
-#     likes       : int = Field(default= 0)
-#     dislikes    : str = Field(default=0)
-#     datepublished:Optional[datetime.datetime] = None
-#     datecreated : datetime.datetime
-#     createdby   : Optional[str] = None
-#     dateupdated : Optional[datetime.datetime] = None
-#     updatedby   : Optional[str] = None
-#     status   : Optional[str] = None
-#     class Config:
-#         orm_mode = True
-#         the_schema = {
-#             "user_demo": {
-#                 "id" : "---",
-#                 "title": "My Blog",
-#                 "content": "My Blog Content",
-#                 "thumbnail" : "--",
-#                 "likes": 0,
-#                 "dislikes": 0,
-#                 "datepublished": datetime.datetime,
-#                 "datecreated": datetime.datetime,
-#                 "createdby": "1",
-#                 "dateupdated": None,
-#                 "updatedby": None,
-#                 "status": "1"
-#             }
-#         }
 
 ##################### USERS ###########################
 
@@ -522,17 +153,21 @@ class UserSchema(BaseModel):
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
     phone       : str = Field(default= None)
+    mobile      : str = Field(default= None)
     photo       : str = Field(default= None)
     address     : str = Field(default= None)
+    addresslat  : float = Field(default= None)
+    addresslong : float = Field(default= None)
+    nin         : str = Field(default=None)
     email       : EmailStr = Field(default= None)
     password    : str = Field(default=None)
     gender      : str = Field(default=None)
     dateofbirth : Optional[datetime.datetime] = None
     roleid      : Optional[str] = None
-    schoolid    : Optional[str] = None
-    isparent    : bool = Field(default=True)
-    isteacher   : bool = Field(default=False)
+    iscitizen   : bool = Field(default=True)
+    isclerk     : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
+    issuperadmin: bool = Field(default=False)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -546,17 +181,21 @@ class UserSchema(BaseModel):
                 "firstname": "John",
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
+                "mobile" : "0775111222",
                 "phone" : "0775111222",
                 "photo" : "https://picsum.photos/200/300",
                 "address": "Kampala, Uganda",
-                "password": "1234",
+                "addresslat": 0.46666,
+                "addresslong": 32.77476,
+                "password": "123456",
                 "gender": "Male",
                 "dateofbirth": "",
+                "nin": "",
                 "roleid": "1",
-                "schoolid": "",
-                "isteacher": False,
-                "isparent": True,
+                "iscitizen": True,
+                "isclerk": False,
                 "isadmin": False,
+                "issuperadmin": False,
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -571,17 +210,21 @@ class UserUpdateSchema(BaseModel):
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
     phone       : str = Field(default= None)
+    mobile      : str = Field(default= None)
     photo       : str = Field(default= None)
     address     : str = Field(default= None)
+    addresslat  : float = Field(default= None)
+    addresslong : float = Field(default= None)
+    nin         : str = Field(default=None)
     email       : EmailStr = Field(default= None)
     password    : str = Field(default=None)
     gender      : str = Field(default=None)
-    dateofbirth : Optional[str] = None
+    dateofbirth : Optional[datetime.datetime] = None
     roleid      : Optional[str] = None
-    schoolid    : Optional[str] = None
-    isparent    : bool = Field(default=True)
-    isteacher   : bool = Field(default=False)
+    iscitizen   : bool = Field(default=True)
+    isclerk     : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
+    issuperadmin: bool = Field(default=False)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -589,17 +232,25 @@ class UserUpdateSchema(BaseModel):
         orm_mode = True
         the_schema = {
             "user_demo": {
-                "id":  "ID",
+                "id" : "---",
                 "firstname": "John",
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
-                "password": "1234",
+                "mobile" : "0775111222",
                 "phone" : "0775111222",
                 "photo" : "https://picsum.photos/200/300",
+                "address": "Kampala, Uganda",
+                "addresslat": 0.46666,
+                "addresslong": 32.77476,
+                "password": "123456",
                 "gender": "Male",
                 "dateofbirth": "",
+                "nin": "",
                 "roleid": "1",
-                "schoolid": "",
+                "iscitizen": True,
+                "isclerk": False,
+                "isadmin": False,
+                "issuperadmin": False,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -637,31 +288,26 @@ class UserSignUpSchema(BaseModel):
     password    : str = Field(..., example="johndoe")
     gender      : str = Field(..., example="M")
     address     : str = Field(..., example="Kanjokya House")
+    addresslat  : float = Field(..., example=0.23332)
+    addresslong : float = Field(..., example=32.23332)
     phone       : str = Field(..., example="+256781777888")
+    mobile      : str = Field(..., example="+256781777888")
     photo       : str = Field(..., example="")
-    schoolid    : str = Field(..., example="")
+    nin         : str = Field(..., example="")
     dateofbirth : str = Field(..., example="1990-03-23")
-    studentid   : str = Field(..., example="SCH001")
-    isparent    : bool = Field(..., example=True)
-    isteacher   : bool = Field(..., example=False)
+    iscitizen   : bool = Field(..., example=True)
+    isclerk     : bool = Field(..., example=False)
     isadmin     : bool = Field(..., example=False)
+    issuperadmin: bool = Field(..., example=False)
     status      : str = Field(..., example="1")
 
 ##################### END_USERS ###########################
 
-##################### SCHOOL ###########################
-class SchoolSchema(BaseModel):
+##################### INCIDENT CATEGORIES ###########################
+class IncidentCategoriesSchema(BaseModel):
     id           : str = Field(default=None)
-    schoolname   : str = Field(default=None)
-    schoolcode   : str = Field(default= None)
-    slogan       : str = Field(default=None)
-    logo         : str = Field(default= None)
-    banner       : str = Field(default= None)
-    country      : str = Field(default=None)
-    city         : str = Field(default=None)
-    address      : str = Field(default=None)
-    phonenumber  : str = Field(default= None)
-    email        : str = Field(default=None)
+    name         : str = Field(default=None)
+    description  : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -672,16 +318,8 @@ class SchoolSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id" : "---",
-                "schoolname": "Name",
-                "schoolcode": "SCH",
-                "slogan": "Future Leaders",
-                "logo": "Base64Img",
-                "banner": "Base64Img",
-                "country": "Uganda",
-                "city": "Kampala",
-                "address": "Bukoto Street",
-                "phonenumber": "0414000111",
-                "email": "school@mail.com",
+                "name": "Name",
+                "description": "Description ....",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -690,18 +328,10 @@ class SchoolSchema(BaseModel):
             }
         }
 
-class SchoolUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    schoolname   : str = Field(default=None)
-    schoolcode   : str = Field(default= None)
-    slogan       : str = Field(default=None)
-    logo         : str = Field(default= None)
-    banner       : str = Field(default= None)
-    country      : str = Field(default=None)
-    city         : str = Field(default=None)
-    address      : str = Field(default=None)
-    phonenumber  : str = Field(default= None)
-    email        : str = Field(default=None)
+class IncidentCategoriesUpdateSchema(BaseModel):
+    id           : str = Field(default=None)
+    name         : str = Field(default=None)
+    description  : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -710,24 +340,177 @@ class SchoolUpdateSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id":  "ID",
-                "schoolname": "Name",
-                "schoolcode": "SCH",
-                "slogan": "Future Leaders",
-                "logo": "Base64Img",
-                "banner": "Base64Img",
-                "country": "Uganda",
-                "city": "Kampala",
-                "address": "Bukoto Street",
-                "address": "Kampala",
-                "phonenumber": "0414000111",
-                "email": "school@mail.com",
+                "name": "Name",
+                "description": "Description",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
             }
         }
 
-class SchoolDeleteSchema(BaseModel):
+class IncidentCategoriesDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident_category": {
+                "id" : "---"
+            }
+        }
+
+##################### END_INCIDENT_CATEGORY ###########################
+
+######################## INCIDENT #############################
+
+class IncidentSchema(BaseModel):
+    id                  : str = Field(default=None)
+    name                : str = Field(default=None)
+    description         : str = Field(default= None)
+    isemergency         : bool = Field(default= False)
+    incidentcategoryid  : str = Field(default= None)
+    address             : str = Field(default= None)
+    addresslat          : float = Field(default= 0.22222)
+    addresslong         : float = Field(default= 0.32888)
+    file1               : str = Field(default=None)
+    file2               : str = Field(default= None)
+    file3               : str = Field(default= None)
+    file4               : str = Field(default= None)
+    file5               : str = Field(default= None)
+    createdby           : Optional[str] = None
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident_demo": {
+                "id" : "---",
+                "name": "Incident",
+                "description": "Incident Details",
+                "incidentcategoryid": "Categ -ID",
+                "address": "Kampala, Uganda",
+                "addresslat": 0.32222,
+                "addresslong": 32.3555,
+                "isemergency": False,
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class IncidentUpdateSchema(BaseModel):
+    id                  : str = Field(default=None)
+    name                : str = Field(default=None)
+    description         : str = Field(default= None)
+    isemergency         : bool = Field(default= False)
+    incidentcategoryid  : str = Field(default= None)
+    address             : str = Field(default= None)
+    addresslat          : float = Field(default= 0.22222)
+    addresslong         : float = Field(default= 0.32888)
+    file1               : str = Field(default=None)
+    file2               : str = Field(default= None)
+    file3               : str = Field(default= None)
+    file4               : str = Field(default= None)
+    file5               : str = Field(default= None)
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident_demo": {
+                "id" : "---",
+                "name": "Incident",
+                "description": "Incident Details",
+                "incidentcategoryid": "Categ -ID",
+                "address": "Kampala, Uganda",
+                "addresslat": 0.32222,
+                "addresslong": 32.3555,
+                "isemergency": False,
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class IncidentDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident": {
+                "id" : "---"
+            }
+        }
+
+######################## END INCIDENT #########################
+
+##################### DESIGNATIONS ###########################
+class DesignationSchema(BaseModel):
+    id          : str = Field(default=None)
+    designationname    : str = Field(default=None)
+    roledescription : str = Field(default= None)
+    linemanagerid : str = Field(default= None)
+    departmentid : str = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "designationname": "Role",
+                "roledescription": "Role Description",
+                "linemanagerid": "staff userid",
+                "departmentid": "departmentid",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class DesignationUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    designationname    : str = Field(default=None)
+    roledescription : str = Field(default= None)
+    linemanagerid : str = Field(default= None)
+    departmentid : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "designationname": "Role",
+                "roledescription": "Role Description",
+                "linemanagerid": "staff userid",
+                "departmentid": "departmentid",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class DesignationDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
         orm_mode = True
@@ -737,34 +520,27 @@ class SchoolDeleteSchema(BaseModel):
             }
         }
 
-##################### END_SCHOOL ###########################
+##################### END_DESIGNATIONS ###########################
 
-######################## USER_SCHOOL #############################
-
-class UserSchoolSchema(BaseModel):
-    id           : str = Field(default=None)
-    userid       : str = Field(default=None)
-    schoolid     : str = Field(default= None)
-    issuperadmin : bool = Field(default= False)
-    isadmin      : bool = Field(default= False)
-    isparent     : bool = Field(default= False)
-    isteacher    : bool = Field(default= False)
-    datecreated  : datetime.datetime
-    createdby    : Optional[str] = None
-    dateupdated  : Optional[datetime.datetime] = None
-    updatedby    : Optional[str] = None
-    status       : Optional[str] = None
+##################### DEPARTMENTS ###########################
+class DepartmentSchema(BaseModel):
+    id              : str = Field(default=None)
+    departmentname  : str = Field(default=None)
+    description     : str = Field(default= None)
+    hodid           : str = Field(default= None)
+    datecreated     : datetime.datetime
+    createdby       : Optional[str] = None
+    dateupdated     : Optional[datetime.datetime] = None
+    updatedby       : Optional[str] = None
+    status          : Optional[str] = None
     class Config:
         orm_mode = True
         the_schema = {
-            "user_demo": {
+            "department_demo": {
                 "id" : "---",
-                "userid": "UserID",
-                "schoolid": "SchoolID",
-                "issuperadmin": False,
-                "isadmin": False,
-                "isparent": False,
-                "isteacher": False,
+                "departmentname": "Accounts",
+                "description": "Finance and Accounting",
+                "hodid": "staffid of HOD",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -773,75 +549,11 @@ class UserSchoolSchema(BaseModel):
             }
         }
 
-class UserSchoolUpdateSchema(BaseModel):
-    id           : str = Field(default=None)
-    userid       : str = Field(default=None)
-    schoolid     : str = Field(default= None)
-    issuperadmin : bool = Field(default= False)
-    isadmin      : bool = Field(default= False)
-    isparent     : bool = Field(default= False)
-    isteacher    : bool = Field(default= False)
-    dateupdated  : Optional[datetime.datetime] = None
-    updatedby    : Optional[str] = None
-    status       : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id":  "ID",
-                "userid": "UserID",
-                "schoolid": "SchoolID",
-                "issuperadmin": False,
-                "isadmin": False,
-                "isparent": False,
-                "isteacher": False,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class UserSchoolDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "role": {
-                "id" : "---"
-            }
-        }
-
-######################## END USER_SCHOOL #########################
-
-##################### ROLES ###########################
-class RoleSchema(BaseModel):
+class DepartmentUpdateSchema(BaseModel):
     id          : str = Field(default=None)
-    rolename    : str = Field(default=None)
-    description : str = Field(default= None)
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "rolename": "Role",
-                "description": "Role Description",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class RoleUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    rolename    : str = Field(default=None)
-    description : str = Field(default= None)
+    departmentname  : str = Field(default=None)
+    description     : str = Field(default= None)
+    hodid           : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -850,250 +562,31 @@ class RoleUpdateSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id":  "ID",
-                "rolename": "Role",
-                "description": "Role Description",
+                "departmentname": "Accounts",
+                "description": "Finance and Accounting",
+                "hodid": "staffid of HOD",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
             }
         }
 
-class RoleDeleteSchema(BaseModel):
+class DepartmentDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
         orm_mode = True
         the_schema = {
-            "role": {
+            "department": {
                 "id" : "---"
             }
         }
 
-##################### END_ROLES ###########################
+##################### END_DEPARTMENTS ###########################
 
-##################### DAYS ###########################
-class DaySchema(BaseModel):
+##################### LANGUAGES ###########################
+class LanguageSchema(BaseModel):
     id          : str = Field(default=None)
-    dayname     : str = Field(default=None)
-    daycode     : str = Field(default= None)
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "dayname": "Monday",
-                "daycode": "MON",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class DayUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    dayname     : str = Field(default=None)
-    daycode     : str = Field(default= None)
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id":  "ID",
-                "dayname": "Monday",
-                "daycode": "MON",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class DayDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "day": {
-                "id" : "---"
-            }
-        }
-
-##################### END_DAYS ###########################
-
-##################### GRADES ###########################
-class GradeSchema(BaseModel):
-    id          : str = Field(default=None)
-    gradename   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    weight      : int = Field(default=None)
-    min         : float = Field(default= None)
-    max         : float = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "grade_demo": {
-                "id" : "---",
-                "gradename": "Distinction 1",
-                "shortcode": "D1",
-                "weight"  : 1,
-                "schoolid": "",
-                "min": 0.0,
-                "max": 0.0,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class GradeUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    gradename   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    weight      : int = Field(default=None)
-    min         : float = Field(default= None)
-    max         : float = Field(default= None)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "grade_demo": {
-                "id":  "ID",
-                "gradename": "Distinction 1",
-                "shortcode": "D1",
-                "weight"  : 1,
-                "schoolid": "",
-                "min": 0.0,
-                "max": 0.0,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class GradeDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "grade": {
-                "id" : "---"
-            }
-        }
-
-##################### END_GRADES ###########################
-
-##################### RESULT ###########################
-class ResultSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectid   : str = Field(default=None)
-    classid     : str = Field(default= None)
-    gradeid     : str = Field(default=None)
-    teacherid   : str = Field(default= None)
-    studentid   : str = Field(default=None)
-    resultypeid : str = Field(default= None)
-    resulttitle : str = Field(default= None)
-    resultperiod : str = Field(default= None)
-    mark        : float = Field(default=None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "result_demo": {
-                "id" : "---",
-                "subjectid": "Subject",
-                "classid": "Class",
-                "gradeid": "Grade",
-                "teacherid": "Teacher",
-                "studentid": "Student",
-                "resulttypeid": "",
-                "resulttitle": "BOT Exam",
-                "resultperiod": "2nd Term",
-                "mark": 0,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ResultUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectid   : str = Field(default=None)
-    classid     : str = Field(default= None)
-    gradeid     : str = Field(default=None)
-    teacherid   : str = Field(default= None)
-    studentid   : str = Field(default=None)
-    resultypeid : str = Field(default= None)
-    resulttitle : str = Field(default= None)
-    resultperiod : str = Field(default= None)
-    mark        : float = Field(default=None)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "result_demo": {
-                "id":  "ID",
-                "subjectid": "Subject",
-                "classid": "Class",
-                "gradeid": "Grade",
-                "teacherid": "Teacher",
-                "studentid": "Student",
-                "resulttypeid": "",
-                "resulttitle": "BOT Exam",
-                "resultperiod": "2nd Term",
-                "mark": 0,
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ResultDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "result": {
-                "id" : "---"
-            }
-        }
-
-##################### END_RESULTS ###########################
-
-
-##################### RESULT TYPES ###########################
-class ResultTypeSchema(BaseModel):
-    id          : str = Field(default=None)
-    name        : str = Field(default=None)
+    languagename: str = Field(default=None)
     shortcode   : str = Field(default= None)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
@@ -1103,10 +596,10 @@ class ResultTypeSchema(BaseModel):
     class Config:
         orm_mode = True
         the_schema = {
-            "user_demo": {
+            "language_demo": {
                 "id" : "---",
-                "name": "Beginning of Term",
-                "shortcode": "BoT",
+                "languagename": "English",
+                "shortcode": "ENG",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1115,9 +608,9 @@ class ResultTypeSchema(BaseModel):
             }
         }
 
-class ResultTypeUpdateSchema(BaseModel):
+class LanguageUpdateSchema(BaseModel):
     id          : str = Field(default=None)
-    name        : str = Field(default=None)
+    languagename: str = Field(default=None)
     shortcode   : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
@@ -1125,126 +618,27 @@ class ResultTypeUpdateSchema(BaseModel):
     class Config:
         orm_mode = True
         the_schema = {
-            "user_demo": {
+            "language_demo": {
                 "id":  "ID",
-                "name": "Beginning of Term",
-                "shortcode": "BoT",
+                "languagename": "English",
+                "shortcode": "ENG",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
             }
         }
 
-class ResultTypeDeleteSchema(BaseModel):
+class LanguageDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
         orm_mode = True
         the_schema = {
-            "result_type": {
+            "language": {
                 "id" : "---"
             }
         }
 
-##################### END_RESULT_TYPES ###########################
-
-##################### EVENTS ###########################
-class EventSchema(BaseModel):
-    id          : str = Field(default=None)
-    name        : str = Field(default=None)
-    description : str = Field(default= None)
-    start       : Optional[datetime.datetime] = None
-    end         : Optional[datetime.datetime] = None
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "name": "Sports Day",
-                "description": "Annual Sports Day",
-                "start": "2022-05-25T09:00:00",
-                "end": "2022-05-25T16:00:00",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class EventAddSchema(BaseModel):
-    id          : str = Field(default=None)
-    name        : str = Field(default=None)
-    description : str = Field(default= None)
-    start       : Optional[str] = None
-    end         : Optional[str] = None
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "name": "Sports Day",
-                "description": "Annual Sports Day",
-                "start": "2022-05-25T09:00:00",
-                "end": "2022-05-25T16:00:00",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class EventUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    name        : str = Field(default=None)
-    description : str = Field(default= None)
-    start       : str = Field(default= None)
-    end         : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id":  "ID",
-                "name": "Sports Day",
-                "description": "Annual Sports Day",
-                "start": "2022-05-25T09:00:00",
-                "end": "2022-05-25T16:00:00",
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class EventDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "event": {
-                "id" : "---"
-            }
-        }
-
-##################### END_EVENTS ###########################
+##################### END_LANGUAGES ###########################
 
 ##################### NEWS ###########################
 class NewsSchema(BaseModel):
@@ -1257,7 +651,6 @@ class NewsSchema(BaseModel):
     file3       : str = Field(default= None)
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
-    schoolid    : Optional[str] = None
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -1276,7 +669,6 @@ class NewsSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
-                "schoolid": "",
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -1295,7 +687,6 @@ class NewsUpdateSchema(BaseModel):
     file3       : str = Field(default= None)
     file4       : str = Field(default= None)
     file5       : str = Field(default= None)
-    schoolid    : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status      : Optional[str] = None
@@ -1312,7 +703,6 @@ class NewsUpdateSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
-                "schoolid": "",
                 "dateupdated": None,
                 "updatedby": None,
                 "status": "1"
@@ -1331,1225 +721,3 @@ class NewsDeleteSchema(BaseModel):
 
 ##################### END_NEWS ###########################
 
-
-##################### POSTS ###########################
-class PostSchema(BaseModel):
-    id          : str = Field(default=None)
-    title       : str = Field(default=None)
-    content     : str = Field(default= None)
-    image       : str = Field(default= None)
-    file1       : str = Field(default= None)
-    file2       : str = Field(default= None)
-    file3       : str = Field(default= None)
-    file4       : str = Field(default= None)
-    file5       : str = Field(default= None)
-    likes       : int = Field(default= 0)
-    dislikes    : int = Field(default= 0)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "news_demo": {
-                "id" : "---",
-                "title": "Title",
-                "content": "Cotent",
-                "image": "IMG Base64",
-                "file1": "File",
-                "file2": "File",
-                "file3": "File",
-                "file4": "File",
-                "file5": "File",
-                "likes": 0,
-                "disikes": 0,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "PENDING"
-            }
-        }
-
-class PostUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    title       : str = Field(default=None)
-    content     : str = Field(default= None)
-    image       : str = Field(default= None)
-    file1       : str = Field(default= None)
-    file2       : str = Field(default= None)
-    file3       : str = Field(default= None)
-    file4       : str = Field(default= None)
-    file5       : str = Field(default= None)
-    likes       : int = Field(default= 0)
-    likes       : int = Field(default= 0)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "title": "Title",
-                "content": "Cotent",
-                "image": "IMG Base64",
-                "file1": "File",
-                "file2": "File",
-                "file3": "File",
-                "file4": "File",
-                "file5": "File",
-                "likes": 0,
-                "disikes": 0,
-                "schoolid": "",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class PostDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "post": {
-                "id" : "---"
-            }
-        }
-
-class CommentSchema(BaseModel):
-    id          : str = Field(default=None)
-    postid      : str = Field(default=None)
-    comment     : str = Field(default= None)
-    file1       : str = Field(default= None)
-    file2       : str = Field(default= None)
-    file3       : str = Field(default= None)
-    file4       : str = Field(default= None)
-    file5       : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : Optional[datetime.datetime] = None
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "comment_demo": {
-                "id" : "---",
-                "postid": "ID",
-                "comment": "Comment",
-                "file1": "File",
-                "file2": "File",
-                "file3": "File",
-                "file4": "File",
-                "file5": "File",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class LikeSchema(BaseModel):
-    id          : str = Field(default=None)
-    postid      : str = Field(default=None)
-    userid      : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "like_demo": {
-                "id" : "---",
-                "postid": "ID",
-                "userid": "ID",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-##################### END_POSTS ###########################
-
-##################### ACADEMIC PERIODS ###########################
-class AcademicPeriodSchema(BaseModel):
-    id                  : str = Field(default=None)
-    periodname          : str = Field(default=None)
-    description         : str = Field(default= None)    
-    startdate           : Optional[datetime.datetime] = None
-    enddate             : Optional[datetime.datetime] = None
-    paymentdeadline     : Optional[datetime.datetime] = None
-    schoolid            : Optional[str] = None
-    datecreated         : datetime.datetime
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment_demo": {
-                "id" : "---",
-                "periodname": "-",
-                "description": "-",
-                "startdate": datetime.datetime,
-                "enddate": datetime.datetime,
-                "paymentdeadline": datetime.datetime,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class AcademicPeriodInsertSchema(BaseModel):
-    id                  : str = Field(default=None)
-    periodname          : str = Field(default=None)
-    description         : str = Field(default= None)    
-    startdate           : Optional[str] = None
-    enddate             : Optional[str] = None
-    paymentdeadline     : Optional[str] = None
-    schoolid            : Optional[str] = None
-    datecreated         : datetime.datetime
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment_demo": {
-                "id" : "---",
-                "periodname": "-",
-                "description": "-",
-                "startdate": datetime.datetime,
-                "enddate": datetime.datetime,
-                "paymentdeadline": datetime.datetime,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class AcademicPeriodUpdateSchema(BaseModel):
-    id                  : str = Field(default=None)
-    periodname          : str = Field(default=None)
-    description         : str = Field(default= None)    
-    startdate           : Optional[str] = None
-    enddate             : Optional[str] = None
-    paymentdeadline     : Optional[str] = None
-    schoolid            : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "clubs_payment_demo": {
-                "id":  "ID",
-                "id" : "---",
-                "periodname": "-",
-                "description": "-",
-                "startdate": "2022-01-20",
-                "enddate": "2022-04-30",
-                "paymentdeadline": "2022-04-15",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class AcademicPeriodDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "academic_period": {
-                "id" : "---"
-            }
-        }
-
-##################### END_ACADEMIC_PERIODS ###########################
-
-##################### SUBJECTS ###########################
-class SubjectSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectname : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    requireskit : bool = Field(default= False)
-    kitdescription : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "subjectname": "Subject",
-                "shortcode": "SBJ",
-                "requireskit": False,
-                "kitdescription": "Sports Wear and",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class SubjectUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectname : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "subjectname": "Subject",
-                "shortcode": "SBJ",
-                "schoolid": "",
-                "requireskit": False,
-                "kitdescription": "Sports Wear and",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class SubjectDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "subject": {
-                "id" : "---"
-            }
-        }
-
-##################### END_SUBJECTS ###########################
-
-##################### CLASSES LEVELS ###########################
-class ClassLevelSchema(BaseModel):
-    id          : str = Field(default=None)
-    levelname   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    fees        : float = Field(default= 0)
-    schoolid    : Optional[str] = None
-    # datecreated : datetime.datetime
-    # createdby   : Optional[str] = None
-    # dateupdated : Optional[datetime.datetime] = None
-    # updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "class_level_demo": {
-                "id" : "---",
-                "levelname": "Primary 7",
-                "shortcode": "P.7",
-                "fees": 0,
-                "schoolid": "",
-                # "datecreated": datetime.datetime,
-                # "createdby": "1",
-                # "dateupdated": None,
-                # "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClassLevelUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    levelname   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    fees        : float = Field(default= 0)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "levelname": "Primary 7",
-                "shortcode": "P.7",
-                "fees": 0,
-                "schoolid": "",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClassLevelDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "class_level": {
-                "id" : "---"
-            }
-        }
-
-##################### END_CLASS_LEVELS ###########################
-
-##################### CLASSES ###########################
-class ClassSchema(BaseModel):
-    id          : str = Field(default=None)
-    classname   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    classlevelid : str = Field(default=None)
-    classteacherid : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "class_demo": {
-                "id" : "---",
-                "classname": "Yellow",
-                "shortcode": "Y",
-                "classlevelid": "-",
-                "classteacherid": "-",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClassUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    classname   : str = Field(default=None)
-    shortcode   : str = Field(default= None)
-    classlevelid : str = Field(default=None)
-    classteacherid : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "class_demo": {
-                "id" : "---",
-                "classname": "Green",
-                "shortcode": "G",
-                "classlevelid": "-",
-                "classteacherid": "-",
-                "schoolid": "",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClassDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "class": {
-                "id" : "---"
-            }
-        }
-
-##################### END_CLASSES ###########################
-
-##################### TEACHER-CLASS-SUBJECTS ###########################
-class TeacherClassSubjectSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectid   : str = Field(default=None)
-    classid     : str = Field(default= None)
-    userid      : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "teacherclasssubject_demo": {
-                "id" : "---",
-                "subjectid": "Subject Id",
-                "classid": "Class Id",
-                "userid": "Teacher User Id",
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class TeacherClassSubjectUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    subjectid   : str = Field(default=None)
-    classid     : str = Field(default= None)
-    userid      : str = Field(default= None)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "teacherclasssubject_demo": {
-                "id":  "ID",
-                "subjectid": "Subject Id",
-                "classid": "Class Id",
-                "userid": "Teacher User Id",
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class TeacherClassSubjectDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "teacherclasssubject": {
-                "id" : "---"
-            }
-        }
-
-##################### END_TEACHER-CLASS-SUBJECTS ###########################
-
-##################### CLUBS ###########################
-class ClubSchema(BaseModel):
-    id          : str = Field(default=None)
-    clubname    : str = Field(default=None)
-    shortcode   : str = Field(default=None)
-    description : str = Field(default= None)
-    patronid    : str = Field(default= None)
-    asstpatronid: str = Field(default= None)
-    fees        : float = Field(default= 0)
-    schoolid    : Optional[str] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "club_demo": {
-                "id" : "---",
-                "clubname": "Club",
-                "shortcode": "Code",
-                "description": "Club Description",
-                "patronid": "Patron Id",
-                "asstpatronid": "Asst. Patron Id",
-                "fees": 0,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClubUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    clubname    : str = Field(default=None)
-    shortcode   : str = Field(default=None)
-    description : str = Field(default= None)
-    patronid    : str = Field(default= None)
-    asstpatronid: str = Field(default= None)
-    fees        : float = Field(default= 0)
-    schoolid    : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "club_demo": {
-                "id":  "ID",
-                "clubname": "Club",
-                "shortcode": "Code",
-                "description": "Club Description",
-                "patronid": "Patron Id",
-                "asstpatronid": "Asst. Patron Id",
-                "fees": 0,
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClubDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "club": {
-                "id" : "---"
-            }
-        }
-
-##################### END_CLUBS ###########################
-
-##################### CLUBS PAYMENTS ###########################
-class ClubsPaymentSchema(BaseModel):
-    id                  : str = Field(default=None)
-    paymentref          : str = Field(default=None)
-    academicperiodid    : str = Field(default=None)
-    studentid           : str = Field(default= None)    
-    classid             : str = Field(default=None)
-    clubid              : str = Field(default=None)
-    transamount         : Optional[float] = None
-    feesamount          : Optional[float] = None
-    amountpaid          : Optional[float] = None
-    datecreated         : datetime.datetime
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment_demo": {
-                "id" : "---",
-                "paymentref": "-",
-                "academicperiodid": "-",
-                "studentid": "-",
-                "classid": "-",
-                "clubid": "-",
-                "transamount": 0,
-                "feesamount": 0,
-                "amountpaid" : 0,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClubsPaymentUpdateSchema(BaseModel):
-    id                  : str = Field(default=None)
-    paymentref          : str = Field(default=None)
-    academicperiodid    : str = Field(default=None)
-    studentid           : str = Field(default= None)    
-    classid             : str = Field(default=None)
-    clubid              : str = Field(default=None)
-    transamount         : Optional[float] = None
-    feesamount          : Optional[float] = None
-    amountpaid          : Optional[float] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "clubs_payment_demo": {
-                "id":  "ID",
-                "paymentref": "-",
-                "academicperiodid": "-",
-                "studentid": "-",
-                "classid": "-",
-                "clubid": "-",
-                "transamount": 0,
-                "feesamount": 0,
-                "amountpaid" : 0,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ClubsPaymentDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "clubs_payment": {
-                "id" : "---"
-            }
-        }
-
-##################### END_CLUBS_PAYMENTS ###########################
-
-##################### FEES ###########################
-class FeesSchema(BaseModel):
-    id          : str = Field(default=None)
-    feesname    : str = Field(default=None)
-    description : str = Field(default= None)    
-    type        : str = Field(default=None)
-    interval    : str = Field(default= None)
-    startdate   : Optional[datetime.datetime] = None
-    enddate     : Optional[datetime.datetime] = None
-    duedate     : Optional[datetime.datetime] = None
-    amount      : Optional[float] = None
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_demo": {
-                "id" : "---",
-                "feesname": "Club",
-                "description": "Club Description",
-                "type": "Fees Type",
-                "startdate": None,
-                "enddate": None,
-                "duedate": None,
-                "amount" : 0,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class FeesUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    feesname    : str = Field(default=None)
-    description : str = Field(default= None)    
-    type        : str = Field(default=None)
-    interval    : str = Field(default= None)
-    startdate   : Optional[datetime.datetime] = None
-    enddate     : Optional[datetime.datetime] = None
-    duedate     : Optional[datetime.datetime] = None
-    amount      : Optional[float] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_demo": {
-                "id":  "ID",
-                "feesname": "Club",
-                "description": "Club Description",
-                "type": "Fees Type",
-                "startdate": None,
-                "enddate": None,
-                "duedate": None,
-                "amount": 0,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class FeesDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fee": {
-                "id" : "---"
-            }
-        }
-
-##################### END_FEES ###########################
-
-##################### FEES PAYMENTS ###########################
-class FeesPaymentSchema(BaseModel):
-    id                  : str = Field(default=None)
-    paymentref          : str = Field(default=None)
-    academicperiodid    : str = Field(default=None)
-    studentid           : str = Field(default= None)    
-    classid             : str = Field(default=None)
-    transamount         : Optional[float] = None
-    feesamount          : Optional[float] = None
-    amountpaid          : Optional[float] = None
-    schoolid            : Optional[str] = None
-    datecreated         : Optional[datetime.datetime] = None
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment_demo": {
-                "id" : "---",
-                "paymentref": "-",
-                "academicperiodid": "-",
-                "studentid": "-",
-                "classid": "-",
-                "transamount": 0,
-                "feesamount": 0,
-                "amountpaid" : 0,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class FeesPaymentUpdateSchema(BaseModel):
-    id                  : str = Field(default=None)
-    paymentref          : str = Field(default=None)
-    academicperiodid    : str = Field(default=None)
-    studentid           : str = Field(default= None)    
-    classid             : str = Field(default=None)
-    transamount         : Optional[float] = None
-    feesamount          : Optional[float] = None
-    amountpaid          : Optional[float] = None
-    schoolid            : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment_demo": {
-                "id":  "ID",
-                "paymentref": "-",
-                "academicperiodid": "-",
-                "studentid": "-",
-                "classid": "-",
-                "transamount": 0,
-                "feesamount": 0,
-                "amountpaid" : 0,
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class FeesPaymentDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "fees_payment": {
-                "id" : "---"
-            }
-        }
-
-##################### END_FEES_PAYMENTS ###########################
-
-##################### WALLET ###########################
-class WalletSchema(BaseModel):
-    id                  : str = Field(default=None)
-    userid              : str = Field(default=None)
-    availablebalance    : float = Field(default= None)
-    currentbalance      : float = Field(default= None)
-    totalincoming       : float = Field(default= None)
-    totaloutgoing       : float = Field(default= None)
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id" : "---",
-                "userid": "UserID",
-                "availablebalance": 0.0,
-                "currentbalance": 0.0,
-                "totalincoming": 0.0,
-                "totaloutgoing": 0.0,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class WalletUpdateSchema(BaseModel):
-    id          : str = Field(default=None)
-    availablebalance    : float = Field(default= None)
-    currentbalance      : float = Field(default= None)
-    totalincoming       : float = Field(default= None)
-    totaloutgoing       : float = Field(default= None)
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id":  "ID",
-                "availablebalance": 0.0,
-                "currentbalance": 0.0,
-                "totalincoming": 0.0,
-                "totaloutgoing": 0.0,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class WalletTopupSchema(BaseModel):
-    id                  : str = Field(default=None)
-    amount              : float = Field(default= None)
-    userid              : str = Field(default=None)
-    userwalletid        : str = Field(default=None)
-    type                : str = Field(default=None)
-    description         : str = Field(default=None)
-    availablebalance    : float = Field(default= None)
-    currentbalance      : float = Field(default= None)
-    totalincoming       : float = Field(default= None)
-    totaloutgoing       : float = Field(default= None)
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "user_demo": {
-                "id":  "ID",
-                "availablebalance": 0.0,
-                "currentbalance": 0.0,
-                "totalincoming": 0.0,
-                "totaloutgoing": 0.0,
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class WalletDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "wallet": {
-                "id" : "---"
-            }
-        }
-
-##################### END_WALLET ###########################
-
-##################### WALLET LOGS ###########################
-class WalletLogSchema(BaseModel):
-    id                  : str = Field(default=None)
-    userid              : str = Field(default=None)
-    userwalletid        : str = Field(default=None)
-    amount              : float = Field(default= None)
-    type                : str = Field(default= None)
-    description         : str = Field(default= None)
-    datecreated         : Optional[datetime.datetime] = None
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "walletlog_demo": {
-                "id" : "---",
-                "userid": "UserID",
-                "userwalletid": "",
-                "amount": 0.0,
-                "type": "IN",
-                "descripttion": "FLutterwave Top up",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class WalletLogUpdateSchema(BaseModel):
-    id                  : str = Field(default=None)
-    userid              : str = Field(default=None)
-    userwalletid        : str = Field(default=None)
-    amount              : float = Field(default= None)
-    type                : str = Field(default= None)
-    description         : float = Field(default= None)
-    dateupdated         : datetime.datetime
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "walletlog_demo": {
-                "id":  "ID",
-                "userid": "UserID",
-                "userwalletid": "",
-                "amount": 0.0,
-                "type": "IN",
-                "descripttion": "FLutterwave Top up",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class WalletLogDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "walletlog": {
-                "id" : "---"
-            }
-        }
-
-##################### END_WALLET_LOGS ###########################
-
-
-#################### STUDENTS #############################
-
-class StudentSchema(BaseModel):
-    id          : str = Field(..., example="0")
-    firstname   : str = Field(..., example="John")
-    lastname    : str = Field(..., example="Doe")
-    othernames  : str = Field(..., example="Alex")
-    dateofbirth : Optional[datetime.datetime] = None
-    photo       : str = Field(..., example="-----")
-    phone       : str = Field(..., example="0771000111")
-    email       : EmailStr = Field(..., example="email@gmail.com")
-    parentone   : str = Field(..., example="Parent")
-    parenttwo   : str = Field(..., example="Parent")
-    parentthree : str = Field(..., example="Parent")
-    classid     : str = Field(..., example="Class Id")
-    studentid   : str = Field(..., example="Student Id")
-    gender      : str = Field(..., example="M")
-    address     : str = Field(..., example="First Street, City")
-    datecreated : Optional[datetime.datetime] = None
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "student_demo": {
-                "id" : "---",
-                "firstname": "Fname",
-                "lastname": "Lname",
-                "othernames": "OtherNames",
-                "dateofbirth": datetime.datetime,
-                "photo": "------",
-                "phone": "0770111222",
-                "email": "me@email.com",
-                "gender": "F",
-                "classid": "Class ID",
-                "studentid": "Student ID",
-                "address": "First Street, City",
-                "parentone": "",
-                "parenttwo": "",
-                "parentthree": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class StudentSignUpSchema(BaseModel):
-    id          : str = Field(..., example="0")
-    firstname   : str = Field(..., example="John")
-    lastname    : str = Field(..., example="Doe")
-    othernames  : str = Field(..., example="Alex")
-    dateofbirth : str = Field(..., example="2015-07-11")
-    photo       : str = Field(..., example="-----")
-    phone       : str = Field(..., example="0771000111")
-    email       : EmailStr = Field(..., example="email@gmail.com")
-    parentone   : str = Field(..., example="Parent")
-    parenttwo   : str = Field(..., example="Parent")
-    parentthree : str = Field(..., example="Parent")
-    classid     : str = Field(..., example="Class Id")
-    studentid   : str = Field(..., example="Student Id")
-    schoolid   : str = Field(..., example="")
-    gender      : str = Field(..., example="M")
-    address     : str = Field(..., example="First Street, City")
-    createdby   : Optional[str] = None
-    datecreated : Optional[datetime.datetime] = None
-    status      : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "student_demo": {
-                "id" : "---",
-                "firstname": "Fname",
-                "lastname": "Lname",
-                "othernames": "OtherNames",
-                "dateofbirth": datetime.datetime,
-                "photo": "------",
-                "phone": "0770111222",
-                "email": "me@email.com",
-                "gender": "F",
-                "classid": "Class ID",
-                "studentid": "Student ID",
-                "address": "First Street, City",
-                "parentone": "",
-                "parenttwo": "",
-                "parentthree": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "status": "1"
-            }
-        }
-
-##################### END_STUDENTS ##########################
-
-##################### TIMETABLES ###########################
-class ScheduleSchema(BaseModel):
-    id                  : str = Field(default=None)
-    subjectid           : str = Field(default=None)
-    userid              : str = Field(default=None)
-    classid             : str = Field(default=None)
-    dayid               : str = Field(default=None)
-    start               : datetime.time = Field(default= None)
-    end                 : datetime.time = Field(default= None)
-    schoolid            : Optional[str] = None
-    datecreated         : Optional[datetime.datetime] = None
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "schedule_demo": {
-                "id" : "---",
-                "subjectid": "Subject ID",
-                "userid": "User ID",
-                "classid": "Class ID",
-                "dayid": "Day ID",
-                "start": datetime.time,
-                "end": datetime.time,
-                "schoolid": "",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ScheduleDetailsSchema(BaseModel):
-    id                  : str = Field(default=None)
-    subjectid           : str = Field(default="")
-    userid              : str = Field(default=None)
-    classid             : str = Field(default=None)
-    dayid               : str = Field(default=None)
-    start               : datetime.time = Field(default= None)
-    end                 : datetime.time = Field(default= None)
-    datecreated         : Optional[datetime.datetime] = None
-    createdby           : Optional[str] = None
-    dateupdated         : Optional[datetime.datetime] = None
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "schedule_demo": {
-                "id" : "---",
-                "subjectid": "Subject ID",
-                "userid": "User ID",
-                "classid": "Class ID",
-                "dayid": "Day ID",
-                "start": datetime.time,
-                "end": datetime.time,
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ScheduleUpdateSchema(BaseModel):
-    id                  : str = Field(default=None)
-    subjectid           : str = Field(default=None)
-    userid              : str = Field(default=None)
-    classid             : str = Field(default=None)
-    dayid               : str = Field(default=None)
-    start               : datetime.time = Field(default= None)
-    end                 : datetime.time = Field(default= None)
-    schoolid            : Optional[str] = None
-    dateupdated         : datetime.datetime
-    updatedby           : Optional[str] = None
-    status              : Optional[str] = None
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "schedule_demo": {
-                "id":  "ID",
-                "subjectid": "Subject ID",
-                "userid": "User ID",
-                "classid": "Class ID",
-                "dayid": "Day ID",
-                "start": datetime.time,
-                "end": datetime.time,
-                "schoolid": "",
-                "dateupdated": datetime.datetime,
-                "updatedby": None,
-                "status": "1"
-            }
-        }
-
-class ScheduleDeleteSchema(BaseModel):
-    id : str = Field(default=None)
-    class Config:
-        orm_mode = True
-        the_schema = {
-            "schedule": {
-                "id" : "---"
-            }
-        }
-
-##################### END_TIMETABLES ###########################
