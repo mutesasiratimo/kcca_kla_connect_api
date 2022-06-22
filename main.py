@@ -20,6 +20,8 @@ from sqlalchemy import asc
 
 app = FastAPI()
 
+
+
 origins = [
     "*"
 ]
@@ -36,6 +38,12 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup():
     await database.connect()
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app, host="127.0.0.1",
+        port=9000
+    )
 
 
 @app.on_event("shutdown")
