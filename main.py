@@ -17,10 +17,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import desc
 from sqlalchemy import asc
 
-
 app = FastAPI()
-
-
 
 origins = [
     "*"
@@ -87,16 +84,6 @@ async def get_all_admins():
         return result
     else:
         raise HTTPException(status_code=204, detail='No admins found')
-
-@app.get("/get_school_parents/{schoolid}", response_model=List[UserSchema], tags=["user"])
-async def get_all_school_parents(schoolid: str):
-    query = users_table.select().where(users_table.c.isparent == True).where(users_table.c.schoolid == schoolid)
-    result = await database.fetch_all(query)
-    if result:
-        return result
-    else:
-        raise HTTPException(status_code=204, detail='No parents found')
-
 
 @app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
 async def get_user_by_id(userid: str):
@@ -530,6 +517,248 @@ async def delete_user_school(incidentcategoryid: str):
     }
 
 ###################### END INCIDENT_CATEGORIES ##################
+
+###################### SAVED LOCATIONS ######################
+
+@app.get("/savedlocations", response_model=List[SavedLocationSchema], tags=["savedlocations"])
+async def get_all_saved_locations():
+    query = savedlocations_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/savedlocations/{savedlocationid}", response_model=SavedLocationSchema, tags=["savedlocations"])
+async def get_saved_location_by_id(savedlocationid: str):
+    query = savedlocations_table.select().where(savedlocations_table.c.id == savedlocationid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/savedlocations/name/{savedlocationid}", tags=["savedlocations"])
+async def get_saved_location_name_by_id(savedlocationid: str):
+    query = savedlocations_table.select().where(savedlocations_table.c.id == savedlocationid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["name"]
+        return fullname
+    else:
+        return "Unkown Incident"
+
+@app.get("/savedlocations/user/{userid}", tags=["savedlocations"])
+async def get_saved_locations_by_userid(userid: str):
+    query = savedlocations_table.select().where(savedlocations_table.c.createdby == userid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append(await get_saved_location_by_id(result["schoolid"]))
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="User does not have any saved locations.")
+    
+
+
+@app.post("/savedlocations/register", response_model=SavedLocationSchema, tags=["savedlocations"])
+async def register_saved_location(savedlocation: SavedLocationSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = savedlocations_table.insert().values(
+        id=gID,
+        locationname=savedlocation.locationname,
+        locationlat=savedlocation.locationlat,
+        locationlong=savedlocation.locationlong,
+        locationaddress=savedlocation.locationaddress,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **savedlocation.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/savedlocations/update", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+async def update_saved_location(savedlocation: SavedLocationUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = savedlocations_table.update().\
+        where(savedlocations_table.c.id == savedlocation.id).\
+        values(
+            locationname=savedlocation.locationname,
+            locationlat=savedlocation.locationlat,
+            locationlong=savedlocation.locationlong,
+            locationaddress=savedlocation.locationaddress,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_saved_location_by_id(savedlocation.id)
+
+
+@app.put("/savedlocations/archive", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+async def archive_saved_location(savedlocationid: str):
+    gDate = datetime.datetime.now()
+    query = savedlocations_table.update().\
+        where(savedlocations_table.c.id == savedlocationid).\
+        values(
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_saved_location_by_id(savedlocationid)
+
+
+@app.put("/savedlocations/restore", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+async def restore_saved_location(savedlocationid: str):
+    gDate = datetime.datetime.now()
+    query = savedlocations_table.update().\
+        where(savedlocations_table.c.id == savedlocationid).\
+        values(
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_saved_location_by_id(savedlocationid)
+
+
+@app.delete("/savedlocations/{savedlocationid}", tags=["savedlocations"])
+async def delete_saved_location(savedlocationid: str):
+    query = savedlocations_table.delete().where(savedlocations_table.c.id == savedlocationid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This Saved Location has been deleted!"
+    }
+
+###################### END SAVED LOCATIONS ##################
+
+###################### TRIPS ######################
+
+@app.get("/trips", response_model=List[TripSchema], tags=["trips"])
+async def get_all_trips():
+    query = trips_table.select()
+    return await database.fetch_all(query)
+
+
+@app.get("/trips/{savedlocationid}", response_model=TripSchema, tags=["trips"])
+async def get_trip_by_id(savedlocationid: str):
+    query = trips_table.select().where(trips_table.c.id == savedlocationid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.get("/trips/name/{savedlocationid}", tags=["trips"])
+async def get_trip_name_by_id(savedlocationid: str):
+    query = trips_table.select().where(trips_table.c.id == savedlocationid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["name"]
+        return fullname
+    else:
+        return "Unkown Incident"
+
+@app.get("/trips/user/{userid}", tags=["trips"])
+async def get_trips_by_userid(userid: str):
+    query = trips_table.select().where(trips_table.c.createdby == userid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append(await get_trip_by_id(result["schoolid"]))
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="User does not have any saved locations.")
+    
+
+
+@app.post("/trips/register", response_model=TripSchema, tags=["trips"])
+async def register_trip(trip: TripSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = trips_table.insert().values(
+        id=gID,
+        startaddress=trip.startaddress,
+        startlat=trip.startlat,
+        startlong=trip.startlong,
+        destinationaddress=trip.destinationaddress,
+        destinationlat=trip.destinationlat,
+        destinationlong=trip.destinationlong,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **trip.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/trips/update", response_model=TripUpdateSchema, tags=["trips"])
+async def update_trip(trip: TripUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = trips_table.update().\
+        where(trips_table.c.id == trip.id).\
+        values(
+            startaddress=trip.startaddress,
+            startlat=trip.startlat,
+            startlong=trip.startlong,
+            destinationaddress=trip.destinationaddress,
+            destinationlat=trip.destinationlat,
+            destinationlong=trip.destinationlong,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_trip_by_id(trip.id)
+
+
+@app.put("/trips/archive", response_model=TripUpdateSchema, tags=["trips"])
+async def archive_trip(tripid: str):
+    gDate = datetime.datetime.now()
+    query = trips_table.update().\
+        where(trips_table.c.id == tripid).\
+        values(
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_trip_by_id(id)
+
+
+@app.put("/trips/restore", response_model=TripUpdateSchema, tags=["trips"])
+async def restore_trip(tripid: str):
+    gDate = datetime.datetime.now()
+    query = trips_table.update().\
+        where(trips_table.c.id == tripid).\
+        values(
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_trip_by_id(tripid)
+
+
+@app.delete("/trips/{tripid}", tags=["trips"])
+async def delete_trip(tripid: str):
+    query = trips_table.delete().where(trips_table.c.id == tripid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This Trip has been deleted!"
+    }
+
+###################### END TRIPS ##################
 
 ###################### DESIGNATIONS ######################
 

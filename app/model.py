@@ -79,6 +79,38 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+savedlocations_table = sqlalchemy.Table(
+    "savedlocations",
+    metadata,
+    sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("locationname"   , sqlalchemy.String),
+    sqlalchemy.Column("locationlat"    , sqlalchemy.Float),
+    sqlalchemy.Column("locationlong"   , sqlalchemy.Float),
+    sqlalchemy.Column("locationaddress", sqlalchemy.String),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+trips_table = sqlalchemy.Table(
+    "trips",
+    metadata,
+    sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("startaddress"   , sqlalchemy.Float),
+    sqlalchemy.Column("startlat"    , sqlalchemy.Float),
+    sqlalchemy.Column("startlong"   , sqlalchemy.String),
+    sqlalchemy.Column("destinationaddress", sqlalchemy.String),
+    sqlalchemy.Column("destinationlat"    , sqlalchemy.Float),
+    sqlalchemy.Column("destinationlong"   , sqlalchemy.Float),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 designations_table = sqlalchemy.Table(
     "designations",
     metadata,
@@ -457,6 +489,144 @@ class IncidentDeleteSchema(BaseModel):
         }
 
 ######################## END INCIDENT #########################
+
+##################### SAVED LOCATIONS ###########################
+class SavedLocationSchema(BaseModel):
+    id              : str = Field(default=None)
+    locationname    : str = Field(default=None)
+    locationlat     : str = Field(default= None)
+    locationlong     : str = Field(default= None)
+    locationaddress : str = Field(default= None)
+    datecreated     : datetime.datetime
+    createdby       : Optional[str] = None
+    dateupdated     : Optional[datetime.datetime] = None
+    updatedby       : Optional[str] = None
+    status          : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "locationname": "Home",
+                "locationlat": 0.22233,
+                "locationlong": 23.44433,
+                "locationaddress": "Buziga, Kampala",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class SavedLocationUpdateSchema(BaseModel):
+    id          : str = Field(default=None)
+    locationname    : str = Field(default=None)
+    locationlat     : str = Field(default= None)
+    locationlong     : str = Field(default= None)
+    locationaddress : str = Field(default= None)
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status   : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "locationname": "Home",
+                "locationlat": 0.22233,
+                "locationlong": 23.44433,
+                "locationaddress": "Buziga, Kampala",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class SavedLocationDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "saved_location": {
+                "id" : "---"
+            }
+        }
+
+##################### END_SAVED LOCATIONS ###########################
+
+##################### TRIPS ###########################
+class TripSchema(BaseModel):
+    id                    : str = Field(default=None)
+    startaddress          : str = Field(default=None)
+    startlat              : str = Field(default= None)
+    startlong             : str = Field(default= None)
+    destinationaddress    : str = Field(default=None)
+    destinationlat        : str = Field(default= None)
+    destinationlong       : str = Field(default= None)
+    datecreated           : datetime.datetime
+    createdby             : Optional[str] = None
+    dateupdated           : Optional[datetime.datetime] = None
+    updatedby             : Optional[str] = None
+    status                : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "startaddress": "Gayaza",
+                "startlat": 0.22233,
+                "startlong": 23.44433,
+                "destinationaddress": "Buziga, Kampala",
+                "destinationlat": 0.22233,
+                "destinationlong": 23.44433,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class TripUpdateSchema(BaseModel):
+    id                    : str = Field(default=None)
+    startaddress          : str = Field(default=None)
+    startlat              : str = Field(default= None)
+    startlong             : str = Field(default= None)
+    destinationaddress    : str = Field(default=None)
+    destinationlat        : str = Field(default= None)
+    destinationlong       : str = Field(default= None)
+    dateupdated           : Optional[datetime.datetime] = None
+    updatedby             : Optional[str] = None
+    status                : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id":  "ID",
+                "startaddress": "Gayaza",
+                "startlat": 0.22233,
+                "startlong": 23.44433,
+                "destinationaddress": "Buziga, Kampala",
+                "destinationlat": 0.22233,
+                "destinationlong": 23.44433,
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class TripDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "saved_location": {
+                "id" : "---"
+            }
+        }
+
+##################### END TRIPS ###########################
 
 ##################### DESIGNATIONS ###########################
 class DesignationSchema(BaseModel):
