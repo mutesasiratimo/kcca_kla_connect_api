@@ -516,8 +516,8 @@ class IncidentDeleteSchema(BaseModel):
 class SavedLocationSchema(BaseModel):
     id              : str = Field(default=None)
     locationname    : str = Field(default=None)
-    locationlat     : str = Field(default= None)
-    locationlong     : str = Field(default= None)
+    locationlat     : float = Field(default= None)
+    locationlong    : float = Field(default= None)
     locationaddress : str = Field(default= None)
     datecreated     : datetime.datetime
     createdby       : Optional[str] = None
@@ -543,8 +543,8 @@ class SavedLocationSchema(BaseModel):
 
 class SavedLocationUpdateSchema(BaseModel):
     id          : str = Field(default=None)
-    locationname    : str = Field(default=None)
-    locationlat     : str = Field(default= None)
+    locationname    : float = Field(default=None)
+    locationlat     : float = Field(default= None)
     locationlong     : str = Field(default= None)
     locationaddress : str = Field(default= None)
     dateupdated : Optional[datetime.datetime] = None

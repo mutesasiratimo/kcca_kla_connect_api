@@ -557,7 +557,7 @@ async def get_incident_category_name_by_id(incidentcategoryid: str):
         fullname = result["name"]
         return fullname
     else:
-        return "Unkown Incident Category"
+        return "Unkown"
 
 
 @app.post("/incidentcategories/register", response_model=IncidentCategoriesSchema, tags=["incidentcategories"])
@@ -685,6 +685,7 @@ async def register_saved_location(savedlocation: SavedLocationSchema):
         locationlat=savedlocation.locationlat,
         locationlong=savedlocation.locationlong,
         locationaddress=savedlocation.locationaddress,
+        createdby=savedlocation.createdby,
         datecreated=gDate,
         status="1"
     )
