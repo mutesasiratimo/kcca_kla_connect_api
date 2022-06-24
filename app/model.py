@@ -1,8 +1,15 @@
 import email
 from tokenize import Double
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, validator
 import databases, sqlalchemy, datetime, uuid  
+import os
+from enum import Enum
+from mimetypes import MimeTypes
+from typing import Dict, List, Optional, Union
+from starlette.datastructures import UploadFile
+
+from app.utils.errors import WrongFile
 
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconnect"
@@ -10,7 +17,7 @@ LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconne
 LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/kccaklaconnect?sslmode=require"
 DATABASE_URL = LIVE_DATABASE_URL
 database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+metadata = sqlalchemy.MetaData() 
 
 
 users_table = sqlalchemy.Table(
@@ -41,6 +48,20 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
+otps_table = sqlalchemy.Table(
+    "otps",
+    metadata,
+    sqlalchemy.Column("id"            , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("userid"        , sqlalchemy.String),
+    sqlalchemy.Column("sessionid"     , sqlalchemy.String),
+    sqlalchemy.Column("otpcode"       , sqlalchemy.String),
+    sqlalchemy.Column("otpfailedcount", sqlalchemy.Integer),
+    sqlalchemy.Column("expiry"        , sqlalchemy.DateTime),
+    sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
+    sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
+    sqlalchemy.Column("status"        , sqlalchemy.CHAR),
 )
 
 incidentcategories_table = sqlalchemy.Table(
@@ -410,6 +431,7 @@ class IncidentSchema(BaseModel):
     file4               : str = Field(default= None)
     file5               : str = Field(default= None)
     createdby           : Optional[str] = None
+    datecreated         : datetime.datetime
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -604,7 +626,7 @@ class TripUpdateSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id":  "ID",
-                "startaddress": "Gayaza",
+                "startaddress": "Gayaza", 
                 "startlat": 0.22233,
                 "startlong": 23.44433,
                 "destinationaddress": "Buziga, Kampala",
@@ -811,6 +833,61 @@ class LanguageDeleteSchema(BaseModel):
 
 ##################### END_LANGUAGES ###########################
 
+##################### OTPS ###########################
+class OtpSchema(BaseModel):
+    id               : str = Field(default=None)
+    userid           : str = Field(default=None)
+    sessionid        : str = Field(default= None)
+    otpcode          : str = Field(default=None)
+    otpfailedcount   : int = Field(default=0)
+    expiry           : Optional[datetime.datetime] = None
+    datecreated      : datetime.datetime
+    createdby        : Optional[str] = None
+    dateupdated      : Optional[datetime.datetime] = None
+    updatedby        : Optional[str] = None
+    status           : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "otp_demo": {
+                "id" : "---",
+                "userid": "user_id",
+                "sessionid": "-",
+                "otpfailedcount": 0,
+                "otpcode": "xaV$5T",
+                "expiry": datetime.datetime,
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class OtpVerifySchema(BaseModel):
+    userid           : str = Field(default=None)
+    otpcode          : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "otp_demo": {
+                "userid": "user_id",
+                "otpcode": "4321"
+            }
+        }
+
+class OtpDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "otp": {
+                "id" : "---"
+            }
+        }
+
+##################### END_OTPS ###########################
+
 ##################### NEWS ###########################
 class NewsSchema(BaseModel):
     id          : str = Field(default=None)
@@ -891,4 +968,90 @@ class NewsDeleteSchema(BaseModel):
         }
 
 ##################### END_NEWS ###########################
+
+##################### MAILING ###########################
+
+class MultipartSubtypeEnum(Enum):
+    """
+    for more info about Multipart subtypes visit:
+        https://en.wikipedia.org/wiki/MIME#Multipart_subtypes
+    """
+
+    mixed = 'mixed'
+    digest = 'digest'
+    alternative = 'alternative'
+    related = 'related'
+    report = 'report'
+    signed = 'signed'
+    encrypted = 'encrypted'
+    form_data = 'form-data'
+    mixed_replace = 'x-mixed-replace'
+    byterange = 'byterange'
+
+class MessageSchema(BaseModel):
+    recipients: List[EmailStr]
+    attachments: List[Union[UploadFile, Dict, str]] = []
+    subject: str = ''
+    body: Optional[Union[str, list]] = None
+    template_body: Optional[Union[list, dict]] = None
+    html: Optional[Union[str, List, Dict]] = None
+    cc: List[EmailStr] = []
+    bcc: List[EmailStr] = []
+    reply_to: List[EmailStr] = []
+    charset: str = 'utf-8'
+    subtype: Optional[str] = None
+    multipart_subtype: MultipartSubtypeEnum = MultipartSubtypeEnum.mixed
+    headers: Optional[Dict] = None
+
+    @validator('attachments')
+    def validate_file(cls, v):
+        temp = []
+        mime = MimeTypes()
+
+        for file in v:
+            file_meta = None
+            if isinstance(file, dict):
+                keys = file.keys()
+                if 'file' not in keys:
+                    raise WrongFile('missing "file" key')
+                file_meta = dict.copy(file)
+                del file_meta['file']
+                file = file['file']
+            if isinstance(file, str):
+                if os.path.isfile(file) and os.access(file, os.R_OK) and validate_path(file):
+                    mime_type = mime.guess_type(file)
+                    f = open(file, mode='rb')
+                    _, file_name = os.path.split(f.name)
+                    u = UploadFile(file_name, f, content_type=mime_type[0])
+                    temp.append((u, file_meta))
+                else:
+                    raise WrongFile('incorrect file path for attachment or not readable')
+            elif isinstance(file, UploadFile):
+                temp.append((file, file_meta))
+            else:
+                raise WrongFile('attachments field type incorrect, must be UploadFile or path')
+        return temp
+
+    @validator('subtype')
+    def validate_subtype(cls, value, values, config, field):
+        """Validate subtype field."""
+        if values['template_body']:
+            return 'html'
+        return value
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+def validate_path(path):
+    cur_dir = os.path.abspath(os.curdir)
+    requested_path = os.path.abspath(os.path.relpath(path, start=cur_dir))
+    common_prefix = os.path.commonprefix([requested_path, cur_dir])
+    return common_prefix == cur_dir
+
+
+class EmailSchema(BaseModel):
+    email: List[EmailStr]
+
+################### END MAILING #########################
 
