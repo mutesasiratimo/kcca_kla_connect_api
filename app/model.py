@@ -186,7 +186,6 @@ news_table = sqlalchemy.Table(
     sqlalchemy.Column("file3"        , sqlalchemy.Text),
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
-    sqlalchemy.Column("schoolid"     , sqlalchemy.String),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
