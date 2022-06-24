@@ -62,7 +62,7 @@ async def get_all_users():
     #     raise HTTPException(status_code=204, detail='No users found')
 
 @app.get("/get_citizens", response_model=List[UserSchema], tags=["user"])
-async def get_all_citizens(schoolid: str):
+async def get_all_citizens():
     query = users_table.select().where(users_table.c.iscitizen == True)
     result = await database.fetch_all(query)
     if result:
@@ -420,11 +420,11 @@ async def get_incidents_by_userid(userid: str):
     res = []
     if results:
         for result in results:
-            res.append(await get_incident_by_id(result["schoolid"]))
+            res.append(await get_incident_by_id(result["id"]))
         return res
     else:
         raise HTTPException(
-            status_code=204, detail="User isn't attached to any school.")
+            status_code=204, detail="User has not posted any incidents.")
 
 @app.get("/incidents/usercount/{userid}", tags=["incidents"])
 async def get_incidentcounts_by_userid(userid: str):
@@ -668,7 +668,7 @@ async def get_saved_locations_by_userid(userid: str):
     res = []
     if results:
         for result in results:
-            res.append(await get_saved_location_by_id(result["schoolid"]))
+            res.append(await get_saved_location_by_id(result["createdby"]))
         return res
     else:
         raise HTTPException(
@@ -788,7 +788,7 @@ async def get_trips_by_userid(userid: str):
     res = []
     if results:
         for result in results:
-            res.append(await get_trip_by_id(result["schoolid"]))
+            res.append(await get_trip_by_id(result["createdby"]))
         return res
     else:
         raise HTTPException(
