@@ -139,8 +139,8 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "iscitizen": result.get("iscitizen"),
                 "roleid": result.get("roleid"),
                 "datecreated": result.get("datecreated"),
-                # "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
-                "incidentscount": 0,
+                "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
+                # "incidentscount": 0,
                 "token": signJWT(user.username),
                 "status": result.get("status")
             }
@@ -366,8 +366,8 @@ async def get_all_incidents():
     res = []
     if results:
         for result in results:
-            incidentcategory = await get_incident_category_name_by_id(result.get("incidentcategoryid"))
-
+            # incidentcategory = await get_incident_category_name_by_id(result.get("incidentcategoryid"))
+            incidentcategory = "Unkown"
             res.append({
                 "id" : result.get("id"),
                 "name": result.get("name"),
