@@ -139,7 +139,8 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "iscitizen": result.get("iscitizen"),
                 "roleid": result.get("roleid"),
                 "datecreated": result.get("datecreated"),
-                "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
+                # "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
+                "incidentscount": 0,
                 "token": signJWT(user.username),
                 "status": result.get("status")
             }
