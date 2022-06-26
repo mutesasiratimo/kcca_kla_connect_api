@@ -19,7 +19,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import desc
 from sqlalchemy import asc
 
-from app.model import EmailSchema
 
 app = FastAPI()
 
