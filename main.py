@@ -93,7 +93,7 @@ async def get_user_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(query)
     if result:
-        print(result.get("firstname"))
+        print(result["firstname"])
         return result
     else:
         raise HTTPException(status_code=404, detail='User not found')
@@ -116,36 +116,36 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
     query = users_table.select().where( users_table.c.email == user.username)
     result = await database.fetch_one(query)
     if result:
-        return result
-        # if result.get("password") == user.password:
-        # print(result)
-        # return {
-        #     "userid": result.get("id"),
-        #     "firstname": result.get("firstname"),
-        #     "lastname": result.get("lastname"),
-        #     "firstname": result.get("firstname"),
-        #     "username": result.get("username"),
-        #     "email": result.get("email"),
-        #     "gender": result.get("gender"),
-        #     "phone": result.get("phone"),
-        #     "mobile": result.get("mobile"),
-        #     "address": result.get("address"),
-        #     "addresslat": result.get("addresslat"),
-        #     "addresslong": result.get("addresslong"),
-        #     "nin": result.get("nin"),
-        #     "dateofbirth": result.get("dateofbirth"),
-        #     "photo": result.get("photo"),
-        #     "isadmin": result.get("isadmin"),
-        #     "issuperadmin": result.get("issuperadmin"),
-        #     "isclerk": result.get("isclerk"),
-        #     "iscitizen": result.get("iscitizen"),
-        #     "roleid": result.get("roleid"),
-        #     "datecreated": result.get("datecreated"),
-        #     # "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
-        #     "incidentscount": 0,
-        #     "token": signJWT(user.username),
-        #     "status": result.get("status")
-        # }
+        # return result
+        if result["password"] == user.password:
+            print(result["password"])
+            return {
+                "userid": result["id"],
+                "firstname": result["firstname"],
+                "lastname": result["lastname"],
+                "firstname": result["firstname"],
+                "username": result["username"],
+                "email": result["email"],
+                "gender": result["gender"],
+                "phone": result["phone"],
+                "mobile": result["mobile"],
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "nin": result["nin"],
+                "dateofbirth": result["dateofbirth"],
+                "photo": result["photo"],
+                "isadmin": result["isadmin"],
+                "issuperadmin": result["issuperadmin"],
+                "isclerk": result["isclerk"],
+                "iscitizen": result["iscitizen"],
+                "roleid": result["roleid"],
+                "datecreated": result["datecreated"],
+                # "incidentscount": await get_incidentcounts_by_userid(result["id"]),
+                "incidentscount": 0,
+                "token": signJWT(user.username),
+                "status": result["status"]
+            }
     else:
         raise HTTPException(status_code=401, detail='Not authorized')
     # else:
@@ -158,28 +158,28 @@ async def user_email_authentication(email: EmailStr):
     result = await database.fetch_one(query)
     if result:
         return {
-            "userid": result.get("id"),
-                "firstname": result.get("firstname"),
-                "lastname": result.get("lastname"),
-                "firstname": result.get("firstname"),
-                "username": result.get("username"),
-                "email": result.get("email"),
-                "gender": result.get("gender"),
-                "phone": result.get("phone"),
-                "mobile": result.get("mobile"),
-                "address": result.get("address"),
-                "addresslat": result.get("addresslat"),
-                "addresslong": result.get("addresslong"),
-                "nin": result.get("nin"),
-                "dateofbirth": result.get("dateofbirth"),
-                "photo": result.get("photo"),
-                "isadmin": result.get("isadmin"),
-                "issuperadmin": result.get("issuperadmin"),
-                "isclerk": result.get("isclerk"),
-                "iscitizen": result.get("iscitizen"),
-                "roleid": result.get("roleid"),
+            "userid": result["id"],
+                "firstname": result["firstname"],
+                "lastname": result["lastname"],
+                "firstname": result["firstname"],
+                "username": result["username"],
+                "email": result["email"],
+                "gender": result["gender"],
+                "phone": result["phone"],
+                "mobile": result["mobile"],
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "nin": result["nin"],
+                "dateofbirth": result["dateofbirth"],
+                "photo": result["photo"],
+                "isadmin": result["isadmin"],
+                "issuperadmin": result["issuperadmin"],
+                "isclerk": result["isclerk"],
+                "iscitizen": result["iscitizen"],
+                "roleid": result["roleid"],
                 "token": signJWT(email),
-                "status": result.get("status")
+                "status": result["status"]
         }
     else:
         raise HTTPException(status_code=401, detail='Not Authorized')
@@ -368,28 +368,28 @@ async def delete_user(userid: str):
 #     res = []
 #     if results:
 #         for result in results:
-#             # incidentcategory = await get_incident_category_name_by_id(result.get("incidentcategoryid"))
+#             # incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"))
 #             incidentcategory = "Unkown"
 #             res.append({
-#                 "id" : result.get("id"),
-#                 "name": result.get("name"),
-#                 "description": result.get("description"),
-#                 "incidentcategoryid": result.get("incidentcategoryid"),
+#                 "id" : result["id"],
+#                 "name": result["name"],
+#                 "description": result["description"],
+#                 "incidentcategoryid": result["incidentcategoryid"],
 #                 "incidentcategory": incidentcategory,
-#                 "address": result.get("address"),
-#                 "addresslat": result.get("addresslat"),
-#                 "addresslong": result.get("addresslong"),
-#                 "isemergency": result.get("isemergency"),
-#                 "file1": result.get("file1"),
-#                 "file2": result.get("file2"),
-#                 "file3": result.get("file3"),
-#                 "file4": result.get("file4"),
-#                 "file5": result.get("file5"),
-#                 "datecreated": result.get("datecreated"),
-#                 "createdby": result.get("createdby"),
-#                 "dateupdated": result.get("dateupdated"),
-#                 "updatedby": result.get("updatedby"),
-#                 "status": result.get("status")
+#                 "address": result["address"],
+#                 "addresslat": result["addresslat"],
+#                 "addresslong": result["addresslong"],
+#                 "isemergency": result["isemergency"],
+#                 "file1": result["file1"],
+#                 "file2": result["file2"],
+#                 "file3": result["file3"],
+#                 "file4": result["file4"],
+#                 "file5": result["file5"],
+#                 "datecreated": result["datecreated"],
+#                 "createdby": result["createdby"],
+#                 "dateupdated": result["dateupdated"],
+#                 "updatedby": result["updatedby"],
+#                 "status": result["status"]
 #             })
 #         return res
 #     else:
