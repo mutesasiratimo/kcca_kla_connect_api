@@ -116,38 +116,39 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
     query = users_table.select().where( users_table.c.email == user.username)
     result = await database.fetch_one(query)
     if result:
-        if result.get("password") == user.password:
-            return {
-                "userid": result.get("id"),
-                "firstname": result.get("firstname"),
-                "lastname": result.get("lastname"),
-                "firstname": result.get("firstname"),
-                "username": result.get("username"),
-                "email": result.get("email"),
-                "gender": result.get("gender"),
-                "phone": result.get("phone"),
-                "mobile": result.get("mobile"),
-                "address": result.get("address"),
-                "addresslat": result.get("addresslat"),
-                "addresslong": result.get("addresslong"),
-                "nin": result.get("nin"),
-                "dateofbirth": result.get("dateofbirth"),
-                "photo": result.get("photo"),
-                "isadmin": result.get("isadmin"),
-                "issuperadmin": result.get("issuperadmin"),
-                "isclerk": result.get("isclerk"),
-                "iscitizen": result.get("iscitizen"),
-                "roleid": result.get("roleid"),
-                "datecreated": result.get("datecreated"),
-                # "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
-                "incidentscount": 0,
-                "token": signJWT(user.username),
-                "status": result.get("status")
-            }
-        else:
-            raise HTTPException(status_code=401, detail='Not authorized')
+        # if result.get("password") == user.password:
+        print(result)
+        return {
+            "userid": result.get("id"),
+            "firstname": result.get("firstname"),
+            "lastname": result.get("lastname"),
+            "firstname": result.get("firstname"),
+            "username": result.get("username"),
+            "email": result.get("email"),
+            "gender": result.get("gender"),
+            "phone": result.get("phone"),
+            "mobile": result.get("mobile"),
+            "address": result.get("address"),
+            "addresslat": result.get("addresslat"),
+            "addresslong": result.get("addresslong"),
+            "nin": result.get("nin"),
+            "dateofbirth": result.get("dateofbirth"),
+            "photo": result.get("photo"),
+            "isadmin": result.get("isadmin"),
+            "issuperadmin": result.get("issuperadmin"),
+            "isclerk": result.get("isclerk"),
+            "iscitizen": result.get("iscitizen"),
+            "roleid": result.get("roleid"),
+            "datecreated": result.get("datecreated"),
+            # "incidentscount": await get_incidentcounts_by_userid(result.get("id")),
+            "incidentscount": 0,
+            "token": signJWT(user.username),
+            "status": result.get("status")
+        }
     else:
-        raise HTTPException(status_code=404, detail='User does not exist')
+        raise HTTPException(status_code=401, detail='Not authorized')
+    # else:
+    #     raise HTTPException(status_code=404, detail='User does not exist')
 
 
 @app.get("/users/emailauth/{email}", tags=["user"])
