@@ -1,4 +1,6 @@
-GNU nano 4.8                    /etc/systemd/system/kcca_kla_connect_api.service                               
+git clone https://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@github.com/mutesasiratimo/kcca_kla_connect_api
+
+
 [Unit]
 Description=Gunicorn instance to serve MyApp
 After=network.target
