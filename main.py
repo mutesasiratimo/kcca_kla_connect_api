@@ -848,6 +848,7 @@ async def register_trip(trip: TripSchema):
         destinationaddress=trip.destinationaddress,
         destinationlat=trip.destinationlat,
         destinationlong=trip.destinationlong,
+        createdby = trip.createdby,
         datecreated=gDate,
         status="1"
     )
