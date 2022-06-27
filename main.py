@@ -141,8 +141,8 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                 "iscitizen": result["iscitizen"],
                 "roleid": result["roleid"],
                 "datecreated": result["datecreated"],
-                # "incidentscount": await get_incidentcounts_by_userid(result["id"]),
-                "incidentscount": 0,
+                "incidentscount": await get_incidentcounts_by_userid(result["id"]),
+                # "incidentscount": 0,
                 "token": signJWT(user.username),
                 "status": result["status"]
             }
@@ -188,7 +188,7 @@ async def user_email_authentication(email: EmailStr):
 @app.get("/users/checkexistence/{email}", tags=["user"])
 async def check_if_user_exists(email: str):
     query = users_table.select().where(users_table.c.email ==
-                                       email or users_table.c.phone == email)
+                                       email)
     result = await database.fetch_one(query)
     if result:
         return True
@@ -224,7 +224,7 @@ async def register_user(user: UserSignUpSchema):
         datecreated=gDate,
         status="1"
     )
-    exists = await check_if_user_exists(user.phone)
+    exists = await check_if_user_exists(user.email)
     if exists:
         raise HTTPException(
             status_code=409, detail="User already exists with this phone number or email.")
