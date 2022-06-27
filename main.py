@@ -39,6 +39,7 @@ app.add_middleware(
 async def startup():
     await database.connect()
 
+
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
@@ -60,6 +61,7 @@ async def get_all_users():
     # else:
     #     raise HTTPException(status_code=204, detail='No users found')
 
+
 @app.get("/get_citizens", response_model=List[UserSchema], tags=["user"])
 async def get_all_citizens():
     query = users_table.select().where(users_table.c.iscitizen == True)
@@ -79,6 +81,7 @@ async def get_all_clerks():
     else:
         raise HTTPException(status_code=204, detail='No clerks found')
 
+
 @app.get("/get_admins", response_model=List[UserSchema], tags=["user"])
 async def get_all_admins():
     query = users_table.select().where(users_table.c.isadmin == True)
@@ -87,6 +90,7 @@ async def get_all_admins():
         return result
     else:
         raise HTTPException(status_code=204, detail='No admins found')
+
 
 @app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
 async def get_user_by_id(userid: str):
@@ -113,39 +117,41 @@ async def get_usernames_by_id(userid: str):
 @app.post("/user/login", tags=["user"])
 async def user_login(user: UserLoginSchema = Body(default=None)):
     # data: OAuth2PasswordRequestForm = Depends()
-    query = users_table.select().where( users_table.c.email == user.username)
+    query = users_table.select().where(users_table.c.email == user.username)
     result = await database.fetch_one(query)
     if result:
-        # return result
         if result["password"] == user.password:
-            print(result["password"])
-            return {
-                "userid": result["id"],
-                "firstname": result["firstname"],
-                "lastname": result["lastname"],
-                "firstname": result["firstname"],
-                "username": result["username"],
-                "email": result["email"],
-                "gender": result["gender"],
-                "phone": result["phone"],
-                "mobile": result["mobile"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "nin": result["nin"],
-                "dateofbirth": result["dateofbirth"],
-                "photo": result["photo"],
-                "isadmin": result["isadmin"],
-                "issuperadmin": result["issuperadmin"],
-                "isclerk": result["isclerk"],
-                "iscitizen": result["iscitizen"],
-                "roleid": result["roleid"],
-                "datecreated": result["datecreated"],
-                "incidentscount": await get_incidentcounts_by_userid(result["id"]),
-                # "incidentscount": 0,
-                "token": signJWT(user.username),
-                "status": result["status"]
-            }
+            if result["status"] == "1":
+                return {
+                    "userid": result["id"],
+                    "firstname": result["firstname"],
+                    "lastname": result["lastname"],
+                    "firstname": result["firstname"],
+                    "username": result["username"],
+                    "email": result["email"],
+                    "gender": result["gender"],
+                    "phone": result["phone"],
+                    "mobile": result["mobile"],
+                    "address": result["address"],
+                    "addresslat": result["addresslat"],
+                    "addresslong": result["addresslong"],
+                    "nin": result["nin"],
+                    "dateofbirth": result["dateofbirth"],
+                    "photo": result["photo"],
+                    "isadmin": result["isadmin"],
+                    "issuperadmin": result["issuperadmin"],
+                    "isclerk": result["isclerk"],
+                    "iscitizen": result["iscitizen"],
+                    "roleid": result["roleid"],
+                    "datecreated": result["datecreated"],
+                    "incidentscount": await get_incidentcounts_by_userid(result["id"]),
+                    # "incidentscount": 0,
+                    "token": signJWT(user.username),
+                    "status": result["status"]
+                }
+            else:
+                raise HTTPException(
+                    status_code=409, detail='User has not been verified')
     else:
         raise HTTPException(status_code=401, detail='Not authorized')
     # else:
@@ -159,27 +165,27 @@ async def user_email_authentication(email: EmailStr):
     if result:
         return {
             "userid": result["id"],
-                "firstname": result["firstname"],
-                "lastname": result["lastname"],
-                "firstname": result["firstname"],
-                "username": result["username"],
-                "email": result["email"],
-                "gender": result["gender"],
-                "phone": result["phone"],
-                "mobile": result["mobile"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "nin": result["nin"],
-                "dateofbirth": result["dateofbirth"],
-                "photo": result["photo"],
-                "isadmin": result["isadmin"],
-                "issuperadmin": result["issuperadmin"],
-                "isclerk": result["isclerk"],
-                "iscitizen": result["iscitizen"],
-                "roleid": result["roleid"],
-                "token": signJWT(email),
-                "status": result["status"]
+            "firstname": result["firstname"],
+            "lastname": result["lastname"],
+            "firstname": result["firstname"],
+            "username": result["username"],
+            "email": result["email"],
+            "gender": result["gender"],
+            "phone": result["phone"],
+            "mobile": result["mobile"],
+            "address": result["address"],
+            "addresslat": result["addresslat"],
+            "addresslong": result["addresslong"],
+            "nin": result["nin"],
+            "dateofbirth": result["dateofbirth"],
+            "photo": result["photo"],
+            "isadmin": result["isadmin"],
+            "issuperadmin": result["issuperadmin"],
+            "isclerk": result["isclerk"],
+            "iscitizen": result["iscitizen"],
+            "roleid": result["roleid"],
+            "token": signJWT(email),
+            "status": result["status"]
         }
     else:
         raise HTTPException(status_code=401, detail='Not Authorized')
@@ -196,7 +202,7 @@ async def check_if_user_exists(email: str):
         return False
 
 
-@app.post("/users/signup", tags=["user"])
+@app.post("/users/signup", tags=["user"], status_code=201)
 async def register_user(user: UserSignUpSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -222,7 +228,7 @@ async def register_user(user: UserSignUpSchema):
         issuperadmin=user.issuperadmin,
         isadmin=user.isadmin,
         datecreated=gDate,
-        status="1"
+        status="0"
     )
     exists = await check_if_user_exists(user.email)
     if exists:
@@ -231,10 +237,29 @@ async def register_user(user: UserSignUpSchema):
     else:
         await database.execute(query)
         return {
-            # "token": signJWT(user.username),
-            "otp": await generate_otp(gID)
+            "userid": result["id"],
+            "firstname": result["firstname"],
+            "lastname": result["lastname"],
+            "firstname": result["firstname"],
+            "username": result["username"],
+            "email": result["email"],
+            "gender": result["gender"],
+            "phone": result["phone"],
+            "mobile": result["mobile"],
+            "address": result["address"],
+            "addresslat": result["addresslat"],
+            "addresslong": result["addresslong"],
+            "nin": result["nin"],
+            "dateofbirth": result["dateofbirth"],
+            "photo": result["photo"],
+            "isadmin": result["isadmin"],
+            "issuperadmin": result["issuperadmin"],
+            "isclerk": result["isclerk"],
+            "iscitizen": result["iscitizen"],
+            "roleid": result["roleid"],
+            "token": signJWT(result["email"]),
+            "status": result["status"]
         }
-    
 
 
 @app.put("/users/update", response_model=UserUpdateSchema, tags=["user"])
@@ -247,11 +272,11 @@ async def update_user(user: UserUpdateSchema):
             firstname=user.firstname,
             lastname=user.lastname,
             gender=user.gender,
-            password=user.password,            
+            password=user.password,
             roleid=user.roleid,
             photo=user.photo,
             email=user.email,
-            address = user.address,
+            address=user.address,
             status=user.status,
             dateupdated=gDate
     )
@@ -298,6 +323,7 @@ async def delete_user(userid: str):
         "message": "This user has been deleted!"
     }
 
+
 @app.post("/users/otp", tags=["user"])
 async def generate_otp(userid: str):
     gID = str(uuid.uuid1())
@@ -305,10 +331,10 @@ async def generate_otp(userid: str):
     expiry = datetime.datetime.now() + datetime.timedelta(hours=1)
     digits = "0123456789"
     OTP = ""
-    queryuser = users_table.select().where(users_table.c.id == userid )
+    queryuser = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(queryuser)
     if result:
-        for i in range(4) :
+        for i in range(4):
             OTP += digits[math.floor(random.random() * 10)]
         query = otps_table.insert().values(
             id=gID,
@@ -317,7 +343,7 @@ async def generate_otp(userid: str):
             otpcode=OTP,
             otpfailedcount=0,
             expiry=expiry,
-            datecreated=gDate,        
+            datecreated=gDate,
             status="1"
         )
         await database.execute(query)
@@ -326,14 +352,15 @@ async def generate_otp(userid: str):
         raise HTTPException(
             status_code=204, detail="User does not exist.")
 
+
 @app.post("/users/verify", tags=["user"])
 async def verify_otp(otp_obj: OtpVerifySchema):
     gDate = datetime.datetime.now()
     expiry = datetime.datetime.now() + datetime.timedelta(hours=1)
-    queryuser = users_table.select().where(users_table.c.id == otp_obj.userid )
+    queryuser = users_table.select().where(users_table.c.id == otp_obj.userid)
     resultuser = await database.fetch_one(queryuser)
     if resultuser:
-        queryotp = otps_table.select().where(otps_table.c.otpcode == otp_obj.otpcode )
+        queryotp = otps_table.select().where(otps_table.c.otpcode == otp_obj.otpcode)
         resultotp = await database.fetch_one(queryotp)
         if resultotp:
             queryotppass = otps_table.update().\
@@ -364,14 +391,14 @@ async def verify_otp(otp_obj: OtpVerifySchema):
 @app.get("/incidents",  tags=["incidents"])
 async def get_all_incidents():
     query = incidents_table.select().order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)    
+    results = await database.fetch_all(query)
     res = []
     if results:
         for result in results:
             # incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"))
             incidentcategory = "Unkown"
             res.append({
-                "id" : result["id"],
+                "id": result["id"],
                 "name": result["name"],
                 "description": result["description"],
                 "incidentcategoryid": result["incidentcategoryid"],
@@ -395,7 +422,6 @@ async def get_all_incidents():
     else:
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
-    
 
 
 @app.get("/incidents/{incidentid}", response_model=IncidentSchema, tags=["incidents"])
@@ -415,6 +441,7 @@ async def get_incidentname_by_id(incidentid: str):
     else:
         return "Unkown Incident"
 
+
 @app.get("/incidents/user/{userid}", tags=["incidents"])
 async def get_incidents_by_userid(userid: str):
     query = incidents_table.select().where(incidents_table.c.createdby == userid)
@@ -428,6 +455,7 @@ async def get_incidents_by_userid(userid: str):
         raise HTTPException(
             status_code=204, detail="User has not posted any incidents.")
 
+
 @app.get("/incidents/usercount/{userid}", tags=["incidents"])
 async def get_incidentcounts_by_userid(userid: str):
     query = incidents_table.select().where(incidents_table.c.createdby == userid)
@@ -435,10 +463,9 @@ async def get_incidentcounts_by_userid(userid: str):
     res = 0
     if results:
         for result in results:
-            res +=1
-    
+            res += 1
+
     return res
-    
 
 
 @app.post("/incidents/register", response_model=IncidentSchema, tags=["incidents"])
@@ -490,7 +517,7 @@ async def update_incident(incident: IncidentUpdateSchema):
             file3=incident.file3,
             file4=incident.file4,
             file5=incident.file5,
-            createdby = incident.createdby,
+            createdby=incident.createdby,
             dateupdated=gDate
     )
 
@@ -540,6 +567,7 @@ async def delete_incident(incidentid: str):
 
 ###################### INCIDENT_CATEGORIES ######################
 
+
 @app.get("/incidentcategories", response_model=List[IncidentCategoriesSchema], tags=["incidentcategories"])
 async def get_all_incident_categories():
     query = incidentcategories_table.select()
@@ -548,13 +576,16 @@ async def get_all_incident_categories():
 
 @app.get("/incidentcategories/{incidentcategoryid}", response_model=IncidentCategoriesSchema, tags=["incidentcategories"])
 async def get_incident_category_by_id(incidentcategoryid: str):
-    query = incidentcategories_table.select().where(incidentcategories_table.c.id == incidentcategoryid)
+    query = incidentcategories_table.select().where(
+        incidentcategories_table.c.id == incidentcategoryid)
     result = await database.fetch_one(query)
     return result
 
+
 @app.get("/incidents/name/{incidentid}", tags=["incidents"])
 async def get_incident_category_name_by_id(incidentcategoryid: str):
-    query = incidentcategories_table.select().where(incidentcategories_table.c.id == incidentcategoryid)
+    query = incidentcategories_table.select().where(
+        incidentcategories_table.c.id == incidentcategoryid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["name"]
@@ -628,7 +659,8 @@ async def restore_incident_category(incidentcategoryid: str):
 
 @app.delete("/incidentcategories/{incidentcategoryid}", tags=["incidentcategories"])
 async def delete_incident_category(incidentcategoryid: str):
-    query = incidentcategories_table.delete().where(incidentcategories_table.c.id == incidentcategoryid)
+    query = incidentcategories_table.delete().where(
+        incidentcategories_table.c.id == incidentcategoryid)
     result = await database.execute(query)
 
     return {
@@ -640,6 +672,7 @@ async def delete_incident_category(incidentcategoryid: str):
 
 ###################### SAVED LOCATIONS ######################
 
+
 @app.get("/savedlocations", response_model=List[SavedLocationSchema], tags=["savedlocations"])
 async def get_all_saved_locations():
     query = savedlocations_table.select()
@@ -648,14 +681,16 @@ async def get_all_saved_locations():
 
 @app.get("/savedlocations/{savedlocationid}", response_model=SavedLocationSchema, tags=["savedlocations"])
 async def get_saved_location_by_id(savedlocationid: str):
-    query = savedlocations_table.select().where(savedlocations_table.c.id == savedlocationid)
+    query = savedlocations_table.select().where(
+        savedlocations_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     return result
 
 
 @app.get("/savedlocations/name/{savedlocationid}", tags=["savedlocations"])
 async def get_saved_location_name_by_id(savedlocationid: str):
-    query = savedlocations_table.select().where(savedlocations_table.c.id == savedlocationid)
+    query = savedlocations_table.select().where(
+        savedlocations_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["name"]
@@ -663,9 +698,11 @@ async def get_saved_location_name_by_id(savedlocationid: str):
     else:
         return "Unkown Incident"
 
+
 @app.get("/savedlocations/user/{userid}", tags=["savedlocations"])
 async def get_saved_locations_by_userid(userid: str):
-    query = savedlocations_table.select().where(savedlocations_table.c.createdby == userid)
+    query = savedlocations_table.select().where(
+        savedlocations_table.c.createdby == userid)
     results = await database.fetch_all(query)
     res = []
     if results:
@@ -675,7 +712,6 @@ async def get_saved_locations_by_userid(userid: str):
     else:
         raise HTTPException(
             status_code=204, detail="User does not have any saved locations.")
-    
 
 
 @app.post("/savedlocations/register", response_model=SavedLocationSchema, tags=["savedlocations"])
@@ -748,7 +784,8 @@ async def restore_saved_location(savedlocationid: str):
 
 @app.delete("/savedlocations/{savedlocationid}", tags=["savedlocations"])
 async def delete_saved_location(savedlocationid: str):
-    query = savedlocations_table.delete().where(savedlocations_table.c.id == savedlocationid)
+    query = savedlocations_table.delete().where(
+        savedlocations_table.c.id == savedlocationid)
     result = await database.execute(query)
 
     return {
@@ -760,32 +797,34 @@ async def delete_saved_location(savedlocationid: str):
 
 ###################### TRIPS ######################
 
+
 @app.get("/trips", response_model=List[TripSchema], tags=["trips"])
 async def get_all_trips():
-    query = trips_table.select()
+    query = user_trips_table.select()
     return await database.fetch_all(query)
 
 
 @app.get("/trips/{savedlocationid}", response_model=TripSchema, tags=["trips"])
 async def get_trip_by_id(savedlocationid: str):
-    query = trips_table.select().where(trips_table.c.id == savedlocationid)
+    query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     return result
 
 
 @app.get("/trips/name/{savedlocationid}", tags=["trips"])
 async def get_trip_name_by_id(savedlocationid: str):
-    query = trips_table.select().where(trips_table.c.id == savedlocationid)
+    query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["name"]
         return fullname
     else:
-        return "Unkown Incident"
+        return "Unkown Trip"
+
 
 @app.get("/trips/user/{userid}", tags=["trips"])
 async def get_trips_by_userid(userid: str):
-    query = trips_table.select().where(trips_table.c.createdby == userid)
+    query = user_trips_table.select().where(user_trips_table.c.createdby == userid)
     results = await database.fetch_all(query)
     res = []
     if results:
@@ -795,14 +834,13 @@ async def get_trips_by_userid(userid: str):
     else:
         raise HTTPException(
             status_code=204, detail="User does not have any saved locations.")
-    
 
 
 @app.post("/trips/register", response_model=TripSchema, tags=["trips"])
 async def register_trip(trip: TripSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
-    query = trips_table.insert().values(
+    query = user_trips_table.insert().values(
         id=gID,
         startaddress=trip.startaddress,
         startlat=trip.startlat,
@@ -825,8 +863,8 @@ async def register_trip(trip: TripSchema):
 @app.put("/trips/update", response_model=TripUpdateSchema, tags=["trips"])
 async def update_trip(trip: TripUpdateSchema):
     gDate = datetime.datetime.now()
-    query = trips_table.update().\
-        where(trips_table.c.id == trip.id).\
+    query = user_trips_table.update().\
+        where(user_trips_table.c.id == trip.id).\
         values(
             startaddress=trip.startaddress,
             startlat=trip.startlat,
@@ -844,8 +882,8 @@ async def update_trip(trip: TripUpdateSchema):
 @app.put("/trips/archive", response_model=TripUpdateSchema, tags=["trips"])
 async def archive_trip(tripid: str):
     gDate = datetime.datetime.now()
-    query = trips_table.update().\
-        where(trips_table.c.id == tripid).\
+    query = user_trips_table.update().\
+        where(user_trips_table.c.id == tripid).\
         values(
             status="0",
             dateupdated=gDate
@@ -858,8 +896,8 @@ async def archive_trip(tripid: str):
 @app.put("/trips/restore", response_model=TripUpdateSchema, tags=["trips"])
 async def restore_trip(tripid: str):
     gDate = datetime.datetime.now()
-    query = trips_table.update().\
-        where(trips_table.c.id == tripid).\
+    query = user_trips_table.update().\
+        where(user_trips_table.c.id == tripid).\
         values(
             status="1",
             dateupdated=gDate
@@ -871,7 +909,7 @@ async def restore_trip(tripid: str):
 
 @app.delete("/trips/{tripid}", tags=["trips"])
 async def delete_trip(tripid: str):
-    query = trips_table.delete().where(trips_table.c.id == tripid)
+    query = user_trips_table.delete().where(user_trips_table.c.id == tripid)
     result = await database.execute(query)
 
     return {
@@ -977,7 +1015,8 @@ async def restore_role(designationid: str):
 
 @app.delete("/designations/{designationid}", tags=["designations"])
 async def delete_designation(designationid: str):
-    query = designations_table.delete().where(designations_table.c.id == designationid)
+    query = designations_table.delete().where(
+        designations_table.c.id == designationid)
     result = await database.execute(query)
 
     return {
@@ -998,14 +1037,16 @@ async def get_all_departments():
 
 @app.get("/departments/{departmentid}", response_model=DepartmentSchema, tags=["departments"])
 async def get_department_by_id(departmentid: str):
-    query = departments_table.select().where(departments_table.c.id == departmentid)
+    query = departments_table.select().where(
+        departments_table.c.id == departmentid)
     result = await database.fetch_one(query)
     return result
 
 
 @app.get("/departments/name/{departmentid}", tags=["departments"])
 async def get_department_name_by_id(departmentid: str):
-    query = departments_table.select().where(departments_table.c.id == departmentid)
+    query = departments_table.select().where(
+        departments_table.c.id == departmentid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["departmentname"]
@@ -1081,7 +1122,8 @@ async def restore_department(departmentid: str):
 
 @app.delete("/departments/{departmentid}", tags=["departments"])
 async def delete_department(departmentid: str):
-    query = departments_table.delete().where(departments_table.c.id == departmentid)
+    query = departments_table.delete().where(
+        departments_table.c.id == departmentid)
     result = await database.execute(query)
 
     return {
@@ -1098,16 +1140,17 @@ async def delete_department(departmentid: str):
 async def get_all_languages():
     query = languages_table.select()
     results = await database.fetch_all(query)
-    if results:        
+    if results:
         return results
     else:
         raise HTTPException(status_code=204, detail="No languages found")
+
 
 @app.get("/languages/{languageid}", response_model=LanguageSchema, tags=["languages"])
 async def get_language_by_id(languageid: str):
     query = languages_table.select().where(languages_table.c.id == languageid)
     result = await database.fetch_one(query)
-    if result:        
+    if result:
         return result
     else:
         raise HTTPException(status_code=204, detail="No language found")

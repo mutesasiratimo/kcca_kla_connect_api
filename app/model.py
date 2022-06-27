@@ -125,6 +125,23 @@ trips_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+user_trips_table = sqlalchemy.Table(
+    "usertrips",
+    metadata,
+    sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("startaddress"   , sqlalchemy.String),
+    sqlalchemy.Column("startlat"    , sqlalchemy.Float),
+    sqlalchemy.Column("startlong"   , sqlalchemy.Float),
+    sqlalchemy.Column("destinationaddress", sqlalchemy.String),
+    sqlalchemy.Column("destinationlat"    , sqlalchemy.Float),
+    sqlalchemy.Column("destinationlong"   , sqlalchemy.Float),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 designations_table = sqlalchemy.Table(
     "designations",
     metadata,
@@ -573,11 +590,11 @@ class SavedLocationDeleteSchema(BaseModel):
 class TripSchema(BaseModel):
     id                    : str = Field(default=None)
     startaddress          : str = Field(default=None)
-    startlat              : str = Field(default= None)
-    startlong             : str = Field(default= None)
+    startlat              : float = Field(default= None)
+    startlong             : float = Field(default= None)
     destinationaddress    : str = Field(default=None)
-    destinationlat        : str = Field(default= None)
-    destinationlong       : str = Field(default= None)
+    destinationlat        : float = Field(default= None)
+    destinationlong       : float = Field(default= None)
     datecreated           : datetime.datetime
     createdby             : Optional[str] = None
     dateupdated           : Optional[datetime.datetime] = None
@@ -605,11 +622,11 @@ class TripSchema(BaseModel):
 class TripUpdateSchema(BaseModel):
     id                    : str = Field(default=None)
     startaddress          : str = Field(default=None)
-    startlat              : str = Field(default= None)
-    startlong             : str = Field(default= None)
+    startlat              : float = Field(default= None)
+    startlong             : float = Field(default= None)
     destinationaddress    : str = Field(default=None)
-    destinationlat        : str = Field(default= None)
-    destinationlong       : str = Field(default= None)
+    destinationlat        : float = Field(default= None)
+    destinationlong       : float = Field(default= None)
     dateupdated           : Optional[datetime.datetime] = None
     updatedby             : Optional[str] = None
     status                : Optional[str] = None
