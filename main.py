@@ -829,7 +829,7 @@ async def get_trips_by_userid(userid: str):
     res = []
     if results:
         for result in results:
-            res.append(await get_trip_by_id(result["createdby"]))
+            res.append(await get_trip_by_id(result["id"]))
         return res
     else:
         raise HTTPException(
