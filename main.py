@@ -363,7 +363,7 @@ async def verify_otp(otp_obj: OtpVerifySchema):
 
 @app.get("/incidents",  tags=["incidents"])
 async def get_all_incidents():
-    query = incidents_table.select().order_by(desc(incidents_table.datecreated))
+    query = incidents_table.select().order_by(desc(incidents_table.c.datecreated))
     results = await database.fetch_all(query)    
     res = []
     if results:
