@@ -308,6 +308,18 @@ async def delete_user(userid: str):
         "message": "This user has been deleted!"
     }
 
+@app.get("/users/activate/{userid}", response_model=UserUpdateSchema, tags=["user"])
+async def activate_user(userid: str):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == userid).\
+        values(
+            status="1",
+            dateupdated=gDate
+    )
+    await database.execute(query)
+    return await get_user_by_id(userid)
+
 
 @app.post("/users/otp", tags=["user"])
 async def generate_otp(userid: str):
