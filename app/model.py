@@ -108,25 +108,25 @@ savedlocations_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
-trips_table = sqlalchemy.Table(
-    "trips",
-    metadata,
-    sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
-    sqlalchemy.Column("startaddress"   , sqlalchemy.Float),
-    sqlalchemy.Column("startlat"    , sqlalchemy.Float),
-    sqlalchemy.Column("startlong"   , sqlalchemy.String),
-    sqlalchemy.Column("destinationaddress", sqlalchemy.String),
-    sqlalchemy.Column("destinationlat"    , sqlalchemy.Float),
-    sqlalchemy.Column("destinationlong"   , sqlalchemy.Float),
-    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("createdby"    , sqlalchemy.String),
-    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
-    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
-)
+# trips_table = sqlalchemy.Table(
+#     "trips",
+#     metadata,
+#     sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
+#     sqlalchemy.Column("startaddress"   , sqlalchemy.Float),
+#     sqlalchemy.Column("startlat"    , sqlalchemy.Float),
+#     sqlalchemy.Column("startlong"   , sqlalchemy.String),
+#     sqlalchemy.Column("destinationaddress", sqlalchemy.String),
+#     sqlalchemy.Column("destinationlat"    , sqlalchemy.Float),
+#     sqlalchemy.Column("destinationlong"   , sqlalchemy.Float),
+#     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+#     sqlalchemy.Column("createdby"    , sqlalchemy.String),
+#     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+#     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+#     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+# )
 
 user_trips_table = sqlalchemy.Table(
-    "usertrips",
+    "triphistory",
     metadata,
     sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("startaddress"   , sqlalchemy.String),
