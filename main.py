@@ -228,7 +228,7 @@ async def register_user(user: UserSignUpSchema):
         issuperadmin=user.issuperadmin,
         isadmin=user.isadmin,
         datecreated=gDate,
-        status="0"
+        status="1"
     )
     exists = await check_if_user_exists(user.email)
     if exists:
