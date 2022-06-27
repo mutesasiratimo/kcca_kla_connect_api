@@ -231,8 +231,8 @@ async def register_user(user: UserSignUpSchema):
     else:
         await database.execute(query)
         return {
-            "token": signJWT(user.username),
-            # "otp": await generate_otp(gID)
+            # "token": signJWT(user.username),
+            "otp": await generate_otp(gID)
         }
     
 
