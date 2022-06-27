@@ -237,29 +237,14 @@ async def register_user(user: UserSignUpSchema):
     else:
         await database.execute(query)
         return {
-            "userid": result["id"],
-            "firstname": result["firstname"],
-            "lastname": result["lastname"],
-            "firstname": result["firstname"],
-            "username": result["username"],
-            "email": result["email"],
-            "gender": result["gender"],
-            "phone": result["phone"],
-            "mobile": result["mobile"],
-            "address": result["address"],
-            "addresslat": result["addresslat"],
-            "addresslong": result["addresslong"],
-            "nin": result["nin"],
-            "dateofbirth": result["dateofbirth"],
-            "photo": result["photo"],
-            "isadmin": result["isadmin"],
-            "issuperadmin": result["issuperadmin"],
-            "isclerk": result["isclerk"],
-            "iscitizen": result["iscitizen"],
-            "roleid": result["roleid"],
-            "token": signJWT(result["email"]),
-            "status": result["status"]
+            **user.dict(),
+            "id": gID,
+            "datecreated": gDate,
+            "token": signJWT(user.username),
+            "status": "1"
         }
+        
+        
 
 
 @app.put("/users/update", response_model=UserUpdateSchema, tags=["user"])
