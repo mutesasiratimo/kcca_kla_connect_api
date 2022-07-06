@@ -9,7 +9,7 @@ from typing import List
 from unittest import result
 from xmlrpc.client import DateTime
 import uvicorn
-from fastapi import FastAPI, Body, Depends, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException
 from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import desc
 from sqlalchemy import asc
-
+from app.send_mail import send_email_background, send_email_async, send_email_async_test
 
 app = FastAPI()
 
@@ -48,6 +48,23 @@ async def shutdown():
 @app.get("/", tags=["welcome"])
 def greet():
     return{"Hello": "Welcome to the KLA CONNECT API"}
+
+
+################ EMAILS #####################
+
+@app.get('/send-email/asynchronous', tags=["mailer"])
+async def send_email_asynchronous(title: str, body: str, to: EmailStr):
+    await send_email_async(title, to, body)
+    # await send_email_async_test()
+    return 'Success'
+
+@app.get('/send-email/backgroundtasks', tags=["mailer"])
+def send_email_backgroundtasks(background_tasks: BackgroundTasks):
+    send_email_background(background_tasks, 'Hello World',   
+    'mutestimo72@gmail.com', {'title': 'Hello World', 'name':       'John Doe'})
+    return 'Success'
+
+################ END EMAILS #################
 
 ################### USERS ###################
 
@@ -269,6 +286,27 @@ async def update_user(user: UserUpdateSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
+@app.get("/users/resetpassword/{email}", tags=["user"])
+async def reset_password(email: str):
+    # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
+    gDate = datetime.datetime.now()
+    query = users_table.select().where(users_table.c.email ==
+                                       email)
+    result = await database.fetch_one(query)
+    if result:
+        email = result["email"]
+        userid = result["id"]
+        otp = await generate_otp(userid)
+        print(otp)
+        await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp +"\n", email)
+        
+        return {
+            "otp": otp
+        }
+    else:
+        raise HTTPException(
+            status_code=204, detail="User does not exist.")
+
 
 @app.put("/users/archive", response_model=UserUpdateSchema, tags=["user"])
 async def archive_user(userid: str):
@@ -354,10 +392,11 @@ async def generate_otp(userid: str):
 async def verify_otp(otp_obj: OtpVerifySchema):
     gDate = datetime.datetime.now()
     expiry = datetime.datetime.now() + datetime.timedelta(hours=1)
-    queryuser = users_table.select().where(users_table.c.id == otp_obj.userid)
+    queryuser = users_table.select().where(users_table.c.email == otp_obj.email)
     resultuser = await database.fetch_one(queryuser)
     if resultuser:
-        queryotp = otps_table.select().where(otps_table.c.otpcode == otp_obj.otpcode)
+        userid = resultuser["id"]
+        queryotp = otps_table.select().where(otps_table.c.otpcode == otp_obj.otpcode and otps_table.c.userid == userid)
         resultotp = await database.fetch_one(queryotp)
         if resultotp:
             queryotppass = otps_table.update().\
@@ -367,18 +406,24 @@ async def verify_otp(otp_obj: OtpVerifySchema):
                     dateupdated=gDate
             )
             await database.execute(queryotppass)
-        # else:
-        #     queryotppass = otps_table.update().\
-        #         where(otps_table.c.otpcode == otp_obj.otpcode).\
-        #         values(
-        #             status="0",
-        #             dateupdated=gDate
-
-        #     )
-        #     await database.execute(queryotppass)
+            
+            await update_password(userid, otp_obj.password)
+            return "Password updated successfully"
     else:
         raise HTTPException(
             status_code=401, detail="Invalid OTP Code.")
+
+async def update_password(userid: str, password: str):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == userid).\
+        values(
+            password=password,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_by_id(userid)
 
 
 ################## END USERS ###################

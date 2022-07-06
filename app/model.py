@@ -874,14 +874,16 @@ class OtpSchema(BaseModel):
         }
 
 class OtpVerifySchema(BaseModel):
-    userid           : str = Field(default=None)
+    email            : EmailStr = Field(default=None)
     otpcode          : str = Field(default=None)
+    password         : str = Field(default=None)
     class Config:
         orm_mode = True
         the_schema = {
             "otp_demo": {
-                "userid": "user_id",
-                "otpcode": "4321"
+                "email": "user@mail.com",
+                "otpcode": "4321",
+                "password": "password"
             }
         }
 
