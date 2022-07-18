@@ -174,6 +174,47 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
     # else:
     #     raise HTTPException(status_code=404, detail='User does not exist')
 
+@app.post("/user/login/mobile", tags=["user"])
+async def user_login(user: UserLoginSchema = Body(default=None)):
+    # data: OAuth2PasswordRequestForm = Depends()
+    query = users_table.select().where(users_table.c.phone == user.username)
+    result = await database.fetch_one(query)
+    if result:
+        if result["password"] == user.password:
+            if result["status"] == "1":
+                return {
+                    "userid": result["id"],
+                    "firstname": result["firstname"],
+                    "lastname": result["lastname"],
+                    "firstname": result["firstname"],
+                    "username": result["username"],
+                    "email": result["email"],
+                    "gender": result["gender"],
+                    "phone": result["phone"],
+                    "mobile": result["mobile"],
+                    "address": result["address"],
+                    "addresslat": result["addresslat"],
+                    "addresslong": result["addresslong"],
+                    "nin": result["nin"],
+                    "dateofbirth": result["dateofbirth"],
+                    "photo": result["photo"],
+                    "isadmin": result["isadmin"],
+                    "issuperadmin": result["issuperadmin"],
+                    "isclerk": result["isclerk"],
+                    "iscitizen": result["iscitizen"],
+                    "roleid": result["roleid"],
+                    "datecreated": result["datecreated"],
+                    "incidentscount": await get_incidentcounts_by_userid(result["id"]),
+                    # "incidentscount": 0,
+                    "token": signJWT(user.username),
+                    "status": result["status"]
+                }
+            else:
+                raise HTTPException(
+                    status_code=409, detail='User has not been verified')
+    else:
+        raise HTTPException(status_code=401, detail='Not authorized')
+
 
 @app.get("/users/emailauth/{email}", tags=["user"])
 async def user_email_authentication(email: EmailStr):
