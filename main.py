@@ -52,13 +52,13 @@ def greet():
 
 ################ EMAILS #####################
 
-@app.get('/send-email/asynchronous', tags=["mailer"])
+# @app.get('/send-email/asynchronous', tags=["mailer"])
 async def send_email_asynchronous(title: str, body: str, to: EmailStr):
     await send_email_async(title, to, body)
     # await send_email_async_test()
     return 'Success'
 
-@app.get('/send-email/backgroundtasks', tags=["mailer"])
+# @app.get('/send-email/backgroundtasks', tags=["mailer"])
 def send_email_backgroundtasks(background_tasks: BackgroundTasks):
     send_email_background(background_tasks, 'Hello World',   
     'mutestimo72@gmail.com', {'title': 'Hello World', 'name':       'John Doe'})
@@ -79,7 +79,7 @@ async def get_all_users():
     #     raise HTTPException(status_code=204, detail='No users found')
 
 
-@app.get("/get_citizens", response_model=List[UserSchema], tags=["user"])
+@app.get("/get_citizens", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_all_citizens():
     query = users_table.select().where(users_table.c.iscitizen == True)
     result = await database.fetch_all(query)
@@ -89,7 +89,7 @@ async def get_all_citizens():
         raise HTTPException(status_code=204, detail='No citizens found')
 
 
-@app.get("/get_clerks", response_model=List[UserSchema], tags=["user"])
+@app.get("/get_clerks", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_all_clerks():
     query = users_table.select().where(users_table.c.isclerk == True)
     result = await database.fetch_all(query)
@@ -99,7 +99,7 @@ async def get_all_clerks():
         raise HTTPException(status_code=204, detail='No clerks found')
 
 
-@app.get("/get_admins", response_model=List[UserSchema], tags=["user"])
+@app.get("/get_admins", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_all_admins():
     query = users_table.select().where(users_table.c.isadmin == True)
     result = await database.fetch_all(query)
@@ -109,7 +109,7 @@ async def get_all_admins():
         raise HTTPException(status_code=204, detail='No admins found')
 
 
-@app.get("/users/{userid}", response_model=UserSchema, tags=["user"])
+@app.get("/users/{userid}", response_model=UserSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_user_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(query)
@@ -120,7 +120,7 @@ async def get_user_by_id(userid: str):
         raise HTTPException(status_code=404, detail='User not found')
 
 
-@app.get("/users/name/{userid}", tags=["user"])
+@app.get("/users/name/{userid}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_usernames_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(query)
@@ -305,7 +305,7 @@ async def register_user(user: UserSignUpSchema):
         
 
 
-@app.put("/users/update", response_model=UserUpdateSchema, tags=["user"])
+@app.put("/users/update", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def update_user(user: UserUpdateSchema):
     # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
     gDate = datetime.datetime.now()
@@ -327,7 +327,7 @@ async def update_user(user: UserUpdateSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
-@app.get("/users/resetpassword/{email}", tags=["user"])
+@app.get("/users/resetpassword/{email}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def reset_password(email: str):
     # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
     gDate = datetime.datetime.now()
@@ -349,7 +349,7 @@ async def reset_password(email: str):
             status_code=204, detail="User does not exist.")
 
 
-@app.put("/users/archive", response_model=UserUpdateSchema, tags=["user"])
+@app.put("/users/archive", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def archive_user(userid: str):
     gDate = datetime.datetime.now()
     query = users_table.update().\
@@ -363,7 +363,7 @@ async def archive_user(userid: str):
     return await get_user_by_id(userid)
 
 
-@app.put("/users/restore", response_model=UserUpdateSchema, tags=["user"])
+@app.put("/users/restore", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def restore_user(userid: str):
     gDate = datetime.datetime.now()
     query = users_table.update().\
@@ -377,7 +377,7 @@ async def restore_user(userid: str):
     return await get_user_by_id(userid)
 
 
-@app.delete("/users/{userid}", tags=["user"])
+@app.delete("/users/{userid}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def delete_user(userid: str):
     query = users_table.delete().where(users_table.c.id == userid)
     result = await database.execute(query)
@@ -387,7 +387,7 @@ async def delete_user(userid: str):
         "message": "This user has been deleted!"
     }
 
-@app.get("/users/activate/{userid}", response_model=UserUpdateSchema, tags=["user"])
+@app.get("/users/activate/{userid}", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def activate_user(userid: str):
     gDate = datetime.datetime.now()
     query = users_table.update().\
@@ -400,7 +400,7 @@ async def activate_user(userid: str):
     return await get_user_by_id(userid)
 
 
-@app.post("/users/otp", tags=["user"])
+@app.post("/users/otp", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def generate_otp(userid: str):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -429,7 +429,7 @@ async def generate_otp(userid: str):
             status_code=204, detail="User does not exist.")
 
 
-@app.post("/users/verify", tags=["user"])
+@app.post("/users/verify", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def verify_otp(otp_obj: OtpVerifySchema):
     gDate = datetime.datetime.now()
     expiry = datetime.datetime.now() + datetime.timedelta(hours=1)
@@ -471,21 +471,22 @@ async def update_password(userid: str, password: str):
 
 ##################### INCIDENTS ######################
 
-@app.get("/incidents",  tags=["incidents"])
+@app.get("/incidents",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_all_incidents():
     query = incidents_table.select().order_by(desc(incidents_table.c.datecreated))
     results = await database.fetch_all(query)
     res = []
     if results:
         for result in results:
-            # incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"))
-            incidentcategory = "Unkown"
+            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+            # incidentcategory = "Unkown"
             res.append({
                 "id": result["id"],
                 "name": result["name"],
                 "description": result["description"],
                 "incidentcategoryid": result["incidentcategoryid"],
                 "incidentcategory": incidentcategory,
+                "incidentcategoryobj": await get_incident_category_by_id(result["incidentcategoryid"]),
                 "address": result["address"],
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
@@ -497,6 +498,7 @@ async def get_all_incidents():
                 "file5": result["file5"],
                 "datecreated": result["datecreated"],
                 "createdby": result["createdby"],
+                "createdbyobj": await get_user_by_id(result["createdby"]),
                 "dateupdated": result["dateupdated"],
                 "updatedby": result["updatedby"],
                 "status": result["status"]
@@ -507,14 +509,38 @@ async def get_all_incidents():
             status_code=204, detail="No incidents nearby.")
 
 
-@app.get("/incidents/{incidentid}", response_model=IncidentSchema, tags=["incidents"])
+@app.get("/incidents/{incidentid}", response_model=IncidentSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incident_by_id(incidentid: str):
     query = incidents_table.select().where(incidents_table.c.id == incidentid)
     result = await database.fetch_one(query)
-    return result
+    if result:
+        incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+        return {
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "incidentcategoryid": result["incidentcategoryid"],
+                "incidentcategory": incidentcategory,
+                "incidentcategoryobj": await get_incident_category_by_id(result["incidentcategoryid"]),
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "createdbyobj": await get_user_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            }
 
 
-@app.get("/incidents/name/{incidentid}", tags=["incidents"])
+@app.get("/incidents/name/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incidentname_by_id(incidentid: str):
     query = incidents_table.select().where(incidents_table.c.id == incidentid)
     result = await database.fetch_one(query)
@@ -525,7 +551,7 @@ async def get_incidentname_by_id(incidentid: str):
         return "Unkown Incident"
 
 
-@app.get("/incidents/user/{userid}", tags=["incidents"])
+@app.get("/incidents/user/{userid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incidents_by_userid(userid: str):
     query = incidents_table.select().where(incidents_table.c.createdby == userid)
     results = await database.fetch_all(query)
@@ -539,7 +565,7 @@ async def get_incidents_by_userid(userid: str):
             status_code=204, detail="User has not posted any incidents.")
 
 
-@app.get("/incidents/usercount/{userid}", tags=["incidents"])
+@app.get("/incidents/usercount/{userid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incidentcounts_by_userid(userid: str):
     query = incidents_table.select().where(incidents_table.c.createdby == userid)
     results = await database.fetch_all(query)
@@ -551,7 +577,7 @@ async def get_incidentcounts_by_userid(userid: str):
     return res
 
 
-@app.post("/incidents/register", response_model=IncidentSchema, tags=["incidents"])
+@app.post("/incidents/register", response_model=IncidentSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def register_incident(incident: IncidentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -582,7 +608,7 @@ async def register_incident(incident: IncidentSchema):
     }
 
 
-@app.put("/incidents/update", response_model=IncidentUpdateSchema, tags=["incidents"])
+@app.put("/incidents/update", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def update_incident(incident: IncidentUpdateSchema):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
@@ -608,7 +634,7 @@ async def update_incident(incident: IncidentUpdateSchema):
     return await get_incident_by_id(incident.id)
 
 
-@app.put("/incidents/archive", response_model=IncidentUpdateSchema, tags=["incidents"])
+@app.put("/incidents/archive", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def archive_incident(incidentid: str):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
@@ -622,7 +648,7 @@ async def archive_incident(incidentid: str):
     return await get_incident_by_id(incidentid)
 
 
-@app.put("/incidents/restore", response_model=IncidentUpdateSchema, tags=["incidents"])
+@app.put("/incidents/restore", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def restore_incident(incidentid: str):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
@@ -636,7 +662,7 @@ async def restore_incident(incidentid: str):
     return await get_incident_by_id(incidentid)
 
 
-@app.delete("/incidents/{incidentid}", tags=["incidents"])
+@app.delete("/incidents/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def delete_incident(incidentid: str):
     query = incidents_table.delete().where(incidents_table.c.id == incidentid)
     result = await database.execute(query)
@@ -651,21 +677,23 @@ async def delete_incident(incidentid: str):
 ###################### INCIDENT_CATEGORIES ######################
 
 
-@app.get("/incidentcategories", response_model=List[IncidentCategoriesSchema], tags=["incidentcategories"])
+@app.get("/incidentcategories", response_model=List[IncidentCategoriesSchema], tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def get_all_incident_categories():
     query = incidentcategories_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/incidentcategories/{incidentcategoryid}", response_model=IncidentCategoriesSchema, tags=["incidentcategories"])
+@app.get("/incidentcategories/{incidentcategoryid}", response_model=IncidentCategoriesSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def get_incident_category_by_id(incidentcategoryid: str):
     query = incidentcategories_table.select().where(
         incidentcategories_table.c.id == incidentcategoryid)
     result = await database.fetch_one(query)
-    return result
+    if result:
+        return result
+        
 
 
-@app.get("/incidents/name/{incidentid}", tags=["incidents"])
+@app.get("/incidents/name/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incident_category_name_by_id(incidentcategoryid: str):
     query = incidentcategories_table.select().where(
         incidentcategories_table.c.id == incidentcategoryid)
@@ -677,7 +705,7 @@ async def get_incident_category_name_by_id(incidentcategoryid: str):
         return "Unkown"
 
 
-@app.post("/incidentcategories/register", response_model=IncidentCategoriesSchema, tags=["incidentcategories"])
+@app.post("/incidentcategories/register", response_model=IncidentCategoriesSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def add_incident_category(category: IncidentCategoriesSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -697,7 +725,7 @@ async def add_incident_category(category: IncidentCategoriesSchema):
     }
 
 
-@app.put("/incidentcategories/update", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"])
+@app.put("/incidentcategories/update", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def update_incident_category(category: IncidentCategoriesUpdateSchema):
     gDate = datetime.datetime.now()
     query = incidentcategories_table.update().\
@@ -712,7 +740,7 @@ async def update_incident_category(category: IncidentCategoriesUpdateSchema):
     return await get_incident_category_by_id(category.id)
 
 
-@app.put("/incidentcategories/archive", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"])
+@app.put("/incidentcategories/archive", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def archive_incident_category(incidentcategoryid: str):
     gDate = datetime.datetime.now()
     query = incidentcategories_table.update().\
@@ -726,7 +754,7 @@ async def archive_incident_category(incidentcategoryid: str):
     return await get_incident_category_by_id(incidentcategoryid)
 
 
-@app.put("/incidentcategories/restore", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"])
+@app.put("/incidentcategories/restore", response_model=IncidentCategoriesUpdateSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def restore_incident_category(incidentcategoryid: str):
     gDate = datetime.datetime.now()
     query = incidentcategories_table.update().\
@@ -740,7 +768,7 @@ async def restore_incident_category(incidentcategoryid: str):
     return await get_incident_category_by_id(incidentcategoryid)
 
 
-@app.delete("/incidentcategories/{incidentcategoryid}", tags=["incidentcategories"])
+@app.delete("/incidentcategories/{incidentcategoryid}", tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def delete_incident_category(incidentcategoryid: str):
     query = incidentcategories_table.delete().where(
         incidentcategories_table.c.id == incidentcategoryid)
@@ -756,13 +784,13 @@ async def delete_incident_category(incidentcategoryid: str):
 ###################### SAVED LOCATIONS ######################
 
 
-@app.get("/savedlocations", response_model=List[SavedLocationSchema], tags=["savedlocations"])
+@app.get("/savedlocations", response_model=List[SavedLocationSchema], tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def get_all_saved_locations():
     query = savedlocations_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/savedlocations/{savedlocationid}", response_model=SavedLocationSchema, tags=["savedlocations"])
+@app.get("/savedlocations/{savedlocationid}", response_model=SavedLocationSchema, tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def get_saved_location_by_id(savedlocationid: str):
     query = savedlocations_table.select().where(
         savedlocations_table.c.id == savedlocationid)
@@ -770,7 +798,7 @@ async def get_saved_location_by_id(savedlocationid: str):
     return result
 
 
-@app.get("/savedlocations/name/{savedlocationid}", tags=["savedlocations"])
+@app.get("/savedlocations/name/{savedlocationid}", tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def get_saved_location_name_by_id(savedlocationid: str):
     query = savedlocations_table.select().where(
         savedlocations_table.c.id == savedlocationid)
@@ -782,7 +810,7 @@ async def get_saved_location_name_by_id(savedlocationid: str):
         return "Unkown Incident"
 
 
-@app.get("/savedlocations/user/{userid}", tags=["savedlocations"])
+@app.get("/savedlocations/user/{userid}", tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def get_saved_locations_by_userid(userid: str):
     query = savedlocations_table.select().where(
         savedlocations_table.c.createdby == userid)
@@ -797,7 +825,7 @@ async def get_saved_locations_by_userid(userid: str):
             status_code=204, detail="User does not have any saved locations.")
 
 
-@app.post("/savedlocations/register", response_model=SavedLocationSchema, tags=["savedlocations"])
+@app.post("/savedlocations/register", response_model=SavedLocationSchema, tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def register_saved_location(savedlocation: SavedLocationSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -820,7 +848,7 @@ async def register_saved_location(savedlocation: SavedLocationSchema):
     }
 
 
-@app.put("/savedlocations/update", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+@app.put("/savedlocations/update", response_model=SavedLocationUpdateSchema, tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def update_saved_location(savedlocation: SavedLocationUpdateSchema):
     gDate = datetime.datetime.now()
     query = savedlocations_table.update().\
@@ -837,7 +865,7 @@ async def update_saved_location(savedlocation: SavedLocationUpdateSchema):
     return await get_saved_location_by_id(savedlocation.id)
 
 
-@app.put("/savedlocations/archive", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+@app.put("/savedlocations/archive", response_model=SavedLocationUpdateSchema, tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def archive_saved_location(savedlocationid: str):
     gDate = datetime.datetime.now()
     query = savedlocations_table.update().\
@@ -851,7 +879,7 @@ async def archive_saved_location(savedlocationid: str):
     return await get_saved_location_by_id(savedlocationid)
 
 
-@app.put("/savedlocations/restore", response_model=SavedLocationUpdateSchema, tags=["savedlocations"])
+@app.put("/savedlocations/restore", response_model=SavedLocationUpdateSchema, tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def restore_saved_location(savedlocationid: str):
     gDate = datetime.datetime.now()
     query = savedlocations_table.update().\
@@ -865,7 +893,7 @@ async def restore_saved_location(savedlocationid: str):
     return await get_saved_location_by_id(savedlocationid)
 
 
-@app.delete("/savedlocations/{savedlocationid}", tags=["savedlocations"])
+@app.delete("/savedlocations/{savedlocationid}", tags=["savedlocations"], dependencies=[Depends(jwtBearer())])
 async def delete_saved_location(savedlocationid: str):
     query = savedlocations_table.delete().where(
         savedlocations_table.c.id == savedlocationid)
@@ -881,20 +909,20 @@ async def delete_saved_location(savedlocationid: str):
 ###################### TRIPS ######################
 
 
-@app.get("/trips", response_model=List[TripSchema], tags=["trips"])
+@app.get("/trips", response_model=List[TripSchema], tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_all_trips():
     query = user_trips_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/trips/{savedlocationid}", response_model=TripSchema, tags=["trips"])
+@app.get("/trips/{savedlocationid}", response_model=TripSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_trip_by_id(savedlocationid: str):
     query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     return result
 
 
-@app.get("/trips/name/{savedlocationid}", tags=["trips"])
+@app.get("/trips/name/{savedlocationid}", tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_trip_name_by_id(savedlocationid: str):
     query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
@@ -905,7 +933,7 @@ async def get_trip_name_by_id(savedlocationid: str):
         return "Unkown Trip"
 
 
-@app.get("/trips/user/{userid}", tags=["trips"])
+@app.get("/trips/user/{userid}", tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_trips_by_userid(userid: str):
     query = user_trips_table.select().where(user_trips_table.c.createdby == userid)
     results = await database.fetch_all(query)
@@ -919,7 +947,7 @@ async def get_trips_by_userid(userid: str):
             status_code=204, detail="User does not have any saved locations.")
 
 
-@app.post("/trips/register", response_model=TripSchema, tags=["trips"])
+@app.post("/trips/register", response_model=TripSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def register_trip(trip: TripSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -944,7 +972,7 @@ async def register_trip(trip: TripSchema):
     }
 
 
-@app.put("/trips/update", response_model=TripUpdateSchema, tags=["trips"])
+@app.put("/trips/update", response_model=TripUpdateSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def update_trip(trip: TripUpdateSchema):
     gDate = datetime.datetime.now()
     query = user_trips_table.update().\
@@ -963,7 +991,7 @@ async def update_trip(trip: TripUpdateSchema):
     return await get_trip_by_id(trip.id)
 
 
-@app.put("/trips/archive", response_model=TripUpdateSchema, tags=["trips"])
+@app.put("/trips/archive", response_model=TripUpdateSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def archive_trip(tripid: str):
     gDate = datetime.datetime.now()
     query = user_trips_table.update().\
@@ -977,7 +1005,7 @@ async def archive_trip(tripid: str):
     return await get_trip_by_id(id)
 
 
-@app.put("/trips/restore", response_model=TripUpdateSchema, tags=["trips"])
+@app.put("/trips/restore", response_model=TripUpdateSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def restore_trip(tripid: str):
     gDate = datetime.datetime.now()
     query = user_trips_table.update().\
@@ -991,7 +1019,7 @@ async def restore_trip(tripid: str):
     return await get_trip_by_id(tripid)
 
 
-@app.delete("/trips/{tripid}", tags=["trips"])
+@app.delete("/trips/{tripid}", tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def delete_trip(tripid: str):
     query = user_trips_table.delete().where(user_trips_table.c.id == tripid)
     result = await database.execute(query)
@@ -1006,20 +1034,20 @@ async def delete_trip(tripid: str):
 ###################### DESIGNATIONS ######################
 
 
-@app.get("/designations", response_model=List[DesignationSchema], tags=["designations"])
+@app.get("/designations", response_model=List[DesignationSchema], tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def get_all_designations():
     query = designations_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/designations/{roleid}", response_model=DesignationSchema, tags=["designations"])
+@app.get("/designations/{roleid}", response_model=DesignationSchema, tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def get_designation_by_id(roleid: str):
     query = designations_table.select().where(designations_table.c.id == roleid)
     result = await database.fetch_one(query)
     return result
 
 
-@app.get("/designations/name/{roleid}", tags=["designations"])
+@app.get("/designations/name/{roleid}", tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def get_designationname_by_id(roleid: str):
     query = designations_table.select().where(designations_table.c.id == roleid)
     result = await database.fetch_one(query)
@@ -1030,7 +1058,7 @@ async def get_designationname_by_id(roleid: str):
         return "Unkown Role"
 
 
-@app.post("/designations/register", response_model=DesignationSchema, tags=["designations"])
+@app.post("/designations/register", response_model=DesignationSchema, tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def register_designation(designation: DesignationSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -1052,7 +1080,7 @@ async def register_designation(designation: DesignationSchema):
     }
 
 
-@app.put("/designations/update", response_model=DesignationUpdateSchema, tags=["designations"])
+@app.put("/designations/update", response_model=DesignationUpdateSchema, tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def update_designation(designation: DesignationUpdateSchema):
     gDate = datetime.datetime.now()
     query = designations_table.update().\
@@ -1069,7 +1097,7 @@ async def update_designation(designation: DesignationUpdateSchema):
     return await get_designation_by_id(designation.id)
 
 
-@app.put("/designations/archive", response_model=DesignationUpdateSchema, tags=["designations"])
+@app.put("/designations/archive", response_model=DesignationUpdateSchema, tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def archive_designation(designationid: str):
     gDate = datetime.datetime.now()
     query = designations_table.update().\
@@ -1083,7 +1111,7 @@ async def archive_designation(designationid: str):
     return await get_designation_by_id(designationid)
 
 
-@app.put("/designations/restore", response_model=DesignationUpdateSchema, tags=["designations"])
+@app.put("/designations/restore", response_model=DesignationUpdateSchema, tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def restore_role(designationid: str):
     gDate = datetime.datetime.now()
     query = designations_table.update().\
@@ -1097,7 +1125,7 @@ async def restore_role(designationid: str):
     return await get_designation_by_id(designationid)
 
 
-@app.delete("/designations/{designationid}", tags=["designations"])
+@app.delete("/designations/{designationid}", tags=["designations"], dependencies=[Depends(jwtBearer())])
 async def delete_designation(designationid: str):
     query = designations_table.delete().where(
         designations_table.c.id == designationid)
@@ -1113,13 +1141,13 @@ async def delete_designation(designationid: str):
 ###################### DEPARTMENTS ######################
 
 
-@app.get("/departments", response_model=List[DepartmentSchema], tags=["departments"])
+@app.get("/departments", response_model=List[DepartmentSchema], tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def get_all_departments():
     query = departments_table.select()
     return await database.fetch_all(query)
 
 
-@app.get("/departments/{departmentid}", response_model=DepartmentSchema, tags=["departments"])
+@app.get("/departments/{departmentid}", response_model=DepartmentSchema, tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def get_department_by_id(departmentid: str):
     query = departments_table.select().where(
         departments_table.c.id == departmentid)
@@ -1127,7 +1155,7 @@ async def get_department_by_id(departmentid: str):
     return result
 
 
-@app.get("/departments/name/{departmentid}", tags=["departments"])
+@app.get("/departments/name/{departmentid}", tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def get_department_name_by_id(departmentid: str):
     query = departments_table.select().where(
         departments_table.c.id == departmentid)
@@ -1139,7 +1167,7 @@ async def get_department_name_by_id(departmentid: str):
         return "Unkown Department"
 
 
-@app.post("/departments/register", response_model=DepartmentSchema, tags=["departments"])
+@app.post("/departments/register", response_model=DepartmentSchema, tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def register_departments(department: DepartmentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -1160,7 +1188,7 @@ async def register_departments(department: DepartmentSchema):
     }
 
 
-@app.put("/departments/update", response_model=DepartmentSchema, tags=["departments"])
+@app.put("/departments/update", response_model=DepartmentSchema, tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def update_department(department: DepartmentSchema):
     gDate = datetime.datetime.now()
     query = departments_table.update().\
@@ -1176,7 +1204,7 @@ async def update_department(department: DepartmentSchema):
     return await get_department_by_id(department.id)
 
 
-@app.put("/departments/archive", response_model=DepartmentSchema, tags=["departments"])
+@app.put("/departments/archive", response_model=DepartmentSchema, tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def archive_department(departmentid: str):
     gDate = datetime.datetime.now()
     query = departments_table.update().\
@@ -1190,7 +1218,7 @@ async def archive_department(departmentid: str):
     return await get_department_by_id(departmentid)
 
 
-@app.put("/departments/restore", response_model=DepartmentSchema, tags=["departments"])
+@app.put("/departments/restore", response_model=DepartmentSchema, tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def restore_department(departmentid: str):
     gDate = datetime.datetime.now()
     query = departments_table.update().\
@@ -1204,7 +1232,7 @@ async def restore_department(departmentid: str):
     return await get_department_by_id(departmentid)
 
 
-@app.delete("/departments/{departmentid}", tags=["departments"])
+@app.delete("/departments/{departmentid}", tags=["departments"], dependencies=[Depends(jwtBearer())])
 async def delete_department(departmentid: str):
     query = departments_table.delete().where(
         departments_table.c.id == departmentid)
@@ -1215,12 +1243,12 @@ async def delete_department(departmentid: str):
         "message": "This department has been deleted!"
     }
 
-###################### END SUBJECTS ##################
+###################### END DEPARTMENTS ##################
 
-###################### CLASS LEVELS ######################
+###################### LANGUAGES ######################
 
 
-@app.get("/languages", tags=["languages"])
+@app.get("/languages", tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def get_all_languages():
     query = languages_table.select()
     results = await database.fetch_all(query)
@@ -1230,7 +1258,7 @@ async def get_all_languages():
         raise HTTPException(status_code=204, detail="No languages found")
 
 
-@app.get("/languages/{languageid}", response_model=LanguageSchema, tags=["languages"])
+@app.get("/languages/{languageid}", response_model=LanguageSchema, tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def get_language_by_id(languageid: str):
     query = languages_table.select().where(languages_table.c.id == languageid)
     result = await database.fetch_one(query)
@@ -1240,7 +1268,7 @@ async def get_language_by_id(languageid: str):
         raise HTTPException(status_code=204, detail="No language found")
 
 
-@app.get("/languages/name/{languageid}", tags=["languages"])
+@app.get("/languages/name/{languageid}", tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def get_languagename_by_id(languageid: str):
     query = languages_table.select().where(languages_table.c.id == languageid)
     result = await database.fetch_one(query)
@@ -1251,7 +1279,7 @@ async def get_languagename_by_id(languageid: str):
         return "Unknown Language"
 
 
-@app.post("/languages/register", response_model=LanguageSchema, tags=["languages"])
+@app.post("/languages/register", response_model=LanguageSchema, tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def register_language(language: LanguageSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
@@ -1271,7 +1299,7 @@ async def register_language(language: LanguageSchema):
     }
 
 
-@app.put("/languages/update", response_model=LanguageUpdateSchema, tags=["languages"])
+@app.put("/languages/update", response_model=LanguageUpdateSchema, tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def update_language(language: LanguageUpdateSchema):
     gDate = datetime.datetime.now()
     query = languages_table.update().\
@@ -1286,7 +1314,7 @@ async def update_language(language: LanguageUpdateSchema):
     return await get_language_by_id(language.id)
 
 
-@app.put("/languages/archive", response_model=LanguageUpdateSchema, tags=["languages"])
+@app.put("/languages/archive", response_model=LanguageUpdateSchema, tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def archive_language(languageid: str):
     gDate = datetime.datetime.now()
     query = languages_table.update().\
@@ -1300,7 +1328,7 @@ async def archive_language(languageid: str):
     return await get_language_by_id(languageid)
 
 
-@app.put("/languages/restore", response_model=LanguageUpdateSchema, tags=["languages"])
+@app.put("/languages/restore", response_model=LanguageUpdateSchema, tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def restore_language(languageid: str):
     gDate = datetime.datetime.now()
     query = languages_table.update().\
@@ -1314,7 +1342,7 @@ async def restore_language(languageid: str):
     return await get_language_by_id(languageid)
 
 
-@app.delete("/languages/{languageid}", tags=["languages"])
+@app.delete("/languages/{languageid}", tags=["languages"], dependencies=[Depends(jwtBearer())])
 async def delete_language(languageid: str):
     query = languages_table.delete().where(languages_table.c.id == languageid)
     result = await database.execute(query)
