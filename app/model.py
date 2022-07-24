@@ -93,6 +93,24 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+reports_table = sqlalchemy.Table(
+    "reports",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("name"         , sqlalchemy.String),
+    sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("isemergency"  , sqlalchemy.Boolean),
+    sqlalchemy.Column("address"      , sqlalchemy.String),
+    sqlalchemy.Column("addresslat"   , sqlalchemy.Float),
+    sqlalchemy.Column("addresslong"  , sqlalchemy.Float),
+    sqlalchemy.Column("attachment"   , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+)
+
 savedlocations_table = sqlalchemy.Table(
     "savedlocations",
     metadata,
@@ -520,6 +538,84 @@ class IncidentDeleteSchema(BaseModel):
         }
 
 ######################## END INCIDENT #########################
+
+######################## REPORT #############################
+
+class ReportSchema(BaseModel):
+    id                  : str = Field(default=None)
+    name                : str = Field(default=None)
+    description         : str = Field(default= None)
+    isemergency         : bool = Field(default= False)
+    address             : str = Field(default= None)
+    addresslat          : float = Field(default= 0.22222)
+    addresslong         : float = Field(default= 0.32888)
+    attachment          : str = Field(default=None)
+    createdby           : Optional[str] = None
+    datecreated         : datetime.datetime
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "report_demo": {
+                "id" : "---",
+                "name": "Report",
+                "description": "Report Details",
+                "address": "Kampala, Uganda",
+                "addresslat": 0.32222,
+                "addresslong": 32.3555,
+                "isemergency": False,
+                "attachment": "File",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ReportUpdateSchema(BaseModel):
+    id                  : str = Field(default=None)
+    name                : str = Field(default=None)
+    description         : str = Field(default= None)
+    isemergency         : bool = Field(default= False)
+    address             : str = Field(default= None)
+    addresslat          : float = Field(default= 0.22222)
+    addresslong         : float = Field(default= 0.32888)
+    attachment          : str = Field(default=None)
+    dateupdated         : Optional[datetime.datetime] = None
+    updatedby           : Optional[str] = None
+    status              : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "report_demo": {
+                "id" : "---",
+                "name": "Report",
+                "description": "Report Details",
+                "address": "Kampala, Uganda",
+                "addresslat": 0.32222,
+                "addresslong": 32.3555,
+                "isemergency": False,
+                "attachment": "File",
+                "dateupdated": datetime.datetime,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class ReportDeleteSchema(BaseModel):
+    id : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "report": {
+                "id" : "---"
+            }
+        }
+
+######################## END REPORT #########################
 
 ##################### SAVED LOCATIONS ###########################
 class SavedLocationSchema(BaseModel):

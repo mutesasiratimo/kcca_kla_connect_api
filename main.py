@@ -59,9 +59,11 @@ async def send_email_asynchronous(title: str, body: str, to: EmailStr):
     return 'Success'
 
 # @app.get('/send-email/backgroundtasks', tags=["mailer"])
+
+
 def send_email_backgroundtasks(background_tasks: BackgroundTasks):
-    send_email_background(background_tasks, 'Hello World',   
-    'mutestimo72@gmail.com', {'title': 'Hello World', 'name':       'John Doe'})
+    send_email_background(background_tasks, 'Hello World',
+                          'mutestimo72@gmail.com', {'title': 'Hello World', 'name':       'John Doe'})
     return 'Success'
 
 ################ END EMAILS #################
@@ -173,6 +175,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
         raise HTTPException(status_code=401, detail='Not authorized')
     # else:
     #     raise HTTPException(status_code=404, detail='User does not exist')
+
 
 @app.post("/user/login/mobile", tags=["user"])
 async def user_login(user: UserLoginSchema = Body(default=None)):
@@ -301,8 +304,6 @@ async def register_user(user: UserSignUpSchema):
             "token": signJWT(user.username),
             "status": "1"
         }
-        
-        
 
 
 @app.put("/users/update", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
@@ -327,6 +328,7 @@ async def update_user(user: UserUpdateSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
+
 @app.get("/users/resetpassword/{email}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def reset_password(email: str):
     # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
@@ -339,8 +341,8 @@ async def reset_password(email: str):
         userid = result["id"]
         otp = await generate_otp(userid)
         print(otp)
-        await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp +"\n", email)
-        
+        await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email)
+
         return {
             "otp": otp
         }
@@ -386,6 +388,7 @@ async def delete_user(userid: str):
         "status": True,
         "message": "This user has been deleted!"
     }
+
 
 @app.get("/users/activate/{userid}", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def activate_user(userid: str):
@@ -437,7 +440,8 @@ async def verify_otp(otp_obj: OtpVerifySchema):
     resultuser = await database.fetch_one(queryuser)
     if resultuser:
         userid = resultuser["id"]
-        queryotp = otps_table.select().where(otps_table.c.otpcode == otp_obj.otpcode and otps_table.c.userid == userid)
+        queryotp = otps_table.select().where(otps_table.c.otpcode ==
+                                             otp_obj.otpcode and otps_table.c.userid == userid)
         resultotp = await database.fetch_one(queryotp)
         if resultotp:
             queryotppass = otps_table.update().\
@@ -447,12 +451,13 @@ async def verify_otp(otp_obj: OtpVerifySchema):
                     dateupdated=gDate
             )
             await database.execute(queryotppass)
-            
+
             await update_password(userid, otp_obj.password)
             return "Password updated successfully"
     else:
         raise HTTPException(
             status_code=401, detail="Invalid OTP Code.")
+
 
 async def update_password(userid: str, password: str):
     gDate = datetime.datetime.now()
@@ -516,28 +521,28 @@ async def get_incident_by_id(incidentid: str):
     if result:
         incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
         return {
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": result["incidentcategoryid"],
-                "incidentcategory": incidentcategory,
-                "incidentcategoryobj": await get_incident_category_by_id(result["incidentcategoryid"]),
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "isemergency": result["isemergency"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "createdbyobj": await get_user_by_id(result["createdby"]),
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            }
+            "id": result["id"],
+            "name": result["name"],
+            "description": result["description"],
+            "incidentcategoryid": result["incidentcategoryid"],
+            "incidentcategory": incidentcategory,
+            "incidentcategoryobj": await get_incident_category_by_id(result["incidentcategoryid"]),
+            "address": result["address"],
+            "addresslat": result["addresslat"],
+            "addresslong": result["addresslong"],
+            "isemergency": result["isemergency"],
+            "file1": result["file1"],
+            "file2": result["file2"],
+            "file3": result["file3"],
+            "file4": result["file4"],
+            "file5": result["file5"],
+            "datecreated": result["datecreated"],
+            "createdby": result["createdby"],
+            "createdbyobj": await get_user_by_id(result["createdby"]),
+            "dateupdated": result["dateupdated"],
+            "updatedby": result["updatedby"],
+            "status": result["status"]
+        }
 
 
 @app.get("/incidents/name/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
@@ -674,6 +679,186 @@ async def delete_incident(incidentid: str):
 
 ###################### END INCIDENTS ##################
 
+##################### REPORTS ######################
+
+
+@app.get("/reports",  tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def get_all_reports():
+    query = reports_table.select().order_by(desc(reports_table.c.datecreated))
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append({
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "attachment": result["attachment"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "createdbyobj": await get_user_by_id(result["createdby"]),
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="No incidents nearby.")
+
+
+@app.get("/reports/{reportid}", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def get_report_by_id(reportid: str):
+    query = reports_table.select().where(reports_table.c.id == reportid)
+    result = await database.fetch_one(query)
+    if result:
+        return {
+            "id": result["id"],
+            "name": result["name"],
+            "description": result["description"],
+            "address": result["address"],
+            "addresslat": result["addresslat"],
+            "addresslong": result["addresslong"],
+            "isemergency": result["isemergency"],
+            "attachment": result["attachment"],
+            "datecreated": result["datecreated"],
+            "createdby": result["createdby"],
+            "createdbyobj": await get_user_by_id(result["createdby"]),
+            "dateupdated": result["dateupdated"],
+            "updatedby": result["updatedby"],
+            "status": result["status"]
+        }
+
+
+@app.get("/reports/name/{reportid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def get_reportname_by_id(reportid: str):
+    query = reports_table.select().where(reports_table.c.id == reportid)
+    result = await database.fetch_one(query)
+    if result:
+        fullname = result["name"]
+        return fullname
+    else:
+        return "Unkown Report"
+
+
+@app.get("/reports/user/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def get_reports_by_userid(userid: str):
+    query = reports_table.select().where(reports_table.c.createdby == userid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append(await get_incident_by_id(result["id"]))
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="User has not posted any reports.")
+
+
+@app.get("/reports/usercount/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def get_reportcounts_by_userid(userid: str):
+    query = reports_table.select().where(reports_table.c.createdby == userid)
+    results = await database.fetch_all(query)
+    res = 0
+    if results:
+        for result in results:
+            res += 1
+
+    return res
+
+
+@app.post("/reports/register", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def register_report(report: ReportSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = reports_table.insert().values(
+        id=gID,
+        name=report.name,
+        description=report.description,
+        isemergency=report.isemergency,
+        address=report.address,
+        addresslat=report.addresslat,
+        addresslong=report.addresslong,
+        attachment=report.attachment,
+        createdby=report.createdby,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **report.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/reports/update", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def update_report(report: ReportUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = reports_table.update().\
+        where(reports_table.c.id == report.id).\
+        values(
+            name=report.name,
+            description=report.description,
+            isemergency=report.isemergency,
+            address=report.address,
+            addresslat=report.addresslat,
+            addresslong=report.addresslong,
+            attachment=report.attachment,
+            createdby=report.createdby,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_report_by_id(report.id)
+
+
+@app.put("/reports/archive", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def archive_report(reportid: str):
+    gDate = datetime.datetime.now()
+    query = reports_table.update().\
+        where(reports_table.c.id == reportid).\
+        values(
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_report_by_id(reportid)
+
+
+@app.put("/reports/restore", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def restore_report(incidentid: str):
+    gDate = datetime.datetime.now()
+    query = reports_table.update().\
+        where(reports_table.c.id == incidentid).\
+        values(
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_report_by_id(incidentid)
+
+
+@app.delete("/reports/{reportid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def delete_report(reportid: str):
+    query = reports_table.delete().where(reports_table.c.id == reportid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This report has been deleted!"
+    }
+
+###################### END REPORTS ##################
+
+
 ###################### INCIDENT_CATEGORIES ######################
 
 
@@ -690,7 +875,6 @@ async def get_incident_category_by_id(incidentcategoryid: str):
     result = await database.fetch_one(query)
     if result:
         return result
-        
 
 
 @app.get("/incidents/name/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
@@ -917,14 +1101,16 @@ async def get_all_trips():
 
 @app.get("/trips/{savedlocationid}", response_model=TripSchema, tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_trip_by_id(savedlocationid: str):
-    query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
+    query = user_trips_table.select().where(
+        user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     return result
 
 
 @app.get("/trips/name/{savedlocationid}", tags=["trips"], dependencies=[Depends(jwtBearer())])
 async def get_trip_name_by_id(savedlocationid: str):
-    query = user_trips_table.select().where(user_trips_table.c.id == savedlocationid)
+    query = user_trips_table.select().where(
+        user_trips_table.c.id == savedlocationid)
     result = await database.fetch_one(query)
     if result:
         fullname = result["name"]
@@ -959,7 +1145,7 @@ async def register_trip(trip: TripSchema):
         destinationaddress=trip.destinationaddress,
         destinationlat=trip.destinationlat,
         destinationlong=trip.destinationlong,
-        createdby = trip.createdby,
+        createdby=trip.createdby,
         datecreated=gDate,
         status="1"
     )
