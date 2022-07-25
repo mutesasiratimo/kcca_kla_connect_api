@@ -706,7 +706,7 @@ async def delete_incident(incidentid: str):
 
 @app.get("/reports",  tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def get_all_reports():
-    query = reports_table.select().order_by(desc(reports_table.c.datecreated))
+    query = kccareports_table.select().order_by(desc(kccareports_table.c.datecreated))
     results = await database.fetch_all(query)
     res = []
     if results:
@@ -715,7 +715,7 @@ async def get_all_reports():
                 "id": result["id"],
                 "name": result["name"],
                 "description": result["description"],
-                "type": result["type"],
+                "reporttype": result["reporttype"],
                 "reference": result["reference"],
                 "address": result["address"],
                 "addresslat": result["addresslat"],
@@ -740,7 +740,7 @@ async def get_all_reports():
 @app.get("/reports/count", tags=["reports"])
 async def get_reports_count():
     counter = 0
-    query = feedback_table.select()
+    query = kccareports_table.select()
     results = await database.fetch_all(query)
     if results:
         for result in results:
@@ -751,14 +751,14 @@ async def get_reports_count():
 
 @app.get("/reports/{reportid}", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def get_report_by_id(reportid: str):
-    query = reports_table.select().where(reports_table.c.id == reportid)
+    query = kccareports_table.select().where(kccareports_table.c.id == reportid)
     result = await database.fetch_one(query)
     if result:
         return {
             "id": result["id"],
             "name": result["name"],
             "description": result["description"],
-            "type": result["type"],
+            "reporttype": result["reporttype"],
             "reference": result["reference"],
             "address": result["address"],
             "addresslat": result["addresslat"],
@@ -779,7 +779,7 @@ async def get_report_by_id(reportid: str):
 
 @app.get("/reports/user/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def get_reports_by_userid(userid: str):
-    query = reports_table.select().where(reports_table.c.createdby == userid)
+    query = kccareports_table.select().where(kccareports_table.c.createdby == userid)
     results = await database.fetch_all(query)
     res = []
     if results:
@@ -793,7 +793,7 @@ async def get_reports_by_userid(userid: str):
 
 @app.get("/reports/usercount/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def get_reportcounts_by_userid(userid: str):
-    query = reports_table.select().where(reports_table.c.createdby == userid)
+    query = kccareports_table.select().where(kccareports_table.c.createdby == userid)
     results = await database.fetch_all(query)
     res = 0
     if results:
@@ -807,7 +807,7 @@ async def get_reportcounts_by_userid(userid: str):
 async def register_report(report: ReportSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
-    query = reports_table.insert().values(
+    query = kccareports_table.insert().values(
         id=gID,
         name=report.name,
         description=report.description,
@@ -834,8 +834,8 @@ async def register_report(report: ReportSchema):
 @app.put("/reports/update", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def update_report(report: ReportUpdateSchema):
     gDate = datetime.datetime.now()
-    query = reports_table.update().\
-        where(reports_table.c.id == report.id).\
+    query = kccareports_table.update().\
+        where(kccareports_table.c.id == report.id).\
         values(
             name=report.name,
             description=report.description,
@@ -857,8 +857,8 @@ async def update_report(report: ReportUpdateSchema):
 @app.put("/reports/archive", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def archive_report(reportid: str):
     gDate = datetime.datetime.now()
-    query = reports_table.update().\
-        where(reports_table.c.id == reportid).\
+    query = kccareports_table.update().\
+        where(kccareports_table.c.id == reportid).\
         values(
             status="0",
             dateupdated=gDate
@@ -871,8 +871,8 @@ async def archive_report(reportid: str):
 @app.put("/reports/restore", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def restore_report(incidentid: str):
     gDate = datetime.datetime.now()
-    query = reports_table.update().\
-        where(reports_table.c.id == incidentid).\
+    query = kccareports_table.update().\
+        where(kccareports_table.c.id == incidentid).\
         values(
             status="1",
             dateupdated=gDate
@@ -884,7 +884,7 @@ async def restore_report(incidentid: str):
 
 @app.delete("/reports/{reportid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def delete_report(reportid: str):
-    query = reports_table.delete().where(reports_table.c.id == reportid)
+    query = kccareports_table.delete().where(kccareports_table.c.id == reportid)
     result = await database.execute(query)
 
     return {
