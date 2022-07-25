@@ -127,9 +127,10 @@ async def get_user_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
     result = await database.fetch_one(query)
     if result:
-        print(result["firstname"])
+        # print(result["firstname"])
         return result
     else:
+        return{"error": "Unkown User"}
         raise HTTPException(status_code=404, detail='User not found')
 
 
