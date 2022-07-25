@@ -111,6 +111,34 @@ reports_table = sqlalchemy.Table(
     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
 )
 
+feedback_table = sqlalchemy.Table(
+    "feedback",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("postid"       , sqlalchemy.String),
+    sqlalchemy.Column("comment"      , sqlalchemy.String),
+    sqlalchemy.Column("attachment"   , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
+)
+
+likes_table = sqlalchemy.Table(
+    "likes",
+    metadata,
+    sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("postid"       , sqlalchemy.String),
+    sqlalchemy.Column("isliked"      , sqlalchemy.Boolean),
+    sqlalchemy.Column("userid"       , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("createdby"    , sqlalchemy.String),
+    sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
+    sqlalchemy.Column("updatedby"    , sqlalchemy.String),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
+)
+
 savedlocations_table = sqlalchemy.Table(
     "savedlocations",
     metadata,
@@ -612,6 +640,56 @@ class ReportDeleteSchema(BaseModel):
         the_schema = {
             "report": {
                 "id" : "---"
+            }
+        }
+
+class CommentSchema(BaseModel):
+    id          : str = Field(default=None)
+    postid      : str = Field(default=None)
+    comment     : str = Field(default= None)
+    attachment  : str = Field(default= None)
+    datecreated : Optional[datetime.datetime] = None
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "comment_demo": {
+                "id" : "---",
+                "postid": "ID",
+                "comment": "Comment",
+                "attachment": "File",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
+            }
+        }
+
+class LikeSchema(BaseModel):
+    id          : str = Field(default=None)
+    postid      : str = Field(default=None)
+    userid      : str = Field(default= None)
+    datecreated : datetime.datetime
+    createdby   : Optional[str] = None
+    dateupdated : Optional[datetime.datetime] = None
+    updatedby   : Optional[str] = None
+    status      : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "like_demo": {
+                "id" : "---",
+                "postid": "ID",
+                "userid": "ID",
+                "datecreated": datetime.datetime,
+                "createdby": "1",
+                "dateupdated": None,
+                "updatedby": None,
+                "status": "1"
             }
         }
 

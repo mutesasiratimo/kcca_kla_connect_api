@@ -80,6 +80,17 @@ async def get_all_users():
     # else:
     #     raise HTTPException(status_code=204, detail='No users found')
 
+@app.get("/users/count", tags=["user"])
+async def get_users_count():
+    counter = 0
+    query = users_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
 
 @app.get("/get_citizens", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_all_citizens():
@@ -513,6 +524,16 @@ async def get_all_incidents():
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
 
+@app.get("/incidents/count", tags=["incidents"])
+async def get_incidents_count():
+    counter = 0
+    query = incidents_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
 
 @app.get("/incidents/{incidentid}", response_model=IncidentSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incident_by_id(incidentid: str):
@@ -698,6 +719,9 @@ async def get_all_reports():
                 "addresslong": result["addresslong"],
                 "isemergency": result["isemergency"],
                 "attachment": result["attachment"],
+                "likes": await get_post_likes_count_by_id(result["id"]),
+                "dislikes": await get_post_dislikes_count_by_id(result["id"]),
+                "commentscount": await get_post_comments_count_by_id(result["id"]),
                 "datecreated": result["datecreated"],
                 "createdby": result["createdby"],
                 "createdbyobj": await get_user_by_id(result["createdby"]),
@@ -709,6 +733,17 @@ async def get_all_reports():
     else:
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
+
+@app.get("/reports/count", tags=["reports"])
+async def get_reports_count():
+    counter = 0
+    query = feedback_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
 
 
 @app.get("/reports/{reportid}", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
@@ -725,6 +760,9 @@ async def get_report_by_id(reportid: str):
             "addresslong": result["addresslong"],
             "isemergency": result["isemergency"],
             "attachment": result["attachment"],
+            "likes": await get_post_likes_count_by_id(result["id"]),
+            "dislikes": await get_post_dislikes_count_by_id(result["id"]),
+            "commentscount": await get_post_comments_count_by_id(result["id"]),
             "datecreated": result["datecreated"],
             "createdby": result["createdby"],
             "createdbyobj": await get_user_by_id(result["createdby"]),
@@ -732,17 +770,6 @@ async def get_report_by_id(reportid: str):
             "updatedby": result["updatedby"],
             "status": result["status"]
         }
-
-
-@app.get("/reports/name/{reportid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def get_reportname_by_id(reportid: str):
-    query = reports_table.select().where(reports_table.c.id == reportid)
-    result = await database.fetch_one(query)
-    if result:
-        fullname = result["name"]
-        return fullname
-    else:
-        return "Unkown Report"
 
 
 @app.get("/reports/user/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
@@ -856,6 +883,176 @@ async def delete_report(reportid: str):
         "message": "This report has been deleted!"
     }
 
+
+@app.post("/reports/comments", response_model=CommentSchema, tags=["posts"])
+async def add_comment(comment: CommentSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = feedback_table.insert().values(
+        id=gID,
+        comment=comment.comment,
+        postid=comment.postid,
+        attachment=comment.attachment,
+        createdby=comment.createdby,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **comment.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+@app.delete("/reports/{feedbackid}", tags=["reports"])
+async def delete_comment(feedbackid: str):
+    query = feedback_table.delete().where(feedback_table.c.id == feedbackid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This feedback has been deleted!"
+    }
+
+@app.get("/reports/comments/{postid}", tags=["reports"])
+async def get_post_comments_by_id(postid: str):
+    query = feedback_table.select().where(feedback_table.c.postid == postid)
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append({
+            "id": result["id"],
+            "postid": result["postid"],
+            "comment": result["comment"],
+            "attachment": result["attachment"],
+            "datecreated": result["datecreated"],
+            "createdby": await get_usernames_by_id(result["createdby"]),
+            "dateupdated": result["dateupdated"],
+            "updatedby": result["updatedby"],
+            "status": result["status"]
+            })
+        
+        return res
+    else:
+        raise HTTPException(status_code=204, detail='No comments found')
+
+@app.get("/reports/commentscount/{postid}", tags=["reports"])
+async def get_post_comments_count_by_id(postid: str):
+    counter = 0
+    query = feedback_table.select().where(feedback_table.c.postid == postid)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.post("/reports/like", tags=["reports"])
+async def like_post(like: LikeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
+    resultlikes = await database.fetch_all(querylikes)
+    if resultlikes:
+        query = likes_table.update().\
+        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
+        values(
+            userid=like.userid,
+            postid=like.postid,
+            isliked=True,
+            updatedby=like.userid,
+            status="1",
+            dateupdated=gDate
+    )
+    else:
+        query = likes_table.insert().values(
+            id=gID,
+            userid=like.userid,
+            postid=like.postid,
+            isliked=True,
+            createdby=like.userid,
+            datecreated=gDate,
+            status="1"
+        )
+
+    await database.execute(query)
+    return {
+        **like.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+@app.post("/reports/dislike", tags=["reports"])
+async def dislike_post(like: LikeSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
+    resultlikes = await database.fetch_all(querylikes)
+    if resultlikes:
+        query = likes_table.update().\
+        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
+        values(
+            userid=like.userid,
+            postid=like.postid,
+            isliked=False,
+            updatedby=like.userid,
+            status="1",
+            dateupdated=gDate
+    )
+    else:
+        query = likes_table.insert().values(
+            id=gID,
+            userid=like.userid,
+            postid=like.postid,
+            isliked=False,
+            createdby=like.userid,
+            datecreated=gDate,
+            status="1"
+        )
+
+    await database.execute(query)
+    return {
+        **like.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+@app.get("/reports/likes/{postid}", tags=["reports"])
+async def get_post_likes_count_by_id(postid: str):
+    counter = 0
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == True)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.get("/reports/dislikes/{postid}", tags=["reports"])
+async def get_post_dislikes_count_by_id(postid: str):
+    counter = 0
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == False)
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
+
+@app.post("/reports/userliked/{postid}/{userid}", tags=["reports"])
+async def check_if_user_liked_post(postid: str, userid: str):
+    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.userid == userid)
+    result = await database.fetch_one(query)
+    if result:
+        if(result["isliked"]):
+            return "yes"
+        else:
+            return "no"
+    else:
+        return "none"
+
 ###################### END REPORTS ##################
 
 
@@ -867,6 +1064,16 @@ async def get_all_incident_categories():
     query = incidentcategories_table.select()
     return await database.fetch_all(query)
 
+@app.get("/incidentcategories/count", tags=["incidentcategories"])
+async def get_incidentcategories_count():
+    counter = 0
+    query = incidentcategories_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    return counter
 
 @app.get("/incidentcategories/{incidentcategoryid}", response_model=IncidentCategoriesSchema, tags=["incidentcategories"], dependencies=[Depends(jwtBearer())])
 async def get_incident_category_by_id(incidentcategoryid: str):
