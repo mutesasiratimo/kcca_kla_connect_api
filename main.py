@@ -905,7 +905,7 @@ async def add_comment(comment: CommentSchema):
         "datecreated": gDate
     }
 
-@app.delete("/reports/{feedbackid}", tags=["reports"])
+@app.delete("/reports/comments/{feedbackid}", tags=["reports"])
 async def delete_comment(feedbackid: str):
     query = feedback_table.delete().where(feedback_table.c.id == feedbackid)
     result = await database.execute(query)
