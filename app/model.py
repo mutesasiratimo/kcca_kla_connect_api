@@ -94,11 +94,13 @@ incidents_table = sqlalchemy.Table(
 )
 
 reports_table = sqlalchemy.Table(
-    "reports",
+    "kccareports",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("reporttype"         , sqlalchemy.String),
+    sqlalchemy.Column("reference"    , sqlalchemy.String),
     sqlalchemy.Column("isemergency"  , sqlalchemy.Boolean),
     sqlalchemy.Column("address"      , sqlalchemy.String),
     sqlalchemy.Column("addresslat"   , sqlalchemy.Float),
@@ -573,6 +575,8 @@ class ReportSchema(BaseModel):
     id                  : str = Field(default=None)
     name                : str = Field(default=None)
     description         : str = Field(default= None)
+    reporttype                : str = Field(default= None)
+    reference           : str = Field(default= None)
     isemergency         : bool = Field(default= False)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
@@ -591,6 +595,8 @@ class ReportSchema(BaseModel):
                 "name": "Report",
                 "description": "Report Details",
                 "address": "Kampala, Uganda",
+                "reporttype": "Road Works",
+                "reference": "REP-0001-27-07",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
                 "isemergency": False,
@@ -606,7 +612,9 @@ class ReportSchema(BaseModel):
 class ReportUpdateSchema(BaseModel):
     id                  : str = Field(default=None)
     name                : str = Field(default=None)
-    description         : str = Field(default= None)
+    description         : str = Field(default= None)    
+    reporttype                : str = Field(default= None)
+    reference           : str = Field(default= None)
     isemergency         : bool = Field(default= False)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
@@ -622,6 +630,8 @@ class ReportUpdateSchema(BaseModel):
                 "id" : "---",
                 "name": "Report",
                 "description": "Report Details",
+                "reporttype": "Road Works",
+                "reference": "REP-0001-27-07",
                 "address": "Kampala, Uganda",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
