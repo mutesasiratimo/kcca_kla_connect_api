@@ -131,7 +131,7 @@ async def get_user_by_id(userid: str):
         return result
     else:
         return{"error": "Unkown User"}
-        raise HTTPException(status_code=404, detail='User not found')
+        # raise HTTPException(status_code=404, detail='User not found')
 
 
 @app.get("/users/name/{userid}", tags=["user"], dependencies=[Depends(jwtBearer())])
