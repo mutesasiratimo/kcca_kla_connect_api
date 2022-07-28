@@ -103,7 +103,7 @@ async def get_incidents_stats():
     citizensresults = await database.fetch_all(citizensquery)
     if citizensresults:
         for result in citizensresults:
-            citizenscounter += 1
+            citizens += 1
     
     adminquery = users_table.select().where(users_table.c.isadmin == True)
     adminresults = await database.fetch_all(adminquery)
