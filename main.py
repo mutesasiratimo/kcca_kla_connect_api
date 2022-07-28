@@ -80,7 +80,7 @@ async def get_all_users():
     # else:
     #     raise HTTPException(status_code=204, detail='No users found')
 
-@app.get("/incidents/stats", tags=["incidents"])
+@app.get("/users/stats", tags=["user"])
 async def get_incidents_stats():
     citizens = 0
     engineers = 0
