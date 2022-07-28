@@ -70,13 +70,33 @@ def send_email_backgroundtasks(background_tasks: BackgroundTasks):
 
 ################### USERS ###################
 
+# response_model=List[UserSchema],
 
-@app.get("/get_users", response_model=List[UserSchema], tags=["user"])
+@app.get("/get_users",  tags=["user"])
 async def get_all_users():
     query = users_table.select()
-    result = await database.fetch_all(query)
-    # if result:
-    return result
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            res.append({
+                    "userid": result["id"],
+                    "firstname": result["firstname"],
+                    "lastname": result["lastname"],
+                    "firstname": result["firstname"],
+                    "username": result["username"],
+                    "email": result["email"],
+                    "gender": result["gender"],
+                    "phone": result["phone"],                    
+                    "mobile": result["mobile"],
+                    "issuperadmin": result["issuperadmin"],
+                    "isadmin": result["isadmin"],
+                    "issuperadmin": result["issuperadmin"],
+                    "isclerk": result["isclerk"],
+                    "iscitizen": result["iscitizen"],
+                    "status": result["status"]
+                    })
+    return res
     # else:
     #     raise HTTPException(status_code=204, detail='No users found')
 
