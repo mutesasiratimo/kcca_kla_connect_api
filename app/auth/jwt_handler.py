@@ -14,7 +14,7 @@ def signJWT(userID : str):
     """ Function for signing the JWT String"""
     payload = {
        "userID": userID,
-       "expiry": int(time.time() + 600)
+       "expiry": int(time.time() + 60000)
     }
     token  = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token_response(token)

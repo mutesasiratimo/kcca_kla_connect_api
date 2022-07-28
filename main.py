@@ -80,6 +80,51 @@ async def get_all_users():
     # else:
     #     raise HTTPException(status_code=204, detail='No users found')
 
+@app.get("/incidents/stats", tags=["incidents"])
+async def get_incidents_stats():
+    citizens = 0
+    engineers = 0
+    clerks = 0
+    admins = 0
+    counter = 0
+    query = users_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    clerkquery = users_table.select().where(users_table.c.isclerk == True)
+    clerkresults = await database.fetch_all(clerkquery)
+    if clerkresults:
+        for result in clerkresults:
+            clerks += 1
+        
+    citizensquery = users_table.select().where(users_table.c.iscitizen == True)
+    citizensresults = await database.fetch_all(citizensquery)
+    if citizensresults:
+        for result in citizensresults:
+            citizenscounter += 1
+    
+    adminquery = users_table.select().where(users_table.c.isadmin == True)
+    adminresults = await database.fetch_all(adminquery)
+    if adminresults:
+        for result in adminresults:
+            admins += 1
+
+    # engineerquery = users_table.select().where(incidents_table.c.status == "3")
+    # engineerresults = await database.fetch_all(engineerquery)
+    # if engineerresults:
+    #     for result in engineerresults:
+    #         engineers += 1
+
+    return {
+        "citizens": citizens,
+        "clerks": clerks,
+        "admins": admins,
+        "engineers": engineers,
+        "total": counter
+    }
+
 @app.get("/users/count", tags=["user"])
 async def get_users_count():
     counter = 0
@@ -111,6 +156,15 @@ async def get_all_clerks():
     else:
         raise HTTPException(status_code=204, detail='No clerks found')
 
+
+@app.get("/get_engineers", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
+async def get_all_engineers():
+    query = users_table.select().where(users_table.c.isengineer == True)
+    result = await database.fetch_all(query)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=204, detail='No engineers found')
 
 @app.get("/get_admins", response_model=List[UserSchema], tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_all_admins():
@@ -535,6 +589,51 @@ async def get_incidents_count():
             counter += 1
 
     return counter
+
+@app.get("/incidents/stats", tags=["incidents"])
+async def get_incidents_stats():
+    approvedcounter = 0
+    resolvedcounter = 0
+    rejectedcounter = 0
+    unapprovedcounter = 0
+    counter = 0
+    query = incidents_table.select()
+    results = await database.fetch_all(query)
+    if results:
+        for result in results:
+            counter += 1
+
+    unapprovedquery = incidents_table.select().where(incidents_table.c.status == "0")
+    unapprovedresults = await database.fetch_all(unapprovedquery)
+    if unapprovedresults:
+        for result in unapprovedresults:
+            unapprovedcounter += 1
+        
+    approvedquery = incidents_table.select().where(incidents_table.c.status == "1")
+    approvedresults = await database.fetch_all(approvedquery)
+    if approvedresults:
+        for result in approvedresults:
+            approvedcounter += 1
+    
+    rejectedquery = incidents_table.select().where(incidents_table.c.status == "2")
+    rejectedresults = await database.fetch_all(rejectedquery)
+    if rejectedresults:
+        for result in rejectedresults:
+            rejectedcounter += 1
+
+    resolvedquery = incidents_table.select().where(incidents_table.c.status == "3")
+    resolvedresults = await database.fetch_all(resolvedquery)
+    if resolvedresults:
+        for result in resolvedresults:
+            resolvedcounter += 1
+
+    return {
+        "unapproved": unapprovedcounter,
+        "approved": approvedcounter,
+        "resolved": resolvedcounter,
+        "rejected": rejectedcounter,
+        "total": counter
+    }
 
 @app.get("/incidents/{incidentid}", response_model=IncidentSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incident_by_id(incidentid: str):
