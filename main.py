@@ -601,6 +601,146 @@ async def get_all_incidents():
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
 
+@app.get("/incidents/approved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def get_approved_incidents():
+    query = incidents_table.select().where(incidents_table.c.status == "1").order_by(desc(incidents_table.c.datecreated))
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+            # incidentcategory = "Unkown"
+            res.append({
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "incidentcategoryid": result["incidentcategoryid"],
+                "incidentcategory": incidentcategory,
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="No approved incidents.")
+
+@app.get("/incidents/unapproved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def get_unapproved_incidents():
+    query = incidents_table.select().where(incidents_table.c.status == "0").order_by(desc(incidents_table.c.datecreated))
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+            # incidentcategory = "Unkown"
+            res.append({
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "incidentcategoryid": result["incidentcategoryid"],
+                "incidentcategory": incidentcategory,
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="No unapproved incidents.")
+
+@app.get("/incidents/resolved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def get_resolved_incidents():
+    query = incidents_table.select().where(incidents_table.c.status == "2").order_by(desc(incidents_table.c.datecreated))
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+            # incidentcategory = "Unkown"
+            res.append({
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "incidentcategoryid": result["incidentcategoryid"],
+                "incidentcategory": incidentcategory,
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="No incidents nearby.")
+
+@app.get("/incidents/rejected",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def get_rejected_incidents():
+    query = incidents_table.select().where(incidents_table.c.status == "3").order_by(desc(incidents_table.c.datecreated))
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
+            # incidentcategory = "Unkown"
+            res.append({
+                "id": result["id"],
+                "name": result["name"],
+                "description": result["description"],
+                "incidentcategoryid": result["incidentcategoryid"],
+                "incidentcategory": incidentcategory,
+                "address": result["address"],
+                "addresslat": result["addresslat"],
+                "addresslong": result["addresslong"],
+                "isemergency": result["isemergency"],
+                "file1": result["file1"],
+                "file2": result["file2"],
+                "file3": result["file3"],
+                "file4": result["file4"],
+                "file5": result["file5"],
+                "datecreated": result["datecreated"],
+                "createdby": result["createdby"],
+                "dateupdated": result["dateupdated"],
+                "updatedby": result["updatedby"],
+                "status": result["status"]
+            })
+        return res
+    else:
+        raise HTTPException(
+            status_code=204, detail="No incidents nearby.")
+
 @app.get("/incidents/count", tags=["incidents"])
 async def get_incidents_count():
     counter = 0

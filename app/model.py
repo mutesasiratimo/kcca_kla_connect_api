@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 ## Postgres Database 
 LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconnect"
 # LIVE_DATABASE_URL = "postgresql://timo:password@178.62.198.62:5432/kccaklaconnect"
-LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/kccaklaconnect?sslmode=require"
+LIVE_DATABASE_URL = "postgresql://doadmin:AVNS_SPpMTrX1fz2cZ7tusan@db-postgresql-nyc3-89277-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 DATABASE_URL = LIVE_DATABASE_URL
 database = databases.Database(DATABASE_URL)
@@ -34,7 +34,7 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("roleid"       , sqlalchemy.String),
     sqlalchemy.Column("iscitizen"    , sqlalchemy.Boolean),
     sqlalchemy.Column("isclerk"      , sqlalchemy.Boolean),
-    # sqlalchemy.Column("isengineer"   , sqlalchemy.Boolean),
+    sqlalchemy.Column("isengineer"   , sqlalchemy.Boolean),
     sqlalchemy.Column("isadmin"      , sqlalchemy.Boolean),
     sqlalchemy.Column("issuperadmin" , sqlalchemy.Boolean),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
@@ -232,7 +232,7 @@ departments_table = sqlalchemy.Table(
     sqlalchemy.Column("id"            , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("departmentname", sqlalchemy.String),
     sqlalchemy.Column("description"   , sqlalchemy.String),
-    sqlalchemy.Column("hodid      "   , sqlalchemy.String),
+    sqlalchemy.Column("hodid"         , sqlalchemy.String),
     sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"     , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
@@ -298,7 +298,7 @@ class UserSchema(BaseModel):
     roleid      : Optional[str] = None
     iscitizen   : bool = Field(default=True)
     isclerk     : bool = Field(default=False)
-    # isengineer  : bool = Field(default=False)
+    isengineer  : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
     issuperadmin: bool = Field(default=False)
     datecreated : datetime.datetime
@@ -327,7 +327,7 @@ class UserSchema(BaseModel):
                 "roleid": "1",
                 "iscitizen": True,
                 "isclerk": False,
-                # "isengineer": False,
+                "isengineer": False,
                 "isadmin": False,
                 "issuperadmin": False,
                 "datecreated": datetime.datetime,
@@ -357,7 +357,7 @@ class UserUpdateSchema(BaseModel):
     roleid      : Optional[str] = None
     iscitizen   : bool = Field(default=True)
     isclerk     : bool = Field(default=False)
-    # isengineer  : bool = Field(default=False)
+    isengineer  : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
     issuperadmin: bool = Field(default=False)
     dateupdated : Optional[datetime.datetime] = None
@@ -384,7 +384,7 @@ class UserUpdateSchema(BaseModel):
                 "roleid": "1",
                 "iscitizen": True,
                 "isclerk": False,
-                # "isengineer": False,
+                "isengineer": False,
                 "isadmin": False,
                 "issuperadmin": False,
                 "dateupdated": datetime.datetime,
@@ -433,7 +433,7 @@ class UserSignUpSchema(BaseModel):
     dateofbirth : str = Field(..., example="1990-03-23")
     iscitizen   : bool = Field(..., example=True)
     isclerk     : bool = Field(..., example=False)
-    # isengineer  : bool = Field(..., example=False)
+    isengineer  : bool = Field(..., example=False)
     isadmin     : bool = Field(..., example=False)
     issuperadmin: bool = Field(..., example=False)
     status      : str = Field(..., example="1")
