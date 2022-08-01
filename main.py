@@ -1458,8 +1458,9 @@ async def post_news_article(news: NewsSchema):
         file3=news.file3,
         file4=news.file4,
         file5=news.file5,
+        createdby=news.createdby,
         datecreated=gDate,
-        status="1"
+        status=news.status
     )
 
     await database.execute(query)
