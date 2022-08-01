@@ -846,13 +846,13 @@ async def get_incidents_stats():
         for result in approvedresults:
             approvedcounter += 1
     
-    rejectedquery = incidents_table.select().where(incidents_table.c.status == "2")
+    rejectedquery = incidents_table.select().where(incidents_table.c.status == "3")
     rejectedresults = await database.fetch_all(rejectedquery)
     if rejectedresults:
         for result in rejectedresults:
             rejectedcounter += 1
 
-    resolvedquery = incidents_table.select().where(incidents_table.c.status == "3")
+    resolvedquery = incidents_table.select().where(incidents_table.c.status == "2")
     resolvedresults = await database.fetch_all(resolvedquery)
     if resolvedresults:
         for result in resolvedresults:
