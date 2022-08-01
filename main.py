@@ -131,11 +131,11 @@ async def get_users_stats():
         for result in adminresults:
             admins += 1
 
-    # engineerquery = users_table.select().where(incidents_table.c.status == "3")
-    # engineerresults = await database.fetch_all(engineerquery)
-    # if engineerresults:
-    #     for result in engineerresults:
-    #         engineers += 1
+    engineerquery = users_table.select().where(users_table.c.isengineer == True)
+    engineerresults = await database.fetch_all(engineerquery)
+    if engineerresults:
+        for result in engineerresults:
+            engineers += 1
 
     return {
         "citizens": citizens,
