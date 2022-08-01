@@ -1092,7 +1092,7 @@ async def get_all_reports():
                 "commentscount": await get_post_comments_count_by_id(result["id"]),
                 "datecreated": result["datecreated"],
                 "createdby": result["createdby"],
-                "createdbyobj": await get_user_by_id(result["createdby"]),
+                # "createdbyobj": await get_user_by_id(result["createdby"]),
                 "dateupdated": result["dateupdated"],
                 "updatedby": result["updatedby"],
                 "status": result["status"]
