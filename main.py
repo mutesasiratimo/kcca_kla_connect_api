@@ -411,15 +411,21 @@ async def update_user(user: UserUpdateSchema):
     query = users_table.update().\
         where(users_table.c.id == user.id).\
         values(
+            username=user.username,
+            password=user.password,
             firstname=user.firstname,
             lastname=user.lastname,
-            gender=user.gender,
-            password=user.password,
-            roleid=user.roleid,
+            phone=user.phone,
+            mobile=user.mobile,
+            dateofbirth=datetime.datetime.strptime(
+                (user.dateofbirth), "%Y-%m-%d").date(),
+            address=user.address,
+            addresslat=user.addresslat,
+            addresslong=user.addresslong,
             photo=user.photo,
             email=user.email,
-            address=user.address,
-            status=user.status,
+            nin=user.nin,
+            gender=user.gender,
             dateupdated=gDate
     )
 
@@ -440,6 +446,24 @@ async def update_userprofile(user: UserUpdateProfileSchema):
 
     await database.execute(query)
     return await get_user_by_id(user.id)
+
+@app.put("/users/updateuserrights", tags=["user"], dependencies=[Depends(jwtBearer())])
+async def update_user_rights(user: UserUpdateRightsSchema):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == user.id).\
+        values(
+            isclerk=user.isclerk,
+            iscitizen=user.iscitizen,
+            issuperadmin=user.issuperadmin,
+            isadmin=user.isadmin,
+            isengineer=user.isengineer,
+    )
+
+    await database.execute(query)
+    return {
+        "success": "User rights updated"
+    }
 
 
 @app.get("/users/resetpassword/{email}", tags=["user"], dependencies=[Depends(jwtBearer())])

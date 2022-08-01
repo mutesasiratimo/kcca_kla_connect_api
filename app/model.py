@@ -409,6 +409,26 @@ class UserUpdateProfileSchema(BaseModel):
             }
         }
 
+class UserUpdateRightsSchema(BaseModel):
+    id          : str = Field(default=None)
+    iscitizen   : bool = Field(default=True)
+    isclerk     : bool = Field(default=False)
+    isengineer  : bool = Field(default=False)
+    isadmin     : bool = Field(default=False)
+    issuperadmin: bool = Field(default=False)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "rights_demo": {
+                "id": "",
+                "iscitizen": True,
+                "isclerk": False,
+                "isengineer": False,
+                "isadmin": False,
+                "issuperadmin": False,
+            }
+        }
+
 class UserDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
