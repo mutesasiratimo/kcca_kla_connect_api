@@ -91,7 +91,7 @@ async def get_all_users():
                     "mobile": result["mobile"],
                     "issuperadmin": result["issuperadmin"],
                     "isadmin": result["isadmin"],
-                    "issuperadmin": result["issuperadmin"],
+                    "isengineer": result["isengineer"],
                     "isclerk": result["isclerk"],
                     "iscitizen": result["iscitizen"],
                     "status": result["status"]
