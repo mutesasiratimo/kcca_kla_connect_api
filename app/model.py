@@ -393,6 +393,22 @@ class UserUpdateSchema(BaseModel):
             }
         }
 
+class UserUpdateProfileSchema(BaseModel):
+    id          : str = Field(default=None)
+    firstname   : str = Field(default=None)
+    lastname    : str = Field(default= None)
+    phone       : str = Field(default= None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "id" : "---",
+                "firstname": "John",
+                "lastname": "Doe",
+                "phone": "0781780862",
+            }
+        }
+
 class UserDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:

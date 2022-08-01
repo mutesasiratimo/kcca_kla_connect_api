@@ -208,6 +208,18 @@ async def get_user_by_id(userid: str):
         # raise HTTPException(status_code=404, detail='User not found')
 
 
+@app.get("/users/photo/{userid}", tags=["user"], dependencies=[Depends(jwtBearer())])
+async def get_user_photo_by_id(userid: str):
+    query = users_table.select().where(users_table.c.id == userid)
+    result = await database.fetch_one(query)
+    if result:
+        # print(result["firstname"])
+        return result["photo"]
+    else:
+        return{"error": ""}
+        # raise HTTPException(status_code=404, detail='User not found')
+
+
 @app.get("/users/name/{userid}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def get_usernames_by_id(userid: str):
     query = users_table.select().where(users_table.c.id == userid)
@@ -414,6 +426,21 @@ async def update_user(user: UserUpdateSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
+@app.put("/users/updateprofile", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
+async def update_userprofile(user: UserUpdateProfileSchema):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == user.id).\
+        values(
+            firstname=user.firstname,
+            lastname=user.lastname,
+            phone=user.phone,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_by_id(user.id)
+
 
 @app.get("/users/resetpassword/{email}", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def reset_password(email: str):
@@ -545,6 +572,7 @@ async def verify_otp(otp_obj: OtpVerifySchema):
             status_code=401, detail="Invalid OTP Code.")
 
 
+@app.post("/users/updatepassword", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def update_password(userid: str, password: str):
     gDate = datetime.datetime.now()
     query = users_table.update().\
@@ -555,8 +583,24 @@ async def update_password(userid: str, password: str):
     )
 
     await database.execute(query)
-    return await get_user_by_id(userid)
+    return {
+        "success": "Password updated successfully."
+    }
 
+@app.post("/users/updatephoto", tags=["user"], dependencies=[Depends(jwtBearer())])
+async def update_photo(userid: str, photo: str):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == userid).\
+        values(
+            photo=photo,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return {
+        "success": "Photo updated successfully."
+    }
 
 ################## END USERS ###################
 
@@ -852,6 +896,16 @@ async def get_incidents_by_userid(userid: str):
         raise HTTPException(
             status_code=204, detail="User has not posted any incidents.")
 
+@app.get("/incidents/photo/{incidentid}", tags=["user"], dependencies=[Depends(jwtBearer())])
+async def get_incident_photo_by_id(incidentid: str):
+    query = incidents_table.select().where(incidents_table.c.id == incidentid)
+    result = await database.fetch_one(query)
+    if result:
+        # print(result["firstname"])
+        return result["file1"]
+    else:
+        return{"error": "No photo available"}
+        # raise HTTPException(status_code=404, detail='User not found')
 
 @app.get("/incidents/usercount/{userid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_incidentcounts_by_userid(userid: str):
