@@ -1001,57 +1001,61 @@ async def update_incident(incident: IncidentUpdateSchema):
 
 
 @app.put("/incidents/archive", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def archive_incident(incidentid: str):
+async def archive_incident(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
-        where(incidents_table.c.id == incidentid).\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="0",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_incident_by_id(incidentid)
+    return await get_incident_by_id(incident.id)
 
 
 @app.put("/incidents/restore", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def restore_incident(incidentid: str):
+async def restore_incident(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
-        where(incidents_table.c.id == incidentid).\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="1",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_incident_by_id(incidentid)
+    return await get_incident_by_id(incident.id)
 
 @app.put("/incidents/resolve", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def resolve_incident(incidentid: str):
+async def resolve_incident(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
-        where(incidents_table.c.id == incidentid).\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="2",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_incident_by_id(incidentid)
+    return await get_incident_by_id(incident.id)
 
 @app.put("/incidents/reject", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def reject_incident(incidentid: str):
+async def reject_incident(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
     query = incidents_table.update().\
-        where(incidents_table.c.id == incidentid).\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="3",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_incident_by_id(incidentid)
+    return await get_incident_by_id(incident.id)
 
 
 @app.delete("/incidents/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])

@@ -619,6 +619,18 @@ class IncidentUpdateSchema(BaseModel):
             }
         }
 
+class IncidentStatusSchema(BaseModel):
+    id                  : str = Field(default=None)
+    updatedby           : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident_demo": {
+                "id" : "---",
+                "updatedby": "User ID",
+            }
+        }
+
 class IncidentDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
