@@ -259,6 +259,7 @@ async def user_login(user: UserLoginSchema = Body(default=None)):
                     "issuperadmin": result["issuperadmin"],
                     "isclerk": result["isclerk"],
                     "iscitizen": result["iscitizen"],
+                    "isengineer": result["isengineer"],
                     "roleid": result["roleid"],
                     "datecreated": result["datecreated"],
                     "incidentscount": await get_incidentcounts_by_userid(result["id"]),
