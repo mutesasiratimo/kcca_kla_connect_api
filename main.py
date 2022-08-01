@@ -1430,6 +1430,124 @@ async def check_if_user_liked_post(postid: str, userid: str):
 ###################### END REPORTS ##################
 
 
+###################### NEWS ######################
+
+@app.get("/news", response_model=List[NewsSchema], tags=["news"])
+async def get_all_news():
+    query = news_table.select()
+    return await database.fetch_all(query)
+
+@app.get("/news/{newsid}", response_model=NewsSchema, tags=["news"])
+async def get_news_by_id(newsid: str):
+    query = news_table.select().where(news_table.c.id == newsid)
+    result = await database.fetch_one(query)
+    return result
+
+
+@app.post("/news/post", response_model=NewsSchema, tags=["news"])
+async def post_news_article(news: NewsSchema):
+    gID = str(uuid.uuid1())
+    gDate = datetime.datetime.now()
+    query = news_table.insert().values(
+        id=gID,
+        title=news.title,
+        content=news.content,
+        image=news.image,
+        file1=news.file1,
+        file2=news.file2,
+        file3=news.file3,
+        file4=news.file4,
+        file5=news.file5,
+        datecreated=gDate,
+        status="1"
+    )
+
+    await database.execute(query)
+    return {
+        **news.dict(),
+        "id": gID,
+        "datecreated": gDate
+    }
+
+
+@app.put("/news/update", response_model=NewsUpdateSchema, tags=["news"])
+async def update_news(news: NewsUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = news_table.update().\
+        where(news_table.c.id == news.id).\
+        values(
+            title=news.title,
+            content=news.content,
+            image=news.image,
+            file1=news.file1,
+            file2=news.file2,
+            file3=news.file3,
+            file4=news.file4,
+            file5=news.file5,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_news_by_id(news.id)
+
+
+@app.put("/news/archive", response_model=NewsUpdateSchema, tags=["news"])
+async def archive_news(news: NewsUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = news_table.update().\
+        where(news_table.c.id == news.id).\
+        values(
+            title=news.title,
+            content=news.content,
+            image=news.image,
+            file1=news.file1,
+            file2=news.file2,
+            file3=news.file3,
+            file4=news.file4,
+            file5=news.file5,
+            status="0",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_news_by_id(news.id)
+
+
+@app.put("/news/restore", response_model=NewsUpdateSchema, tags=["news"])
+async def restore_news(news: NewsUpdateSchema):
+    gDate = datetime.datetime.now()
+    query = news_table.update().\
+        where(news_table.c.id == news.id).\
+        values(
+            title=news.title,
+            content=news.content,
+            image=news.image,
+            file1=news.file1,
+            file2=news.file2,
+            file3=news.file3,
+            file4=news.file4,
+            file5=news.file5,
+            status="1",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_news_by_id(news.id)
+
+
+@app.delete("/news/{newsid}", tags=["news"])
+async def delete_news(newsid: str):
+    query = news_table.delete().where(news_table.c.id == newsid)
+    result = await database.execute(query)
+
+    return {
+        "status": True,
+        "message": "This news article has been deleted!"
+    }
+
+###################### END NEWS ##################
+
+
 ###################### INCIDENT_CATEGORIES ######################
 
 
