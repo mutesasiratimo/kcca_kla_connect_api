@@ -963,7 +963,7 @@ async def register_incident(incident: IncidentSchema):
         file5=incident.file5,
         createdby=incident.createdby,
         datecreated=gDate,
-        status="1"
+        status= incident.status
     )
 
     await database.execute(query)
