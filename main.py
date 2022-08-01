@@ -1027,6 +1027,32 @@ async def restore_incident(incidentid: str):
     await database.execute(query)
     return await get_incident_by_id(incidentid)
 
+@app.put("/incidents/resolve", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def resolve_incident(incidentid: str):
+    gDate = datetime.datetime.now()
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incidentid).\
+        values(
+            status="2",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_incident_by_id(incidentid)
+
+@app.put("/incidents/reject", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def reject_incident(incidentid: str):
+    gDate = datetime.datetime.now()
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incidentid).\
+        values(
+            status="3",
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_incident_by_id(incidentid)
+
 
 @app.delete("/incidents/{incidentid}", tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def delete_incident(incidentid: str):
