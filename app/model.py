@@ -4,11 +4,11 @@ import databases, sqlalchemy, datetime, uuid
 from typing import Dict, List, Optional, Union
 
 ## Postgres Database 
-LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconnect"
+LOCAL_DATABASE_URL = "postgresql://postgres:password@172.16.0.159:5432/klaconnect"
 # LIVE_DATABASE_URL = "postgresql://timo:password@178.62.198.62:5432/kccaklaconnect"
 LIVE_DATABASE_URL = "postgresql://doadmin:AVNS_SPpMTrX1fz2cZ7tusan@db-postgresql-nyc3-89277-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
-DATABASE_URL = LIVE_DATABASE_URL
+DATABASE_URL = LOCAL_DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData() 
 
