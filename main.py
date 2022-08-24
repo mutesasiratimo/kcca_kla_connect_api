@@ -20,7 +20,21 @@ from sqlalchemy import desc
 from sqlalchemy import asc
 from app.send_mail import send_email_background, send_email_async, send_email_async_test
 
-app = FastAPI()
+app = FastAPI(
+    title="KCCA Kla Connect",
+    description= 'A system for reporting and managing incidents.',
+    version="0.1.1",
+    # terms_of_service="http://example.com/terms/",
+    contact={
+        "name": "KCCA",
+        "url": "http://kcca.go.ug",
+        "email": "info@kcca.go.ug",
+    },
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
 
 origins = [
     "*"
