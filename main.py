@@ -470,7 +470,7 @@ async def update_user_rights(user: UserUpdateRightsSchema):
         values(
             isclerk=user.isclerk,
             iscitizen=user.iscitizen,
-            issuperadmin=user.issuperadmin,
+            # issuperadmin=user.issuperadmin,
             isadmin=user.isadmin,
             isengineer=user.isengineer,
     )
@@ -1065,6 +1065,20 @@ async def reject_incident(incident: IncidentStatusSchema):
         where(incidents_table.c.id == incident.id).\
         values(
             status="3",
+            updatedby = incident.updatedby,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_incident_by_id(incident.id)
+
+@app.put("/incidents/state", response_model=IncidentUpdateSchema, tags=["incidents"], dependencies=[Depends(jwtBearer())])
+async def restore_incident(incident: IncidentUpdateStatusSchema):
+    gDate = datetime.datetime.now()
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incident.id).\
+        values(
+            status=incident.status,
             updatedby = incident.updatedby,
             dateupdated=gDate
     )

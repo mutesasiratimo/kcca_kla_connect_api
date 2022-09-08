@@ -4,8 +4,8 @@ import databases, sqlalchemy, datetime, uuid
 from typing import Dict, List, Optional, Union
 
 ## Postgres Database 
+# LOCAL_DATABASE_URL = "postgresql://postgres:password@127.0.0.1:5432/kccaklaconnect"
 LOCAL_DATABASE_URL = "postgresql://postgres:password@172.16.0.159:5432/klaconnect"
-# LIVE_DATABASE_URL = "postgresql://timo:password@178.62.198.62:5432/kccaklaconnect"
 LIVE_DATABASE_URL = "postgresql://doadmin:AVNS_SPpMTrX1fz2cZ7tusan@db-postgresql-nyc3-89277-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 DATABASE_URL = LOCAL_DATABASE_URL
@@ -41,7 +41,7 @@ users_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 otps_table = sqlalchemy.Table(
@@ -55,7 +55,7 @@ otps_table = sqlalchemy.Table(
     sqlalchemy.Column("expiry"        , sqlalchemy.DateTime),
     sqlalchemy.Column("datecreated"   , sqlalchemy.DateTime),
     sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
-    sqlalchemy.Column("status"        , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"        , sqlalchemy.String),
 )
 
 incidentcategories_table = sqlalchemy.Table(
@@ -68,7 +68,7 @@ incidentcategories_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 incidents_table = sqlalchemy.Table(
@@ -91,7 +91,7 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 reports_table = sqlalchemy.Table(
@@ -111,7 +111,7 @@ reports_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 kccareports_table = sqlalchemy.Table(
@@ -131,7 +131,7 @@ kccareports_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 feedback_table = sqlalchemy.Table(
@@ -174,7 +174,7 @@ savedlocations_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 # trips_table = sqlalchemy.Table(
@@ -191,7 +191,7 @@ savedlocations_table = sqlalchemy.Table(
 #     sqlalchemy.Column("createdby"    , sqlalchemy.String),
 #     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
 #     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-#     sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+#     sqlalchemy.Column("status"       , sqlalchemy.String),
 # )
 
 user_trips_table = sqlalchemy.Table(
@@ -208,7 +208,7 @@ user_trips_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 designations_table = sqlalchemy.Table(
@@ -223,7 +223,7 @@ designations_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 departments_table = sqlalchemy.Table(
@@ -237,7 +237,7 @@ departments_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"     , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"   , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"     , sqlalchemy.String),
-    sqlalchemy.Column("status"        , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"        , sqlalchemy.String),
 )
 
 languages_table = sqlalchemy.Table(
@@ -250,7 +250,7 @@ languages_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 news_table = sqlalchemy.Table(
@@ -269,7 +269,7 @@ news_table = sqlalchemy.Table(
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
-    sqlalchemy.Column("status"       , sqlalchemy.CHAR),
+    sqlalchemy.Column("status"       , sqlalchemy.String),
 )
 
 engine = sqlalchemy.create_engine(
@@ -415,7 +415,7 @@ class UserUpdateRightsSchema(BaseModel):
     isclerk     : bool = Field(default=False)
     isengineer  : bool = Field(default=False)
     isadmin     : bool = Field(default=False)
-    issuperadmin: bool = Field(default=False)
+    # issuperadmin: bool = Field(default=False)
     class Config:
         orm_mode = True
         the_schema = {
@@ -425,7 +425,7 @@ class UserUpdateRightsSchema(BaseModel):
                 "isclerk": False,
                 "isengineer": False,
                 "isadmin": False,
-                "issuperadmin": False,
+                # "issuperadmin": False,
             }
         }
 
@@ -627,6 +627,20 @@ class IncidentStatusSchema(BaseModel):
         the_schema = {
             "incident_demo": {
                 "id" : "---",
+                "updatedby": "User ID",
+            }
+        }
+
+class IncidentUpdateStatusSchema(BaseModel):
+    id                  : str = Field(default=None)
+    status              : str = Field(default=None)
+    updatedby           : Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "incident_demo": {
+                "id" : "---",
+                "status": "1",
                 "updatedby": "User ID",
             }
         }
