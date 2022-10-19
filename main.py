@@ -502,6 +502,20 @@ async def reset_password(email: str):
         raise HTTPException(
             status_code=204, detail="User does not exist.")
 
+@app.get("/users/searchuser/{name}", tags=["user"])
+async def search_user_by_name(name: str):
+    query = users_table.select()
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            if result["firstname"] and name.lower() in str(result["firstname"]).lower():
+                res.append(result)
+            else:
+                if result["lastname"] and name.lower() in str(result["lastname"]).lower():
+                    res.append(result)
+    return res
+
 
 @app.put("/users/archive", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def archive_user(userid: str):
@@ -834,6 +848,20 @@ async def get_incidents_count():
             counter += 1
 
     return counter
+
+@app.get("/incidents/searchincident/{name}", tags=["incidents"])
+async def search_incidents_by_title_and_category(name: str):
+    query = incidents_table.select()
+    results = await database.fetch_all(query)
+    res = []
+    if results:
+        for result in results:
+            if result["name"] and name.lower() in str(result["name"]).lower():
+                res.append(result)
+            else:
+                if result["incidentcategoryid"] and name.lower() in str(result["incidentcategoryid"]).lower():
+                    res.append(result)
+    return res
 
 @app.get("/incidents/stats", tags=["incidents"])
 async def get_incidents_stats():
