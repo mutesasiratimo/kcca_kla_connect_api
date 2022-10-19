@@ -462,7 +462,7 @@ async def update_userprofile(user: UserUpdateProfileSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
-@app.put("/users/updateuserrights", tags=["user"], dependencies=[Depends(jwtBearer())])
+@app.post("/users/updateuserrights", tags=["user"], dependencies=[Depends(jwtBearer())])
 async def update_user_rights(user: UserUpdateRightsSchema):
     gDate = datetime.datetime.now()
     query = users_table.update().\
