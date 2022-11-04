@@ -22,6 +22,7 @@ fastapi==0.29.0
 graphene==2.1.5
 graphql-core==2.2
 graphql-relay==0.4.5
+httptools==0.1.1
 h11==0.8.1
 idna==2.8
 immutables==0.9
@@ -69,3 +70,5 @@ wrapt==1.11.2
 asyncpg
 gunicorn
 fastapi-mail
+fastapi_pagination
+python-decouple
