@@ -26,8 +26,10 @@ conf = ConnectionConfig(
     MAIL_PORT=int(587),
     MAIL_SERVER="mail.kcca.go.ug",
     MAIL_FROM_NAME="KCCA KLA KONNECT",
-    MAIL_TLS=True,
-    MAIL_SSL=False,
+    # MAIL_TLS=True,
+    # MAIL_SSL=False,
+    MAIL_SSL_TLS=False,
+    MAIL_STARTTLS=False,
     USE_CREDENTIALS=True,
     TEMPLATE_FOLDER='templates/email'
 )
