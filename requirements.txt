@@ -67,7 +67,8 @@ uvicorn==0.7.2
 websockets==7.0
 wincertstore==0.2
 wrapt==1.11.2
+asyncpg
 gunicorn
 fastapi-mail
 fastapi_pagination
-python-decouple==3.1
+python-decouple
