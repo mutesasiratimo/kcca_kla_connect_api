@@ -858,6 +858,8 @@ async def search_incidents_by_title_and_category(name: str):
         for result in results:
             if result["name"] and name.lower() in str(result["name"]).lower():
                 res.append(result)
+            elif result["address"] and name.lower() in str(result["address"]).lower():
+                    res.append(result)
             else:
                 if result["incidentcategoryid"] and name.lower() in str(result["incidentcategoryid"]).lower():
                     res.append(result)
