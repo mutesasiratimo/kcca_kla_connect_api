@@ -28,6 +28,8 @@ conf = ConnectionConfig(
     MAIL_FROM_NAME=Envs.MAIL_FROM_NAME,
     MAIL_TLS=True,
     MAIL_SSL=False,
+    MAIL_SSL_TLS=False,
+    MAIL_STARTTLS=False,
     USE_CREDENTIALS=True,
 )
 
