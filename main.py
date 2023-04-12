@@ -1037,7 +1037,7 @@ async def update_incident(incident: IncidentUpdateSchema):
             file3=incident.file3,
             file4=incident.file4,
             file5=incident.file5,
-            createdby=incident.createdby,
+            updatedby=incident.updatedby,
             dateupdated=gDate
     )
 
