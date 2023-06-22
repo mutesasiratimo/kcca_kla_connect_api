@@ -163,7 +163,7 @@ likes_table = sqlalchemy.Table(
 )
 
 savedlocations_table = sqlalchemy.Table(
-    "savedlocations",
+    "savedlocationsnew",
     metadata,
     sqlalchemy.Column("id"             , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("locationname"   , sqlalchemy.String),
