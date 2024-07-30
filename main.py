@@ -398,6 +398,7 @@ async def register_user(user: UserSignUpSchema):
         nin=user.nin,
         gender=user.gender,
         isclerk=user.isclerk,
+        isengineer=user.isengineer,
         iscitizen=user.iscitizen,
         issuperadmin=user.issuperadmin,
         isadmin=user.isadmin,
