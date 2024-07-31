@@ -4,7 +4,8 @@ import databases, sqlalchemy, datetime, uuid
 from typing import Dict, List, Optional, Union
 
 ## Postgres Database 
-TEST_DATABASE_URL = "postgresql://postgres:password@172.16.0.192/klaconnect"
+# TEST_DATABASE_URL = "postgresql://postgres:password@172.16.0.192/klaconnect"
+TEST_DATABASE_URL = "postgresql://postgres:password@127.0.0.1/klaconnect"
 LOCAL_DATABASE_URL = "postgresql://postgres:4e3w2q11423@0.0.0.0:5432/klaconnect"
 LIVE_DATABASE_URL = "postgresql://doadmin:AVNS_SPpMTrX1fz2cZ7tusan@db-postgresql-nyc3-89277-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"

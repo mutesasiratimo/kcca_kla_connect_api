@@ -25,6 +25,7 @@ app = FastAPI(
     description= 'A system for reporting and managing incidents.',
     version="0.1.1",
     # terms_of_service="http://example.com/terms/",
+    prefix="/apiklakonnect",
     contact={
         "name": "KCCA",
         "url": "http://kcca.go.ug",

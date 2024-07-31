@@ -77,11 +77,13 @@ Description=Gunicorn instance to serve MyApp
 After=network.target
 
 [Service]
-User=root
+User=mutestimo72
 Group=www-data
-WorkingDirectory=/root/project/kcca_dmmp_api
+WorkingDirectory=/home/mutestimo72/projects/kcca_dmmp_api
 Environment="PATH=/usr/local/bin"
-ExecStart=/usr/bin/gunicorn -k uvicorn.workers.UvicornWorker main:app --host 0.0.0.0 --port 5000
+#ExecStart=/usr/bin/gunicorn -k uvicorn.workers.UvicornWorker main:app
+ExecStart=/home/mutestimo72/fastapi_env/bin/uvicorn main:app --host 0.0.0.0 --port 6000
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
