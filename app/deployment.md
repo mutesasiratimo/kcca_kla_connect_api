@@ -82,7 +82,7 @@ Group=www-data
 WorkingDirectory=/home/mutestimo72/projects/kcca_dmmp_api
 Environment="PATH=/usr/local/bin"
 #ExecStart=/usr/bin/gunicorn -k uvicorn.workers.UvicornWorker main:app
-ExecStart=/home/mutestimo72/fastapi_env/bin/uvicorn main:app --host 0.0.0.0 --port 6000
+ExecStart=/home/mutestimo72/fastapi_env/bin/uvicorn main:app --host 0.0.0.0 --port 6000 --root-path="/apiklakonnect"
 Restart=always
 
 [Install]
@@ -91,27 +91,37 @@ WantedBy=multi-user.target
 //////
 
 LIVE SERVER NGINX CONFIG
-164.92.157.80
+GNU nano 7.2 /etc/nginx/sites-available/kcca  
 server {
-listen 443 ssl;
-listen [::]:443 ssl;
+listen 80;
+server_name 35.239.4.66;
 
-      server_name 172.16.0.192 dmmp.kcca.go.ug;
-      ssl_certificate /etc/nginx/ssl/wild/file2021.crt;
-      ssl_certificate_key  /etc/nginx/ssl/wild/file2021.key;
+    #index index.html;
+    #root /var/www/html/mywebsite;
 
-      location /api {
-        allow 127.0.0.1;
-        include proxy_params;
-        proxy_pass http://127.0.0.1:8000;
+    location /klakonnect {
 
-}
-location /dashboard {
-alias /home/special/html/dashboard;
+        alias /home/mutestimo72/html/klakonnect/web;
 
-        # any additional configuration for non-static content
+    }
 
-}
+    location /dmmp {
+
+        alias /home/mutestimo72/html/dmmp/web;
+
+    }
+
+    location ^~ /apiklakonnect/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:6000/;
+
+    }
+
+    location ^~ /apidmmp/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:8000/;
+
+    }
 
 }
 

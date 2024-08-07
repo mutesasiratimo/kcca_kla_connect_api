@@ -6,6 +6,8 @@ import math
 import random
 from turtle import title
 from typing import List
+import urllib.request 
+from urllib.parse import urlparse, parse_qs
 from unittest import result
 from xmlrpc.client import DateTime
 import uvicorn
@@ -25,7 +27,6 @@ app = FastAPI(
     description= 'A system for reporting and managing incidents.',
     version="0.1.1",
     # terms_of_service="http://example.com/terms/",
-    prefix="/apiklakonnect",
     contact={
         "name": "KCCA",
         "url": "http://kcca.go.ug",
@@ -483,7 +484,7 @@ async def update_user_rights(user: UserUpdateRightsSchema):
     }
 
 
-@app.get("/users/resetpassword/{email}", tags=["user"], dependencies=[Depends(jwtBearer())])
+@app.get("/users/resetpassword/{email}", tags=["user"])
 async def reset_password(email: str):
     # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
     gDate = datetime.datetime.now()
@@ -492,10 +493,21 @@ async def reset_password(email: str):
     result = await database.fetch_one(query)
     if result:
         email = result["email"]
+        sms_number = result["phone"].replace("+", "")
         userid = result["id"]
         otp = await generate_otp(userid)
+        sms_message = f"Kindly use "+otp+" as the OTP for resetting your Kla Konnect password"
         print(otp)
-        await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email)
+        print(sms_number)
+        print(sms_message)
+        sms_gateway_url = 'https://sms.dmarkmobile.com/v2/api/send_sms/?spname=spesho@dmarkmobile.com&sppass=t4x1sms&numbers='+sms_number+'&msg='+sms_message+'&type=json'.replace(" ", "%20")
+        parsed_url = urlparse(sms_gateway_url).query
+        parse_qs(parsed_url)
+        contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
+
+        print(str(contents))
+        # contents = urllib.request.urlopen(parsed_url).read()
+        # await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email) .replace(" ", "%20")
 
         return {
             "otp": otp

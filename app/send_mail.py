@@ -5,12 +5,20 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 # from dotenv import load_dotenv
 # load_dotenv('.env')
 class Envs:
-    MAIL_USERNAME = "shpt@kcca.go.ug"
-    MAIL_PASSWORD = "Kcca12345"
+    MAIL_USERNAME = "mutestimo72@gmail.com"
+    MAIL_PASSWORD = "mtn-1996"
     MAIL_FROM = "shpt@kcca.go.ug"
     MAIL_PORT = int(587)
-    MAIL_SERVER = "mail.kcca.go.ug"
+    MAIL_SERVER = "mail.google.com"
     MAIL_FROM_NAME = "KCCA KLA CONNECT"
+
+    # MAIL_USERNAME = "shpt@kcca.go.ug"
+    # MAIL_PASSWORD = "Kcca12345"
+    # MAIL_FROM = "shpt@kcca.go.ug"
+    # MAIL_PORT = int(587)
+    # MAIL_SERVER = "mail.kcca.go.ug"
+    # MAIL_FROM_NAME = "KCCA KLA CONNECT"
+
     # MAIL_USERNAME = config('MAIL_USERNAME')
     # MAIL_PASSWORD = config('MAIL_PASSWORD')
     # MAIL_FROM = config('MAIL_FROM')
