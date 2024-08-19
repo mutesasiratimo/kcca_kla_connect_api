@@ -396,7 +396,7 @@ class UserUpdateSchema(BaseModel):
 
 class UserUpdatePasswordSchema(BaseModel):
     userid         : str = Field(default=None)
-    password       : str = Field(default=True)
+    password       : str = Field(default=None)
     # issuperadmin: bool = Field(default=False)
     class Config:
         orm_mode = True
