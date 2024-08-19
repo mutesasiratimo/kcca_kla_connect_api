@@ -645,12 +645,12 @@ async def verify_otp(otp_obj: OtpVerifySchema):
 
 
 @app.post("/users/updatepassword", tags=["user"], dependencies=[Depends(jwtBearer())])
-async def update_password(userid: str, password: str):
+async def update_password(user: UserUpdatePasswordSchema):
     gDate = datetime.datetime.now()
     query = users_table.update().\
-        where(users_table.c.id == userid).\
+        where(users_table.c.id == user.userid).\
         values(
-            password=password,
+            password=user.password,
             dateupdated=gDate
     )
 

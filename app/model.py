@@ -394,6 +394,19 @@ class UserUpdateSchema(BaseModel):
             }
         }
 
+class UserUpdatePasswordSchema(BaseModel):
+    userid         : str = Field(default=None)
+    password       : str = Field(default=True)
+    # issuperadmin: bool = Field(default=False)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "rights_demo": {
+                "userid": "",
+                "password": "",
+            }
+        }
+
 class UserUpdateProfileSchema(BaseModel):
     id          : str = Field(default=None)
     firstname   : str = Field(default=None)
