@@ -1048,6 +1048,7 @@ async def update_incident(incident: IncidentUpdateSchema):
             description=incident.description,
             isemergency=incident.isemergency,
             incidentcategoryid=incident.incidentcategoryid,
+            incidentcategory=incidentcategory,
             address=incident.address,
             addresslat=incident.addresslat,
             addresslong=incident.addresslong,
