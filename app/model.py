@@ -598,7 +598,6 @@ class IncidentUpdateSchema(BaseModel):
     name                : str = Field(default=None)
     description         : str = Field(default= None)
     isemergency         : bool = Field(default= False)
-    incidentcategory    : str= Field(default=None)
     incidentcategoryid  : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
@@ -617,8 +616,7 @@ class IncidentUpdateSchema(BaseModel):
             "incident_demo": {
                 "id" : "---",
                 "name": "Incident",
-                "description": "Incident Details",
-		"incidentcategory": "Pothole",
+                "description": "Incident",
                 "incidentcategoryid": "Categ -ID",
                 "address": "Kampala, Uganda",
                 "addresslat": 0.32222,
