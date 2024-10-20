@@ -15,7 +15,7 @@ metadata = sqlalchemy.MetaData()
 
 
 users_table = sqlalchemy.Table(
-    "users",
+    "userstable",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("fcmid"        , sqlalchemy.String),
