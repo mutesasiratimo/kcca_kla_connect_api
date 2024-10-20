@@ -384,6 +384,7 @@ async def register_user(user: UserSignUpSchema):
     gDate = datetime.datetime.now()
     query = users_table.insert().values(
         id=gID,
+        fcmid=user.fcmid,
         username=user.username,
         password=user.password,
         firstname=user.firstname,
@@ -429,6 +430,7 @@ async def update_user(user: UserUpdateSchema):
     query = users_table.update().\
         where(users_table.c.id == user.id).\
         values(
+            fcmid=user.fcmid,
             username=user.username,
             password=user.password,
             firstname=user.firstname,
@@ -638,7 +640,7 @@ async def verify_otp(otp_obj: OtpVerifySchema):
             await database.execute(queryotppass)
 
             await update_password(userid, otp_obj.password)
-            return "Password updated successfully"
+            return "User verified successfully"
     else:
         raise HTTPException(
             status_code=401, detail="Invalid OTP Code.")

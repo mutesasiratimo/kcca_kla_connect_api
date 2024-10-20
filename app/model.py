@@ -18,6 +18,7 @@ users_table = sqlalchemy.Table(
     "users",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("fcmid"        , sqlalchemy.String),
     sqlalchemy.Column("firstname"    , sqlalchemy.String),
     sqlalchemy.Column("lastname"     , sqlalchemy.String),
     sqlalchemy.Column("username"     , sqlalchemy.String),
@@ -282,6 +283,7 @@ metadata.create_all(engine)
 
 class UserSchema(BaseModel):
     id          : str = Field(default=None)
+    fcmid       : Optional[str] = None
     firstname   : str = Field(default=None)
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
@@ -312,6 +314,7 @@ class UserSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id" : "---",
+                "fcmid": "",
                 "firstname": "John",
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
@@ -341,6 +344,7 @@ class UserSchema(BaseModel):
 
 class UserUpdateSchema(BaseModel):
     id          : str = Field(default=None)
+    fcmid       : Optional[str] = None
     firstname   : str = Field(default=None)
     lastname    : str = Field(default= None)
     username    : str = Field(default= None)
@@ -369,6 +373,7 @@ class UserUpdateSchema(BaseModel):
         the_schema = {
             "user_demo": {
                 "id" : "---",
+                "fcmid": "",
                 "firstname": "John",
                 "lastname": "Doe",
                 "username" : "help@bekbrace.com",
@@ -467,6 +472,7 @@ class UserLoginSchema(BaseModel):
 
 class UserSignUpSchema(BaseModel):
     id          : str = Field(..., example="0")
+    fcmid       : str = Field(..., example="fmcid")
     firstname   : str = Field(..., example="John")
     lastname    : str = Field(..., example="Doe")
     username    : str = Field(..., example="johndoe")
@@ -599,6 +605,7 @@ class IncidentUpdateSchema(BaseModel):
     description         : str = Field(default= None)
     isemergency         : bool = Field(default= False)
     incidentcategoryid  : str = Field(default= None)
+    incidentcategory    : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
     addresslong         : float = Field(default= 0.32888)
@@ -618,6 +625,7 @@ class IncidentUpdateSchema(BaseModel):
                 "name": "Incident",
                 "description": "Incident Details",
                 "incidentcategoryid": "Categ -ID",
+                "incidentcategory": "Pothole",
                 "address": "Kampala, Uganda",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
