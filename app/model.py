@@ -623,7 +623,7 @@ class IncidentUpdateSchema(BaseModel):
             "incident_demo": {
                 "id" : "---",
                 "name": "Incident",
-                "description": "Incident Details",
+                "description": "Incident",
                 "incidentcategoryid": "Categ -ID",
                 "incidentcategory": "Pothole",
                 "address": "Kampala, Uganda",
