@@ -470,6 +470,18 @@ class UserLoginSchema(BaseModel):
             }
         }
 
+class UserFcmSchema(BaseModel):
+    userid   : str = Field(default= None)
+    fcmid    : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_demo": {
+                "userid" : "userid",
+                "fcmid"  : "1234"
+            }
+        }
+
 class UserSignUpSchema(BaseModel):
     id          : str = Field(..., example="0")
     fcmid       : str = Field(..., example="fmcid")

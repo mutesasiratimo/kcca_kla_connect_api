@@ -452,6 +452,20 @@ async def update_user(user: UserUpdateSchema):
     await database.execute(query)
     return await get_user_by_id(user.id)
 
+@app.put("/users/updatefcmid", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
+async def update_userfcmid(user: UserFcmSchema):
+    gDate = datetime.datetime.now()
+    query = users_table.update().\
+        where(users_table.c.id == user.userid).\
+        values(
+            userid=user.userid,
+            fcmid=user.fcmid,
+            dateupdated=gDate
+    )
+
+    await database.execute(query)
+    return await get_user_by_id(user.id)
+
 @app.put("/users/updateprofile", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
 async def update_userprofile(user: UserUpdateProfileSchema):
     gDate = datetime.datetime.now()
