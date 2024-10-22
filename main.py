@@ -1,3 +1,4 @@
+from fastapi import FastAPI, File, UploadFile
 from asyncio import streams
 from collections import UserList
 from email.mime import image
@@ -10,6 +11,7 @@ import urllib.request
 from urllib.parse import urlparse, parse_qs
 from unittest import result
 from xmlrpc.client import DateTime
+from fastapi.responses import FileResponse, JSONResponse
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException
 from app.model import *
@@ -21,6 +23,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import desc
 from sqlalchemy import asc
 from app.send_mail import send_email_background, send_email_async, send_email_async_test
+import os
+
+UPLOAD_FOLDER = "uploads"
+
+#Create upload folder if it does not exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI(
     title="KCCA Kla Connect",
@@ -64,6 +72,25 @@ async def shutdown():
 @app.get("/", tags=["welcome"])
 def greet():
     return{"Hello": "Welcome to the KLA CONNECT API"}
+
+############# FILES ###########################
+
+@app.post("/upload_file")
+async def upload_file(file: UploadFile = File(...)):
+    #TO DO: Add date str before file name
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+
+    return JSONResponse(content={"message": "File uploaded successfully", "filename": file.filename, "content_type": file.content_type})
+
+@app.get("/download_file/{filename}")
+async def download_file(filename: str):
+    file_name = filename
+    # DEPENDS ON WHERE YOUR FILE LOCATES
+    file_path = UPLOAD_FOLDER + "/" + file_name
+    return FileResponse(path=file_path, media_type='application/octet-stream', filename=file_name)
+################# END FILES ###################
 
 
 ################ EMAILS #####################
