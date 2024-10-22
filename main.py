@@ -89,7 +89,7 @@ async def download_file(filename: str):
     file_name = filename
     # DEPENDS ON WHERE YOUR FILE LOCATES
     file_path = UPLOAD_FOLDER + "/" + file_name
-    return FileResponse(filename=file_name)
+    return FileResponse(path=file_path, media_type='application/octet-stream', filename=file_name)
 ################# END FILES ###################
 
 
