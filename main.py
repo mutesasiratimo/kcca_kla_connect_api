@@ -458,7 +458,6 @@ async def update_userfcmid(user: UserFcmSchema):
     query = users_table.update().\
         where(users_table.c.id == user.userid).\
         values(
-            id=user.userid,
             fcmid=user.fcmid,
             dateupdated=gDate
     )
