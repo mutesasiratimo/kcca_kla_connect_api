@@ -74,7 +74,7 @@ incidentcategories_table = sqlalchemy.Table(
 )
 
 incidents_table = sqlalchemy.Table(
-    "incidents",
+    "incidentstable",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
