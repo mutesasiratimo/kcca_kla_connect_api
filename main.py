@@ -77,6 +77,7 @@ def greet():
 
 @app.post("/upload_file")
 async def upload_file(file: UploadFile = File(...)):
+    print(str(file))
     #TO DO: Add date str before file name
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     with open(file_path, "wb") as buffer:
