@@ -61,11 +61,12 @@ otps_table = sqlalchemy.Table(
 )
 
 incidentcategories_table = sqlalchemy.Table(
-    "incidentcategories",
+    "incidentcategory",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
+    sqlalchemy.Column("isurgent"     , sqlalchemy.Boolean),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
