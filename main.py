@@ -742,6 +742,7 @@ async def get_all_incidents():
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
                 "isemergency": result["isemergency"],
+                "iscityreport": result["iscityreport"],
                 "file1": result["file1"],
                 "file2": result["file2"],
                 "file3": result["file3"],
@@ -779,6 +780,7 @@ async def get_approved_incidents():
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
                 "isemergency": result["isemergency"],
+                "iscityreport": result["iscityreport"],
                 "file1": result["file1"],
                 "file2": result["file2"],
                 "file3": result["file3"],
@@ -813,6 +815,7 @@ async def get_unapproved_incidents():
                 "address": result["address"],
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
+                "iscityreport": result["iscityreport"],
                 "isemergency": result["isemergency"],
                 "file1": result["file1"],
                 "file2": result["file2"],
@@ -848,6 +851,7 @@ async def get_resolved_incidents():
                 "address": result["address"],
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
+                "iscityreport": result["iscityreport"],
                 "isemergency": result["isemergency"],
                 "file1": result["file1"],
                 "file2": result["file2"],
@@ -883,6 +887,7 @@ async def get_rejected_incidents():
                 "address": result["address"],
                 "addresslat": result["addresslat"],
                 "addresslong": result["addresslong"],
+                "iscityreport": result["iscityreport"],
                 "isemergency": result["isemergency"],
                 "file1": result["file1"],
                 "file2": result["file2"],
@@ -989,6 +994,7 @@ async def get_incident_by_id(incidentid: str):
             "addresslat": result["addresslat"],
             "addresslong": result["addresslong"],
             "isemergency": result["isemergency"],
+            "iscityreport": result["iscityreport"],
             "file1": result["file1"],
             "file2": result["file2"],
             "file3": result["file3"],
@@ -1059,6 +1065,7 @@ async def register_incident(incident: IncidentSchema):
         name=incident.name,
         description=incident.description,
         isemergency=incident.isemergency,
+        iscityreport=incident.iscityreport,
         incidentcategoryid=incident.incidentcategoryid,
         address=incident.address,
         addresslat=incident.addresslat,
@@ -1090,6 +1097,7 @@ async def update_incident(incident: IncidentUpdateSchema):
             name=incident.name,
             description=incident.description,
             isemergency=incident.isemergency,
+            iscityreport=incident.iscityreport,
             incidentcategoryid=incident.incidentcategoryid,
             address=incident.address,
             addresslat=incident.addresslat,
@@ -1892,6 +1900,7 @@ async def add_incident_category(category: IncidentCategoriesSchema):
         id=gID,
         name=category.name,
         description=category.description,
+        isurgent=category.isurgent,
         datecreated=gDate,
         status="1"
     )
@@ -1912,6 +1921,7 @@ async def update_incident_category(category: IncidentCategoriesUpdateSchema):
         values(
             name=category.name,
             description=category.description,
+            isurgent=category.isurgent,
             dateupdated=gDate
     )
 

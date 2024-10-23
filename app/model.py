@@ -515,6 +515,7 @@ class IncidentCategoriesSchema(BaseModel):
     id           : str = Field(default=None)
     name         : str = Field(default=None)
     description  : str = Field(default= None)
+    isurgent     : bool = Field(default=False)
     datecreated : datetime.datetime
     createdby   : Optional[str] = None
     dateupdated : Optional[datetime.datetime] = None
@@ -528,6 +529,7 @@ class IncidentCategoriesSchema(BaseModel):
                 "name": "Name",
                 "description": "Description ....",
                 "datecreated": datetime.datetime,
+                "isurgent": False,
                 "createdby": "1",
                 "dateupdated": None,
                 "updatedby": None,
@@ -539,6 +541,7 @@ class IncidentCategoriesUpdateSchema(BaseModel):
     id           : str = Field(default=None)
     name         : str = Field(default=None)
     description  : str = Field(default= None)
+    isurgent     : bool = Field(default=False)
     dateupdated : Optional[datetime.datetime] = None
     updatedby   : Optional[str] = None
     status   : Optional[str] = None
@@ -549,6 +552,7 @@ class IncidentCategoriesUpdateSchema(BaseModel):
                 "id":  "ID",
                 "name": "Name",
                 "description": "Description",
+                "isurgent": False,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -574,6 +578,7 @@ class IncidentSchema(BaseModel):
     name                : str = Field(default=None)
     description         : str = Field(default= None)
     isemergency         : bool = Field(default= False)
+    iscityreport        : bool = Field(default= False)
     incidentcategoryid  : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
@@ -600,6 +605,7 @@ class IncidentSchema(BaseModel):
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
                 "isemergency": False,
+                "iscityreport": False,
                 "file1": "File",
                 "file2": "File",
                 "file3": "File",
@@ -618,6 +624,7 @@ class IncidentUpdateSchema(BaseModel):
     name                : str = Field(default=None)
     description         : str = Field(default= None)
     isemergency         : bool = Field(default= False)
+    iscityreport        : bool = Field(default= False)
     incidentcategoryid  : str = Field(default= None)
     incidentcategory    : str = Field(default= None)
     address             : str = Field(default= None)
@@ -644,6 +651,7 @@ class IncidentUpdateSchema(BaseModel):
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
                 "isemergency": False,
+                "iscityreport": False,
                 "file1": "File",
                 "file2": "File",
                 "file3": "File",
@@ -699,35 +707,41 @@ class ReportSchema(BaseModel):
     id                  : str = Field(default=None)
     name                : str = Field(default=None)
     description         : str = Field(default= None)
-    reporttype                : str = Field(default= None)
-    reference           : str = Field(default= None)
     isemergency         : bool = Field(default= False)
+    iscityreport        : bool = Field(default= False)
+    incidentcategoryid  : str = Field(default= None)
+    incidentcategory    : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
     addresslong         : float = Field(default= 0.32888)
-    attachment          : str = Field(default=None)
-    createdby           : Optional[str] = None
-    datecreated         : datetime.datetime
+    file1               : str = Field(default=None)
+    file2               : str = Field(default= None)
+    file3               : str = Field(default= None)
+    file4               : str = Field(default= None)
+    file5               : str = Field(default= None)
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
     class Config:
         orm_mode = True
         the_schema = {
-            "report_demo": {
+            "incident_demo": {
                 "id" : "---",
-                "name": "Report",
-                "description": "Report Details",
+                "name": "Incident",
+                "description": "Incident",
+                "incidentcategoryid": "Categ -ID",
+                "incidentcategory": "Pothole",
                 "address": "Kampala, Uganda",
-                "reporttype": "Road Works",
-                "reference": "REP-0001-27-07",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
                 "isemergency": False,
-                "attachment": "File",
-                "datecreated": datetime.datetime,
-                "createdby": "1",
-                "dateupdated": None,
+                "iscityreport": False,
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
+                "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
             }
@@ -736,31 +750,41 @@ class ReportSchema(BaseModel):
 class ReportUpdateSchema(BaseModel):
     id                  : str = Field(default=None)
     name                : str = Field(default=None)
-    description         : str = Field(default= None)    
-    reporttype                : str = Field(default= None)
-    reference           : str = Field(default= None)
+    description         : str = Field(default= None)
     isemergency         : bool = Field(default= False)
+    iscityreport        : bool = Field(default= True)
+    incidentcategoryid  : str = Field(default= None)
+    incidentcategory    : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
     addresslong         : float = Field(default= 0.32888)
-    attachment          : str = Field(default=None)
+    file1               : str = Field(default=None)
+    file2               : str = Field(default= None)
+    file3               : str = Field(default= None)
+    file4               : str = Field(default= None)
+    file5               : str = Field(default= None)
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
     class Config:
         orm_mode = True
         the_schema = {
-            "report_demo": {
+            "incident_demo": {
                 "id" : "---",
-                "name": "Report",
-                "description": "Report Details",
-                "reporttype": "Road Works",
-                "reference": "REP-0001-27-07",
+                "name": "Incident",
+                "description": "Incident",
+                "incidentcategoryid": "Categ -ID",
+                "incidentcategory": "Pothole",
                 "address": "Kampala, Uganda",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
                 "isemergency": False,
-                "attachment": "File",
+                "iscityreport": True,
+                "file1": "File",
+                "file2": "File",
+                "file3": "File",
+                "file4": "File",
+                "file5": "File",
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
