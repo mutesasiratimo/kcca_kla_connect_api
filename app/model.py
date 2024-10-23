@@ -74,12 +74,13 @@ incidentcategories_table = sqlalchemy.Table(
 )
 
 incidents_table = sqlalchemy.Table(
-    "incidentstable",
+    "incidentstablenew",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
     sqlalchemy.Column("isemergency"  , sqlalchemy.Boolean),
+    sqlalchemy.Column("iscityreport" , sqlalchemy.Boolean),
     sqlalchemy.Column("incidentcategoryid" , sqlalchemy.String),
     sqlalchemy.Column("address"      , sqlalchemy.String),
     sqlalchemy.Column("addresslat"   , sqlalchemy.Float),
