@@ -580,6 +580,7 @@ class IncidentSchema(BaseModel):
     isemergency         : bool = Field(default= False)
     iscityreport        : bool = Field(default= False)
     incidentcategoryid  : str = Field(default= None)
+    incidentcategory    : str = Field(default= None)
     address             : str = Field(default= None)
     addresslat          : float = Field(default= 0.22222)
     addresslong         : float = Field(default= 0.32888)
@@ -601,6 +602,7 @@ class IncidentSchema(BaseModel):
                 "name": "Incident",
                 "description": "Incident Details",
                 "incidentcategoryid": "Categ -ID",
+                "incidentcategory": "Pothole",
                 "address": "Kampala, Uganda",
                 "addresslat": 0.32222,
                 "addresslong": 32.3555,
