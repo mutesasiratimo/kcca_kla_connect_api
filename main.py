@@ -105,7 +105,7 @@ async def send_email_asynchronous(title: str, body: str, to: EmailStr):
 @app.get('/send-email/backgroundtasks', tags=["mailer"])
 def send_email_backgroundtasks(background_tasks: BackgroundTasks, title: str, body: str, to: EmailStr):
     send_email_background(background_tasks, title, body, to)
-    return 'Success'
+    # return 'Success'
 
 ################ END EMAILS #################
 
