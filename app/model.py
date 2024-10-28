@@ -1311,3 +1311,5 @@ class NewsDeleteSchema(BaseModel):
 ##################### END_NEWS ###########################
 
 
+class EmailSchema(BaseModel):
+    email: List[EmailStr]

@@ -96,18 +96,15 @@ async def download_file(filename: str):
 
 ################ EMAILS #####################
 
-# @app.get('/send-email/asynchronous', tags=["mailer"])
+@app.get('/send-email/asynchronous', tags=["mailer"])
 async def send_email_asynchronous(title: str, body: str, to: EmailStr):
     await send_email_async(title, to, body)
     # await send_email_async_test()
     return 'Success'
 
-# @app.get('/send-email/backgroundtasks', tags=["mailer"])
-
-
-def send_email_backgroundtasks(background_tasks: BackgroundTasks):
-    send_email_background(background_tasks, 'Hello World',
-                          'mutestimo72@gmail.com', {'title': 'Hello World', 'name':       'John Doe'})
+@app.get('/send-email/backgroundtasks', tags=["mailer"])
+def send_email_backgroundtasks(background_tasks: BackgroundTasks, title: str, body: str, to: EmailStr):
+    send_email_background(background_tasks, title, body, to)
     return 'Success'
 
 ################ END EMAILS #################
@@ -441,11 +438,26 @@ async def register_user(user: UserSignUpSchema):
         raise HTTPException(
             status_code=409, detail="User already exists with this phone number or email.")
     else:
+        otp = await generate_otp(gID)
+        email_address = user.email
+        sms_message = f"Welcome to Kla Konnect! Kindly use "+otp+" as the OTP to activate your account"
+        print(otp)
+        print(user.phone)
+        print(sms_message)
+        sms_gateway_url = 'https://sms.dmarkmobile.com/v2/api/send_sms/?spname=spesho@dmarkmobile.com&sppass=t4x1sms&numbers='+sms_number+'&msg='+sms_message+'&type=json'.replace(" ", "%20")
+        parsed_url = urlparse(sms_gateway_url).query
+        parse_qs(parsed_url)
+        contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
+
+        print(str(contents))
+        # contents = urllib.request.urlopen(parsed_url).read()
+        await send_email_backgroundtasks(BackgroundTasks, title, sms_message, email_address)
         await database.execute(query)
         return {
             **user.dict(),
             "id": gID,
             "datecreated": gDate,
+            "otp": otp,
             "token": signJWT(user.username),
             "status": "1"
         }
@@ -537,6 +549,7 @@ async def reset_password(email: str):
     if result:
         email = result["email"]
         sms_number = result["phone"].replace("+", "")
+        email_address=result["email"]
         userid = result["id"]
         password = result["password"]
         otp = await generate_otp(userid)
@@ -551,6 +564,7 @@ async def reset_password(email: str):
 
         print(str(contents))
         # contents = urllib.request.urlopen(parsed_url).read()
+        await send_email_backgroundtasks(BackgroundTasks, title, sms_message, email_address)
         # await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email) .replace(" ", "%20")
         # password key returned as gateway in case of M.I.T.M attack
         return {
