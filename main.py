@@ -58,6 +58,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+local_background_tasks = BackgroundTasks()
 
 @app.on_event("startup")
 async def startup():
@@ -96,14 +97,15 @@ async def download_file(filename: str):
 
 ################ EMAILS #####################
 
-@app.get('/send-email/asynchronous', tags=["mailer"])
+# @app.get('/send-email/asynchronous', tags=["mailer"])
 async def send_email_asynchronous(title: str, body: str, to: EmailStr):
     await send_email_async(title, to, body)
     # await send_email_async_test()
     return 'Success'
 
-@app.get('/send-email/backgroundtasks', tags=["mailer"])
-def send_email_backgroundtasks(background_tasks: BackgroundTasks, title: str, body: str, to: EmailStr):
+# @app.get('/send-email/backgroundtasks', tags=["mailer"])
+def send_email_backgroundtasks(title: str, body: str, to: EmailStr):
+    background_tasks = BackgroundTasks(),
     send_email_background(background_tasks, title, body, to)
     # return 'Success'
 
@@ -438,26 +440,39 @@ async def register_user(user: UserSignUpSchema):
         raise HTTPException(
             status_code=409, detail="User already exists with this phone number or email.")
     else:
-        otp = await generate_otp(gID)
+        # otp = ""
+        # otp = await generate_otp(gID)
+        digits = "0123456789"
+        OTP = ""
+        for i in range(4):
+            OTP += digits[math.floor(random.random() * 10)]
         email_address = user.email
-        sms_message = f"Welcome to Kla Konnect! Kindly use "+otp+" as the OTP to activate your account"
-        print(otp)
+        sms_number = user.phone
+        sms_message = f"Welcome to Kla Konnect! Kindly use "+OTP+" as the OTP to activate your account"
+        print(OTP)
         print(user.phone)
         print(sms_message)
         sms_gateway_url = 'https://sms.dmarkmobile.com/v2/api/send_sms/?spname=spesho@dmarkmobile.com&sppass=t4x1sms&numbers='+sms_number+'&msg='+sms_message+'&type=json'.replace(" ", "%20")
+        
+        # contents = urllib.request.urlopen(parsed_url).read()
+        # background_tasks = BackgroundTasks()
+        # background_tasks.add_task(send_email_asynchronous, title="Welcome to Kla Konnect", body=sms_message, to=email_address)
+        # send_email_backgroundtasks(BackgroundTasks(), "Welcome to Kla Konnect", sms_message, email_address)
+        # await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
+        
+        await database.execute(query)
         parsed_url = urlparse(sms_gateway_url).query
         parse_qs(parsed_url)
         contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
 
         print(str(contents))
-        # contents = urllib.request.urlopen(parsed_url).read()
-        await send_email_backgroundtasks(BackgroundTasks, title, sms_message, email_address)
-        await database.execute(query)
+        await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
+        # TO DO MAKE BACKGROUND EMAIL SENDING FUNCTIONAL, AWAIT SLOWS DOWN RESPONSE.
         return {
             **user.dict(),
             "id": gID,
             "datecreated": gDate,
-            "otp": otp,
+            "otp": OTP,
             "token": signJWT(user.username),
             "status": "1"
         }
@@ -552,7 +567,12 @@ async def reset_password(email: str):
         email_address=result["email"]
         userid = result["id"]
         password = result["password"]
-        otp = await generate_otp(userid)
+        # otp = await generate_otp(userid)
+        digits = "0123456789"
+        otp = ""
+        for i in range(4):
+            otp += digits[math.floor(random.random() * 10)]
+
         sms_message = f"Kindly use "+otp+" as the OTP for resetting your Kla Konnect password"
         print(otp)
         print(sms_number)
@@ -563,8 +583,9 @@ async def reset_password(email: str):
         contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
 
         print(str(contents))
+        await send_email_asynchronous("Kla Konnect Password Reset", sms_message, email_address)
         # contents = urllib.request.urlopen(parsed_url).read()
-        await send_email_backgroundtasks(BackgroundTasks, title, sms_message, email_address)
+        # await send_email_backgroundtasks(BackgroundTasks, "Kla Konnect Password Reset", sms_message, email_address)
         # await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email) .replace(" ", "%20")
         # password key returned as gateway in case of M.I.T.M attack
         return {
