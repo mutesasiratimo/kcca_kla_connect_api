@@ -722,7 +722,7 @@ async def verify_otp(otp_obj: OtpVerifySchema):
             status_code=401, detail="Invalid OTP Code.")
 
 
-@app.post("/users/updatepassword", tags=["user"], dependencies=[Depends(jwtBearer())])
+@app.post("/users/updatepassword", tags=["user"])
 async def update_password(user: UserUpdatePasswordSchema):
     gDate = datetime.datetime.now()
     query = users_table.update().\
