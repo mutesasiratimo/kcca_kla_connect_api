@@ -35,8 +35,8 @@ conf = ConnectionConfig(
     MAIL_FROM=Envs.MAIL_FROM,
     MAIL_PORT=Envs.MAIL_PORT,
     MAIL_SERVER=Envs.MAIL_SERVER,
-    MAIL_SSL_TLS=False,
-    MAIL_STARTTLS=True,
+    # MAIL_SSL_TLS=False,
+    # MAIL_STARTTLS=True,
     USE_CREDENTIALS=True,
 )
 

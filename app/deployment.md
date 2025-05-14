@@ -1,4 +1,8 @@
-git clone https://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@github.com/mutesasiratimo/kcca_kla_connect_api
+# CLONE REPO
+
+mkdir projects > cd projects
+
+git clone https://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####@github.com/mutesasiratimo/kcca_kla_connect_api
 
 # Make VENV
 
@@ -12,11 +16,66 @@ source fastapi_env/bin/activate
 
 where pip
 
-# IF NOT, INSTALL PIP
+IF NOT:
+sudo apt install pip or python3-pip
+
+# SETUP OPEN SSH
+
+sudo apt install openssh-server
+
+sudo apt install ufw
+
+sudo ufw enable
+
+sudo ufw allow ssh
+
+sudo systemctl enable ssh
+
+sudo systemctl status ssh
 
 sudo apt install python3-tk
 
 sudo apt install gunicorn
+
+# SETUP POSTGRESQL
+
+sudo apt install wget ca-certificates
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+
+sudo apt update
+
+sudo apt install postgresql postgresql-contrib
+
+sudo systemctl status postgresql
+
+sudo -u postgres psql
+
+\password postgres
+
+CREATE DATABASE klakonnect;
+
+\c klakonnect
+
+exit
+
+sudo nano /etc/postgresql/17/main/postgresql.conf
+
+Uncomment and edit the listen_addresses attribute to start listening to start listening to all available IP addresses.
+
+listen_addresses = '\*'
+
+sudo nano /etc/postgresql/17/main/pg_hba.conf
+
+Append a new connection policy (a pattern stands for [CONNECTION_TYPE][DATABASE][USER] [ADDRESS][METHOD]) in the bottom of the file.
+
+host all all 0.0.0.0/0 md5
+
+sudo systemctl restart postgresql
+
+ss -nlt | grep 5432
 
 # INSTALL FAST API DEPENDENCIES
 
@@ -31,47 +90,73 @@ pip install DateTime
 pip install fastapi_pagination
 pip install fastapi_mail
 
-//NGINX SITES SCRIPT
-server{
+# NGINX CONFIGURATION SETUP
 
-    server_name 172.16.0.160;
+sudo apt install nginx
 
-    location / {
-        allow 127.0.0.1;
-        include proxy_params;
-        proxy_pass http://127.0.0.1:8000;
+sudo systemctl start nginx
+
+sudo systemctl enable nginx
+
+sudo nano /etc/nginx/sites-available/kcca
+
+paste text below
+
+###########################
+GNU nano 7.2  
+server {
+listen 80;
+server_name 35.225.77.49;
+
+    #index index.html;
+    #root /var/www/html/mywebsite;
+
+    location /klakonnect {
+
+        alias /home/timo/html/klakonnect;
+
     }
 
-location /dashboard {
-alias /home/agnes/html/dashboard;
+    location /dmmp {
 
-        # any additional configuration for non-static content
+        alias /home/timo/html/dmmp;
+
+    }
+
+    location /drammp {
+
+        alias /home/timo/html/drammp;
+
+    }
+
+    location ^~ /apiklakonnect/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:6000/;
+
+    }
+
+    location ^~ /apidmmp/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:8000/;
+
+    }
+
+    location ^~ /apidrammp/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:5000/;
+
+    }
 
 }
 
-}
+#############################
 
-///gunicorn.conf
-from multiprocessing import cpu_count
+# SETUP APPLICATON TO RUN AS SERVICE
 
-# Socket Path
+sudo nano /etc/systemd/system/klakonnect.service
 
-bind = 'unix:/root/project/kcca_kla_connect_api/gunicorn.sock'
+paste text below
 
-# Worker Options
-
-workers = cpu_count() + 1
-worker_class = 'uvicorn.workers.UvicornWorker'
-
-# Logging Options
-
-loglevel = 'debug'
-accesslog = '/root/project/kcca_kla_connect_api/access_log'
-errorlog = '/root/project/kcca_kla_connect_api/error_log'
-
-///////
-
-////project.service
 [Unit]
 Description=Gunicorn instance to serve MyApp
 After=network.target
@@ -90,51 +175,34 @@ WantedBy=multi-user.target
 
 //////
 
-LIVE SERVER NGINX CONFIG
-GNU nano 7.2 /etc/nginx/sites-available/kcca  
-server {
-listen 80;
-server_name 35.239.4.66;
+sudo systemctl start klakonnect
 
-    #index index.html;
-    #root /var/www/html/mywebsite;
+sudo systemctl enable klakonnect
 
-    location /klakonnect {
+# SETUP LOGGING (OPTIONAL)
 
-        alias /home/mutestimo72/html/klakonnect/web;
+cd projects/kla_connect_api/
 
-    }
+sudo nano gunicorn.conf
 
-    location /dmmp {
+paste text below:
+########################
 
-        alias /home/mutestimo72/html/dmmp/web;
+from multiprocessing import cpu_count
 
-    }
+# Socket Path
 
-    location ^~ /apiklakonnect/ {
-        #allow 127.0.0.1;
-        proxy_pass http://127.0.0.1:6000/;
+bind = 'unix:/root/project/kcca_kla_connect_api/gunicorn.sock'
 
-    }
+# Worker Options
 
-    location ^~ /apidmmp/ {
-        #allow 127.0.0.1;
-        proxy_pass http://127.0.0.1:8000/;
+workers = cpu_count() + 1
+worker_class = 'uvicorn.workers.UvicornWorker'
 
-    }
+# Logging Options
 
-}
+loglevel = 'debug'
+accesslog = '/home/timo/projects/kcca_kla_connect_api/access_log'
+errorlog = '/home/timo/projects/kcca_kla_connect_api/error_log'
 
-[Unit]
-Description=Gunicorn instance to serve MyApp
-After=network.target
-
-[Service]
-User=root
-Group=www-data
-WorkingDirectory=/root/project/kcca_kla_connect_api
-Environment="PATH=/usr/local/bin"
-ExecStart=/usr/bin/gunicorn -k uvicorn.workers.UvicornWorker main:app
-
-[Install]
-WantedBy=multi-user.target
+///////
