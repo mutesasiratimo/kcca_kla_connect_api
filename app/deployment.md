@@ -55,9 +55,9 @@ sudo -u postgres psql
 
 \password postgres
 
-CREATE DATABASE klakonnect;
+CREATE DATABASE klaconnect;
 
-\c klakonnect
+\c klaconnect
 
 exit
 
@@ -103,7 +103,7 @@ sudo nano /etc/nginx/sites-available/kcca
 paste text below
 
 ###########################
-GNU nano 7.2  
+
 server {
 listen 80;
 server_name 35.225.77.49;
@@ -151,11 +151,19 @@ server_name 35.225.77.49;
 
 #############################
 
+# SETUP NGINX SYM LINK
+
+sudo ln -s /etc/nginx/sites-available/kcca /etc/nginx/sites-enabled/
+
+# ALLOW NGINX VIA UFW
+
+sudo ufw allow 'Nginx Full'
+
 # SETUP APPLICATON TO RUN AS SERVICE
 
 sudo nano /etc/systemd/system/klakonnect.service
 
-paste text below
+paste text below \*\* check spelling difference btn kla_konnect and kla_connect
 
 [Unit]
 Description=Gunicorn instance to serve MyApp
@@ -164,7 +172,7 @@ After=network.target
 [Service]
 User=mutestimo72
 Group=www-data
-WorkingDirectory=/home/mutestimo72/projects/kcca_dmmp_api
+WorkingDirectory=/home/mutestimo72/projects/kcca_kla_connect_api
 Environment="PATH=/usr/local/bin"
 #ExecStart=/usr/bin/gunicorn -k uvicorn.workers.UvicornWorker main:app
 ExecStart=/home/mutestimo72/fastapi_env/bin/uvicorn main:app --host 0.0.0.0 --port 6000 --root-path="/apiklakonnect"
@@ -206,3 +214,21 @@ accesslog = '/home/timo/projects/kcca_kla_connect_api/access_log'
 errorlog = '/home/timo/projects/kcca_kla_connect_api/error_log'
 
 ///////
+
+GNU nano 6.2 /etc/systemd/system/klakonnect.service  
+[Unit]
+Description=Gunicorn instance to serve KLA Konnect API
+After=network.target
+
+[Service]
+User=timo
+Group=www-data
+WorkingDirectory=/home/timo/projects/kcca_kla_connect_api
+Environment="PATH=/home/timo/projects/fastapi_env/bin"
+ExecStart=/home/timo/projects/fastapi_env/bin/gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:6000 --env UVICORN_CMD_ARGS="--root-path /apiklakonnect"
+
+#ExecStart=/home/timo/projects/fastapi_env/bin/uvicorn main:app --host 0.0.0.0 --port 6000 --root-path="/apiklakonnect"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
