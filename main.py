@@ -31,7 +31,7 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI(
-    root_path="/apiklakonnect"
+    root_path="/apiklakonnect",
     title="KCCA Kla Connect",
     description= 'A system for reporting and managing incidents.',
     version="0.1.1",
