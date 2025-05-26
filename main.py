@@ -1935,10 +1935,14 @@ async def add_incident_category(category: IncidentCategoriesSchema):
     query = incidentcategories_table.insert().values(
         id=gID,
         name=category.name,
+        image=category.image,
         description=category.description,
-        isurgent=category.isurgent,
+        autoapprove=category.autoapprove,
+        doesexpire=category.doesexpire,
+        hourstoexpire=category.hourstoexpire,
         datecreated=gDate,
-        status="1"
+        createdby=category.createdby,
+        status=category.status
     )
 
     await database.execute(query)
@@ -1956,9 +1960,15 @@ async def update_incident_category(category: IncidentCategoriesUpdateSchema):
         where(incidentcategories_table.c.id == category.id).\
         values(
             name=category.name,
+            image=category.image,
             description=category.description,
-            isurgent=category.isurgent,
-            dateupdated=gDate
+            autoapprove=category.autoapprove,
+            doesexpire=category.doesexpire,
+            hourstoexpire=category.hourstoexpire,
+            datecreated=gDate,
+            updatedby=category.updatedby,
+            dateupdated=gDate,
+            status=category.status
     )
 
     await database.execute(query)

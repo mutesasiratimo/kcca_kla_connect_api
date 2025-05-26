@@ -61,12 +61,15 @@ otps_table = sqlalchemy.Table(
 )
 
 incidentcategories_table = sqlalchemy.Table(
-    "incidentcategory",
+    "incidentcategories",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
+    sqlalchemy.Column("image"        , sqlalchemy.String),
     sqlalchemy.Column("description"  , sqlalchemy.String),
-    sqlalchemy.Column("isurgent"     , sqlalchemy.Boolean),
+    sqlalchemy.Column("autoapprove"     , sqlalchemy.Boolean),
+    sqlalchemy.Column("doesexpire"   , sqlalchemy.Boolean),
+    sqlalchemy.Column("hourstoexpire", sqlalchemy.Integer),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -510,26 +513,33 @@ class UserSignUpSchema(BaseModel):
 
 ##################### END_USERS ###########################
 
-##################### INCIDENT CATEGORIES ###########################
+# ##################### INCIDENT CATEGORIES ###########################
+
 class IncidentCategoriesSchema(BaseModel):
-    id           : str = Field(default=None)
-    name         : str = Field(default=None)
-    description  : str = Field(default= None)
-    isurgent     : bool = Field(default=False)
-    datecreated : datetime.datetime
-    createdby   : Optional[str] = None
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
+    id               : str = Field(default=None)
+    name             : str = Field(default=None)
+    image            : str = Field(default=None)
+    description      : str = Field(default= None)
+    autoapprove      : bool = Field(default=False)
+    doesexpire       : bool = Field(default=False)
+    hourstoexpire    : int = Field(default=None)
+    datecreated      : datetime.datetime
+    createdby        : Optional[str] = None
+    dateupdated      : Optional[datetime.datetime] = None
+    updatedby        : Optional[str] = None
+    status           : Optional[str] = None
     class Config:
         orm_mode = True
         the_schema = {
             "user_demo": {
                 "id" : "---",
                 "name": "Name",
+                "image": "",
                 "description": "Description ....",
+                "autoapprove": False,
+                "doesexpire": False,
+                "hourstoexpire": 0,
                 "datecreated": datetime.datetime,
-                "isurgent": False,
                 "createdby": "1",
                 "dateupdated": None,
                 "updatedby": None,
@@ -538,21 +548,27 @@ class IncidentCategoriesSchema(BaseModel):
         }
 
 class IncidentCategoriesUpdateSchema(BaseModel):
-    id           : str = Field(default=None)
-    name         : str = Field(default=None)
-    description  : str = Field(default= None)
-    isurgent     : bool = Field(default=False)
-    dateupdated : Optional[datetime.datetime] = None
-    updatedby   : Optional[str] = None
-    status   : Optional[str] = None
+    id               : str = Field(default=None)
+    name             : str = Field(default=None)
+    image            : str = Field(default=None)
+    description      : str = Field(default= None)
+    autoapprove      : bool = Field(default=False)
+    doesexpire       : bool = Field(default=False)
+    hourstoexpire    : int = Field(default=None)
+    dateupdated      : Optional[datetime.datetime] = None
+    updatedby        : Optional[str] = None
+    status           : Optional[str] = None
     class Config:
         orm_mode = True
         the_schema = {
             "user_demo": {
                 "id":  "ID",
                 "name": "Name",
-                "description": "Description",
-                "isurgent": False,
+                "image": "",
+                "description": "Description ....",
+                "autoapprove": False,
+                "doesexpire": False,
+                "hourstoexpire": 0,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
