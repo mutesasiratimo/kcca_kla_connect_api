@@ -2661,3 +2661,5 @@ async def delete_language(languageid: str):
 
 
 ####################### END MAILER ###################
+
+add_pagination(app) 
