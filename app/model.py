@@ -61,7 +61,7 @@ otps_table = sqlalchemy.Table(
 )
 
 incidentcategories_table = sqlalchemy.Table(
-    "incidentcategories",
+    "incidentcategoriestable",
     metadata,
     sqlalchemy.Column("id"           , sqlalchemy.String, primary_key=True),
     sqlalchemy.Column("name"         , sqlalchemy.String),
