@@ -854,8 +854,8 @@ async def get_all_incidents_paginate(params: Params = Depends()):
     result = await database.fetch_all(query)
     return paginate(result)
 
-@app.get("/incidents/status/default/{status}", response_model=Page[IncidentSchema], tags=["incidents"])
-@app.get("/incidents/status/limit-offset/{status}",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
+@app.get("/incidents/status/default/{status}", response_model=Page[IncidentWithCategorySchema], tags=["incidents"])
+@app.get("/incidents/status/limit-offset/{status}",  response_model=LimitOffsetPage[IncidentWithCategorySchema], tags=["incidents"])
 async def get_all_incidents_by_status_paginate(status: str, params: Params = Depends(),):
     # Perform the JOIN
     j = join(
