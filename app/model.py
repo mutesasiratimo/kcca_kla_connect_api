@@ -589,6 +589,33 @@ class IncidentCategoriesDeleteSchema(BaseModel):
 
 ######################## INCIDENT #############################
 
+class IncidentWithCategorySchema(BaseModel):
+    id                        : str = Field(default=None)
+    name                      : str = Field(default=None)
+    description               : str = Field(default= None)
+    isemergency               : bool = Field(default= False)
+    iscityreport              : bool = Field(default= False)
+    incidentcategoryid        : str = Field(default= None)
+    address                   : str = Field(default= None)
+    addresslat                : float = Field(default= 0.22222)
+    addresslong               : float = Field(default= 0.32888)
+    file1                     : str = Field(default=None)
+    file2                     : str = Field(default= None)
+    file3                     : str = Field(default= None)
+    file4                     : str = Field(default= None)
+    file5                     : str = Field(default= None)
+    category_name             : str = Field(default=None)
+    category_image            : str = Field(default=None)
+    category_description      : str = Field(default= None)
+    category_autoapprove      : bool = Field(default=False)
+    category_doesexpire       : bool = Field(default=False)
+    category_hourstoexpire    : int = Field(default=None)
+    createdby                 : Optional[str] = None
+    datecreated               : datetime.datetime
+    dateupdated               : Optional[datetime.datetime] = None
+    updatedby                 : Optional[str] = None
+    status                    : Optional[str] = None
+
 class IncidentSchema(BaseModel):
     id                  : str = Field(default=None)
     name                : str = Field(default=None)

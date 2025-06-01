@@ -17,6 +17,7 @@ from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException
 from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
+from sqlalchemy import select, join
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -807,12 +808,36 @@ async def get_all_incidents():
             status_code=204, detail="No incidents nearby.")
     
 
+# @app.get("/incidents/default", response_model=Page[IncidentSchema], tags=["incidents"])
+# @app.get("/incidents/limit-offset",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
+# async def get_all_incidents_paginate(params: Params = Depends(),):
+#     query = incidents_table.select()
+#     result = await database.fetch_all(query)
+#     return paginate(result)
+
+
 @app.get("/incidents/default", response_model=Page[IncidentSchema], tags=["incidents"])
-@app.get("/incidents/limit-offset",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
-async def get_all_incidents_paginate(params: Params = Depends(),):
-    query = incidents_table.select()
+@app.get("/incidents/limit-offset", response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
+async def get_all_incidents_paginate(params: Params = Depends()):
+    # Perform the JOIN
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.status,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image")
+    ).select_from(j)
+
     result = await database.fetch_all(query)
-    # if result:
     return paginate(result)
 
 @app.get("/incidents/approved/default", response_model=Page[IncidentSchema], tags=["incidents"])
