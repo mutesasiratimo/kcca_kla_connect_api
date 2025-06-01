@@ -767,7 +767,7 @@ async def update_photo(userid: str, photo: str):
 
 ##################### INCIDENTS ######################
 
-@app.get("/incidents",  response_model=Page[IncidentWithCategorySchema], tags=["incidents"], dependencies=[Depends(jwtBearer())])
+@app.get("/incidents",  response_model=List[IncidentWithCategorySchema], tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_all_incidents():
     # query = incidents_table.select().order_by(desc(incidents_table.c.datecreated))
     # Perform the JOIN
