@@ -590,12 +590,12 @@ class IncidentCategoriesDeleteSchema(BaseModel):
 ######################## INCIDENT #############################
 
 class IncidentWithCategorySchema(BaseModel):
-    id                        : str = Field(default=None)
-    name                      : str = Field(default=None)
-    description               : str = Field(default= None)
+    incident_id               : str = Field(default=None)
+    incident_name             : str = Field(default=None)
+    incident_description      : str = Field(default= None)
+    incidentcategoryid        : str = Field(default= None)
     isemergency               : bool = Field(default= False)
     iscityreport              : bool = Field(default= False)
-    incidentcategoryid        : str = Field(default= None)
     address                   : str = Field(default= None)
     addresslat                : float = Field(default= 0.22222)
     addresslong               : float = Field(default= 0.32888)

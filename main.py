@@ -831,10 +831,24 @@ async def get_all_incidents_paginate(params: Params = Depends()):
         incidents_table.c.id.label("incident_id"),
         incidents_table.c.name.label("incident_name"),
         incidents_table.c.description.label("incident_description"),
-        incidents_table.c.status,
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
-        incidentcategories_table.c.image.label("category_image")
+        incidentcategories_table.c.image.label("category_image"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
     ).select_from(j)
 
     result = await database.fetch_all(query)
