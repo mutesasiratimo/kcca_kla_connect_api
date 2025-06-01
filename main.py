@@ -767,54 +767,51 @@ async def update_photo(userid: str, photo: str):
 
 ##################### INCIDENTS ######################
 
-@app.get("/incidents",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
+@app.get("/incidents",  response_model=Page[IncidentWithCategorySchema], tags=["incidents"], dependencies=[Depends(jwtBearer())])
 async def get_all_incidents():
     query = incidents_table.select().order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
-            # incidentcategory = "Unkown"
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": "",
-                "incidentcategory": result["incidentcategoryid"],
-                "incidentcategoryobj": {},
-                # "incidentcategoryobj": await get_incident_category_by_id(result["incidentcategoryid"]),
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "isemergency": result["isemergency"],
-                "iscityreport": result["iscityreport"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "createdbyobj": {},
-                # "createdbyobj": await get_user_by_id(result["createdby"]),
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
+    # Perform the JOIN
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image"),
+        incidentcategories_table.c.autoapprove.label("category_autoapprove"),
+        incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+        incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
+    ).select_from(j)
+
+    result = await database.fetch_all(query)
+    if result:
+        return result
     else:
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
     
-
-# @app.get("/incidents/default", response_model=Page[IncidentSchema], tags=["incidents"])
-# @app.get("/incidents/limit-offset",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
-# async def get_all_incidents_paginate(params: Params = Depends(),):
-#     query = incidents_table.select()
-#     result = await database.fetch_all(query)
-#     return paginate(result)
-
 
 @app.get("/incidents/default", response_model=Page[IncidentWithCategorySchema], tags=["incidents"])
 @app.get("/incidents/limit-offset", response_model=LimitOffsetPage[IncidentWithCategorySchema], tags=["incidents"])
@@ -857,157 +854,48 @@ async def get_all_incidents_paginate(params: Params = Depends()):
     result = await database.fetch_all(query)
     return paginate(result)
 
-@app.get("/incidents/approved/default", response_model=Page[IncidentSchema], tags=["incidents"])
-@app.get("/incidents/approved/limit-offset",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
-async def get_all_approved_incidents_paginate(params: Params = Depends(),):
-    query = incidents_table.select().where(incidents_table.c.status == "1").order_by(desc(incidents_table.c.datecreated))
+@app.get("/incidents/status/default/{status}", response_model=Page[IncidentSchema], tags=["incidents"])
+@app.get("/incidents/status/limit-offset/{status}",  response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
+async def get_all_incidents_by_status_paginate(status: str, params: Params = Depends(),):
+    # Perform the JOIN
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image"),
+        incidentcategories_table.c.autoapprove.label("category_autoapprove"),
+        incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+        incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
+    ).select_from(j).where(incidents_table.c.status == status).order_by(desc(incidents_table.c.datecreated))
+
+    # query = incidents_table.select().where(incidents_table.c.status == "1").order_by(desc(incidents_table.c.datecreated))
     result = await database.fetch_all(query)
-    # if result:
     return paginate(result)
 
-@app.get("/incidents/approved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def get_approved_incidents():
-    query = incidents_table.select().where(incidents_table.c.status == "1").order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            # incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
-            # incidentcategory = "Unkown"
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": "",
-                "incidentcategory": result["incidentcategoryid"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "isemergency": result["isemergency"],
-                "iscityreport": result["iscityreport"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
-    else:
-        raise HTTPException(
-            status_code=204, detail="No approved incidents.")
-
-@app.get("/incidents/unapproved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def get_unapproved_incidents():
-    query = incidents_table.select().where(incidents_table.c.status == "0").order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
-            # incidentcategory = "Unkown"
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": "",
-                "incidentcategory": result["incidentcategoryid"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "iscityreport": result["iscityreport"],
-                "isemergency": result["isemergency"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
-    else:
-        raise HTTPException(
-            status_code=204, detail="No unapproved incidents.")
-
-@app.get("/incidents/resolved",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def get_resolved_incidents():
-    query = incidents_table.select().where(incidents_table.c.status == "2").order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
-            # incidentcategory = "Unkown"
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": "",
-                "incidentcategory": result["incidentcategoryid"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "iscityreport": result["iscityreport"],
-                "isemergency": result["isemergency"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
-    else:
-        raise HTTPException(
-            status_code=204, detail="No incidents nearby.")
-
-@app.get("/incidents/rejected",  tags=["incidents"], dependencies=[Depends(jwtBearer())])
-async def get_rejected_incidents():
-    query = incidents_table.select().where(incidents_table.c.status == "3").order_by(desc(incidents_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            incidentcategory = await get_incident_category_name_by_id(result["incidentcategoryid"])
-            # incidentcategory = "Unkown"
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "incidentcategoryid": "",
-                "incidentcategory": result["incidentcategoryid"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "iscityreport": result["iscityreport"],
-                "isemergency": result["isemergency"],
-                "file1": result["file1"],
-                "file2": result["file2"],
-                "file3": result["file3"],
-                "file4": result["file4"],
-                "file5": result["file5"],
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
-    else:
-        raise HTTPException(
-            status_code=204, detail="No incidents nearby.")
 
 @app.get("/incidents/count", tags=["incidents"])
 async def get_incidents_count():
