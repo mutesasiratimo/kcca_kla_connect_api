@@ -816,8 +816,8 @@ async def get_all_incidents():
 #     return paginate(result)
 
 
-@app.get("/incidents/default", response_model=Page[IncidentSchema], tags=["incidents"])
-@app.get("/incidents/limit-offset", response_model=LimitOffsetPage[IncidentSchema], tags=["incidents"])
+@app.get("/incidents/default", response_model=Page[IncidentWithCategorySchema], tags=["incidents"])
+@app.get("/incidents/limit-offset", response_model=LimitOffsetPage[IncidentWithCategorySchema], tags=["incidents"])
 async def get_all_incidents_paginate(params: Params = Depends()):
     # Perform the JOIN
     j = join(
