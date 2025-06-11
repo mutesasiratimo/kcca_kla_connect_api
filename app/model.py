@@ -284,6 +284,22 @@ engine = sqlalchemy.create_engine(
 )
 metadata.create_all(engine)
 
+###################### FCM #############################
+
+class FcmSchema(BaseModel):
+    fcmid         : str = Field(default=None)
+    title         : str = Field(default=None)
+    body          : str = Field(default=None)
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "email_demo": {
+                "fcmid"  :  "Heading",
+                "title"  :   "Body",
+                "body"   :    ""
+            }
+        }
+
 ##################### USERS ###########################
 
 class UserSchema(BaseModel):

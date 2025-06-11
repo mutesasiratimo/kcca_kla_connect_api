@@ -25,7 +25,16 @@ from sqlalchemy import desc
 from sqlalchemy import asc
 from app.send_mail import send_email_background, send_email_async, send_email_async_test
 import os
+import websockets
+import json
+import requests
+import google.auth.transport.requests
+from google.oauth2 import service_account
+import google.oauth2.id_token
+import firebase_admin
+from firebase_admin import credentials
 from fastapi_pagination import Page, LimitOffsetPage, paginate, add_pagination, Params
+from app.utils.email_templates import send_welcome_email
 
 UPLOAD_FOLDER = "uploads"
 
@@ -33,7 +42,7 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI(
-    root_path="/apiklakonnect",
+    # root_path="/apiklakonnect",
     title="KCCA Kla Connect",
     description= 'A system for reporting and managing incidents.',
     version="0.1.1",
@@ -97,6 +106,85 @@ async def download_file(filename: str):
     return FileResponse(path=file_path, media_type='application/octet-stream', filename=file_name)
 ################# END FILES ###################
 
+
+################### FCM NOTIFICATIONS ############ 
+
+service_acount_file ="ug-kla-konnect-firebase-adminsdk-fbsvc-f2479ab9d6.json"
+credentials = service_account.Credentials.from_service_account_file(service_acount_file, scopes=["https://www.googleapis.com/auth/cloud-platform"])
+
+@app.get('/get-access-token/', tags=["notification"])
+def get_access_token():
+    request = google.auth.transport.requests.Request()
+    credentials.refresh(request)
+    return credentials.token
+
+@app.post('/send-notification-post/', tags=["notification"])
+def send_push(notification: FcmSchema):
+    
+    url = "https://fcm.googleapis.com/v1/projects/ug-kla-konnect/messages:send"
+    data = {
+        "message": {
+            "token": notification.fcmid,
+            "notification": {
+                "title": notification.title,
+                "body": notification.body
+            }
+        }
+    }
+    
+    headers = {
+        'Authorization': f'Bearer {get_access_token()}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print("Successfully sent notification:", response)
+    return response.json()
+
+@app.get('/send-notification/', tags=["notification"])
+def send_push_post(fcm_id, body, title):
+    
+    url = "https://fcm.googleapis.com/v1/projects/ug-kla-konnect/messages:send"
+    data = {
+        "message": {
+            "token": fcm_id,
+            "notification": {
+                "title": title,
+                "body": body
+            }
+        }
+    }
+    
+    headers = {
+        'Authorization': f'Bearer {get_access_token()}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print("Successfully sent notification:", response)
+    return response.json()
+
+@app.get('/send-notification/topic/', tags=["notification"])
+def send_push_post_topic(topic, body, title):
+    
+    url = "https://fcm.googleapis.com/v1/projects/ug-kla-konnect/messages:send"
+    data = {
+        "message": {
+            "topic": topic,
+            "notification": {
+                "title": title,
+                "body": body
+            }
+        }
+    }
+    
+    headers = {
+        'Authorization': f'Bearer {get_access_token()}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print("Successfully sent notification:", response)
+    return response.json()
+
+################# END FCM NOTIFICATIONS ############
 
 ################ EMAILS #####################
 
@@ -417,7 +505,7 @@ async def check_if_user_exists(email: str):
 
 
 @app.post("/users/signup", tags=["user"], status_code=201)
-async def register_user(user: UserSignUpSchema):
+async def register_user(user: UserSignUpSchema, background_tasks: BackgroundTasks):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
     query = users_table.insert().values(
@@ -447,7 +535,7 @@ async def register_user(user: UserSignUpSchema):
         status="1"
     )
     exists = await check_if_user_exists(user.email)
-    if exists:
+    if (1<0):
         raise HTTPException(
             status_code=409, detail="User already exists with this phone number or email.")
     else:
@@ -477,10 +565,11 @@ async def register_user(user: UserSignUpSchema):
         contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
 
         print(str(contents))
-        await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
+        # await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
         # TO DO MAKE BACKGROUND EMAIL SENDING FUNCTIONAL, AWAIT SLOWS DOWN RESPONSE.
+        background_tasks.add_task(send_welcome_email, email_address, user.firstname, OTP)
         return {
-            **user.dict(),
+            **user.dict(), 
             "id": gID,
             "datecreated": gDate,
             "otp": OTP,
