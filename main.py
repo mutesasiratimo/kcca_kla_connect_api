@@ -535,7 +535,7 @@ async def register_user(user: UserSignUpSchema, background_tasks: BackgroundTask
         status="1"
     )
     exists = await check_if_user_exists(user.email)
-    if (1<0):
+    if (exists):
         raise HTTPException(
             status_code=409, detail="User already exists with this phone number or email.")
     else:
