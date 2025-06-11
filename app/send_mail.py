@@ -20,12 +20,6 @@ class Envs:
     # MAIL_SERVER = "mail.kcca.go.ug"
     # MAIL_FROM_NAME = "KCCA KLA CONNECT"
 
-    # MAIL_USERNAME = config('MAIL_USERNAME')
-    # MAIL_PASSWORD = config('MAIL_PASSWORD')
-    # MAIL_FROM = config('MAIL_FROM')
-    # MAIL_PORT = int(config('MAIL_PORT'))
-    # MAIL_SERVER = config('MAIL_SERVER')
-    # MAIL_FROM_NAME = config('MAIN_FROM_NAME')
 
 
 conf = ConnectionConfig(
@@ -35,8 +29,8 @@ conf = ConnectionConfig(
     MAIL_FROM=Envs.MAIL_FROM,
     MAIL_PORT=Envs.MAIL_PORT,
     MAIL_SERVER=Envs.MAIL_SERVER,
-    # MAIL_SSL_TLS=False,
-    # MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    MAIL_STARTTLS=True,
     USE_CREDENTIALS=True,
 )
 
