@@ -44,14 +44,14 @@ def send_welcome_email(to_email: str, user_name: str, otp: str):
         "user_name": user_name,
         "otp": otp
     })
-    print("Rendered HTML:", html)  # Debug
+    
     send_html_email(to_email, "Welcome! Activate Your Account.", html)
 
-def send_password_email(to_email: str, user_name: str, otp: str):
+def send_password_reset_email(to_email: str, user_name: str, otp: str):
     html = render_email_template("password_reset.html", {
         "user_name": user_name,
         "otp": otp,
         "to_email": to_email
     })
-    print("Rendered HTML:", html)  # Debug
+    
     send_html_email(to_email, "Password Reset Instruction.", html)

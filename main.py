@@ -34,7 +34,7 @@ import google.oauth2.id_token
 import firebase_admin
 from firebase_admin import credentials
 from fastapi_pagination import Page, LimitOffsetPage, paginate, add_pagination, Params
-from app.utils.email_templates import send_welcome_email
+from app.utils.email_templates import send_welcome_email, send_password_reset_email
 
 UPLOAD_FOLDER = "uploads"
 
@@ -655,13 +655,14 @@ async def update_user_rights(user: UserUpdateRightsSchema):
 
 
 @app.get("/users/resetpassword/{email}", tags=["user"])
-async def reset_password(email: str):
+async def reset_password(email: str, background_tasks: BackgroundTasks):
     # dateofbirth=datetime.datetime.strptime((user.dateofbirth), "%Y-%m-%d").date(),
     gDate = datetime.datetime.now()
     query = users_table.select().where(users_table.c.email ==
                                        email)
     result = await database.fetch_one(query)
     if result:
+        first_name = result["firstname"]
         email = result["email"]
         sms_number = result["phone"].replace("+", "")
         email_address=result["email"]
@@ -683,7 +684,8 @@ async def reset_password(email: str):
         contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
 
         print(str(contents))
-        await send_email_asynchronous("Kla Konnect Password Reset", sms_message, email_address)
+        # await send_email_asynchronous("Kla Konnect Password Reset", sms_message, email_address)
+        background_tasks.add_task(send_password_reset_email, email_address, first_name, otp)
         # contents = urllib.request.urlopen(parsed_url).read()
         # await send_email_backgroundtasks(BackgroundTasks, "Kla Konnect Password Reset", sms_message, email_address)
         # await send_email_asynchronous("Kla Connect Password Reset", "The OTP for resetting your password is "+otp + "\n", email) .replace(" ", "%20")
