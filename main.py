@@ -42,7 +42,7 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI(
-    root_path="/apiklakonnect",
+    # root_path="/apiklakonnect",
     title="KCCA Kla Connect",
     description= 'A system for reporting and managing incidents.',
     version="0.1.1",
@@ -1017,6 +1017,10 @@ async def search_incidents_by_title_and_category(name: str):
 
 @app.get("/incidents/stats", tags=["incidents"])
 async def get_incidents_stats():
+    approved_today_counter = 0
+    resolved_today_counter = 0
+    rejected_today_counter = 0
+    unapproved_today_counter = 0
     approvedcounter = 0
     resolvedcounter = 0
     rejectedcounter = 0
@@ -1033,30 +1037,42 @@ async def get_incidents_stats():
     if unapprovedresults:
         for result in unapprovedresults:
             unapprovedcounter += 1
+            if result["datecreated"] == datetime.datetime.now():
+                unapproved_today_counter += 1
         
     approvedquery = incidents_table.select().where(incidents_table.c.status == "1")
     approvedresults = await database.fetch_all(approvedquery)
     if approvedresults:
         for result in approvedresults:
             approvedcounter += 1
+            if result["dateupdated"] == datetime.datetime.now():
+                approved_today_counter += 1
     
     rejectedquery = incidents_table.select().where(incidents_table.c.status == "3")
     rejectedresults = await database.fetch_all(rejectedquery)
     if rejectedresults:
         for result in rejectedresults:
             rejectedcounter += 1
+            if result["dateupdated"] == datetime.datetime.now():
+                rejected_today_counter += 1
 
     resolvedquery = incidents_table.select().where(incidents_table.c.status == "2")
     resolvedresults = await database.fetch_all(resolvedquery)
     if resolvedresults:
         for result in resolvedresults:
             resolvedcounter += 1
+            if result["dateupdated"] == datetime.datetime.now():
+                resolved_today_counter += 1
 
     return {
         "unapproved": unapprovedcounter,
+        "unapproved_today": unapproved_today_counter,
         "approved": approvedcounter,
+        "approved_today": approved_today_counter,
         "resolved": resolvedcounter,
+        "resolved_today": resolved_today_counter,
         "rejected": rejectedcounter,
+        "rejected_today": rejected_today_counter,
         "total": counter
     }
 
@@ -1454,364 +1470,222 @@ async def check_if_user_liked_post(postid: str, userid: str):
 
 ##################### REPORTS ######################
 
-
 @app.get("/reports",  tags=["reports"], dependencies=[Depends(jwtBearer())])
 async def get_all_reports():
-    query = kccareports_table.select().order_by(desc(kccareports_table.c.datecreated))
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            res.append({
-                "id": result["id"],
-                "name": result["name"],
-                "description": result["description"],
-                "reporttype": result["reporttype"],
-                "reference": result["reference"],
-                "address": result["address"],
-                "addresslat": result["addresslat"],
-                "addresslong": result["addresslong"],
-                "isemergency": result["isemergency"],
-                "attachment": result["attachment"],
-                "likes": await get_post_likes_count_by_id(result["id"]),
-                "dislikes": await get_post_dislikes_count_by_id(result["id"]),
-                "commentscount": await get_post_comments_count_by_id(result["id"]),
-                "datecreated": result["datecreated"],
-                "createdby": result["createdby"],
-                # "createdbyobj": await get_user_by_id(result["createdby"]),
-                "dateupdated": result["dateupdated"],
-                "updatedby": result["updatedby"],
-                "status": result["status"]
-            })
-        return res
+    
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image"),
+        incidentcategories_table.c.autoapprove.label("category_autoapprove"),
+        incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+        incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
+    ).select_from(j).where(incidents_table.c.iscityreport == True).order_by(desc(incidents_table.c.datecreated))
+
+    result = await database.fetch_all(query)
+    if result:
+        return result
     else:
         raise HTTPException(
             status_code=204, detail="No incidents nearby.")
 
-@app.get("/reports/count", tags=["reports"])
-async def get_reports_count():
-    counter = 0
-    query = kccareports_table.select()
-    results = await database.fetch_all(query)
-    if results:
-        for result in results:
-            counter += 1
-
-    return counter
 
 
-@app.get("/reports/{reportid}", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def get_report_by_id(reportid: str):
-    query = kccareports_table.select().where(kccareports_table.c.id == reportid)
-    result = await database.fetch_one(query)
-    if result:
-        return {
-            "id": result["id"],
-            "name": result["name"],
-            "description": result["description"],
-            "reporttype": result["reporttype"],
-            "reference": result["reference"],
-            "address": result["address"],
-            "addresslat": result["addresslat"],
-            "addresslong": result["addresslong"],
-            "isemergency": result["isemergency"],
-            "attachment": result["attachment"],
-            "likes": await get_post_likes_count_by_id(result["id"]),
-            "dislikes": await get_post_dislikes_count_by_id(result["id"]),
-            "commentscount": await get_post_comments_count_by_id(result["id"]),
-            "datecreated": result["datecreated"],
-            "createdby": result["createdby"],
-            # "createdbyobj": await get_user_by_id(result["createdby"]),
-            "dateupdated": result["dateupdated"],
-            "updatedby": result["updatedby"],
-            "status": result["status"]
-        }
+@app.get("/reports/default", response_model=Page[IncidentWithCategorySchema], tags=["reports"])
+@app.get("/reports/limit-offset", response_model=LimitOffsetPage[IncidentWithCategorySchema], tags=["reports"])
+async def get_all_reports_paginate(params: Params = Depends()):
+    # Perform the JOIN
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image"),
+        incidentcategories_table.c.autoapprove.label("category_autoapprove"),
+        incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+        incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
+    ).select_from(j).where(incidents_table.c.iscityreport == True)
+
+    result = await database.fetch_all(query)
+    return paginate(result)
+
+@app.get("/reports/status/default/{status}", response_model=Page[IncidentWithCategorySchema], tags=["reports"])
+@app.get("/reports/status/limit-offset/{status}",  response_model=LimitOffsetPage[IncidentWithCategorySchema], tags=["reports"])
+async def get_all_reports_by_status_paginate(status: str, params: Params = Depends(),):
+    # Perform the JOIN
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    # Select desired fields
+    query = select(
+        incidents_table.c.id.label("incident_id"),
+        incidents_table.c.name.label("incident_name"),
+        incidents_table.c.description.label("incident_description"),
+        incidents_table.c.isemergency,
+        incidents_table.c.iscityreport,
+        incidents_table.c.address,
+        incidents_table.c.addresslat,
+        incidents_table.c.addresslong,
+        incidents_table.c.file1,
+        incidents_table.c.file2,
+        incidents_table.c.file3,
+        incidents_table.c.file4,
+        incidents_table.c.file5,
+        incidentcategories_table.c.name.label("category_name"),
+        incidentcategories_table.c.description.label("category_description"),
+        incidentcategories_table.c.image.label("category_image"),
+        incidentcategories_table.c.autoapprove.label("category_autoapprove"),
+        incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+        incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.createdby,
+        incidents_table.c.datecreated,
+        incidents_table.c.dateupdated,
+        incidents_table.c.updatedby,
+        incidents_table.c.status
+    ).select_from(j).where(incidents_table.c.status == status and incidents_table.c.iscityreport == True).order_by(desc(incidents_table.c.datecreated))
+
+    result = await database.fetch_all(query)
+    return paginate(result)
 
 
-@app.get("/reports/user/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def get_reports_by_userid(userid: str):
-    query = kccareports_table.select().where(kccareports_table.c.createdby == userid)
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            res.append(await get_incident_by_id(result["id"]))
-        return res
-    else:
-        raise HTTPException(
-            status_code=204, detail="User has not posted any reports.")
-
-
-@app.get("/reports/usercount/{userid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def get_reportcounts_by_userid(userid: str):
-    query = kccareports_table.select().where(kccareports_table.c.createdby == userid)
-    results = await database.fetch_all(query)
-    res = 0
-    if results:
-        for result in results:
-            res += 1
-
-    return res
-
-
-@app.post("/reports/register", response_model=ReportSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def register_report(report: ReportSchema):
+@app.post("/reports/register", response_model=IncidentSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def register_report(incident: IncidentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
-    query = kccareports_table.insert().values(
+    query = incidents_table.insert().values(
         id=gID,
-        name=report.name,
-        description=report.description,
-        reporttype=report.reporttype,
-        reference=report.reference,
-        isemergency=report.isemergency,
-        address=report.address,
-        addresslat=report.addresslat,
-        addresslong=report.addresslong,
-        attachment=report.attachment,
-        createdby=report.createdby,
+        name=incident.name,
+        description=incident.description,
+        isemergency=incident.isemergency,
+        iscityreport=True,
+        incidentcategoryid=incident.incidentcategoryid,
+        address=incident.address,
+        addresslat=incident.addresslat,
+        addresslong=incident.addresslong,
+        file1=incident.file1,
+        file2=incident.file2,
+        file3=incident.file3,
+        file4=incident.file4,
+        file5=incident.file5,
+        createdby=incident.createdby,
         datecreated=gDate,
-        status="1"
+        status= incident.status
     )
 
     await database.execute(query)
     return {
-        **report.dict(),
+        **incident.dict(),
         "id": gID,
         "datecreated": gDate
     }
 
 
-@app.post("/reports/update", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def update_report(report: ReportUpdateSchema):
+@app.post("/reports/update", response_model=IncidentUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def update_report(incident: IncidentUpdateSchema):
     gDate = datetime.datetime.now()
-    query = kccareports_table.update().\
-        where(kccareports_table.c.id == report.id).\
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incident.id).\
         values(
-            name=report.name,
-            description=report.description,
-            reporttype=report.reporttype,
-            reference=report.reference,
-            isemergency=report.isemergency,
-            address=report.address,
-            addresslat=report.addresslat,
-            addresslong=report.addresslong,
-            attachment=report.attachment,
-            createdby=report.createdby,
+            name=incident.name,
+            description=incident.description,
+            isemergency=incident.isemergency,
+            iscityreport=True,
+            incidentcategoryid=incident.incidentcategoryid,
+            address=incident.address,
+            addresslat=incident.addresslat,
+            addresslong=incident.addresslong,
+            file1=incident.file1,
+            file2=incident.file2,
+            file3=incident.file3,
+            file4=incident.file4,
+            file5=incident.file5,
+            updatedby=incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_report_by_id(report.id)
+    return await get_incident_by_id(incident.id)
 
 
-@app.post("/reports/archive", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def archive_report(reportid: str):
+@app.post("/reports/archive", response_model=IncidentUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def archive_report(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
-    query = kccareports_table.update().\
-        where(kccareports_table.c.id == reportid).\
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="0",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_report_by_id(reportid)
+    return await get_incident_by_id(incident.id)
 
 
-@app.post("/reports/restore", response_model=ReportUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def restore_report(incidentid: str):
+@app.post("/reports/restore", response_model=IncidentUpdateSchema, tags=["reports"], dependencies=[Depends(jwtBearer())])
+async def restore_report(incident: IncidentStatusSchema):
     gDate = datetime.datetime.now()
-    query = kccareports_table.update().\
-        where(kccareports_table.c.id == incidentid).\
+    query = incidents_table.update().\
+        where(incidents_table.c.id == incident.id).\
         values(
             status="1",
+            updatedby = incident.updatedby,
             dateupdated=gDate
     )
 
     await database.execute(query)
-    return await get_report_by_id(incidentid)
-
-
-@app.delete("/reports/{reportid}", tags=["reports"], dependencies=[Depends(jwtBearer())])
-async def delete_report(reportid: str):
-    query = kccareports_table.delete().where(kccareports_table.c.id == reportid)
-    result = await database.execute(query)
-
-    return {
-        "status": True,
-        "message": "This report has been deleted!"
-    }
-
-
-@app.post("/reports/comments", response_model=CommentSchema, tags=["posts"])
-async def add_comment(comment: CommentSchema):
-    gID = str(uuid.uuid1())
-    gDate = datetime.datetime.now()
-    query = feedback_table.insert().values(
-        id=gID,
-        comment=comment.comment,
-        postid=comment.postid,
-        attachment=comment.attachment,
-        createdby=comment.createdby,
-        datecreated=gDate,
-        status="1"
-    )
-
-    await database.execute(query)
-    return {
-        **comment.dict(),
-        "id": gID,
-        "datecreated": gDate
-    }
-
-@app.delete("/reports/comments/{feedbackid}", tags=["reports"])
-async def delete_comment(feedbackid: str):
-    query = feedback_table.delete().where(feedback_table.c.id == feedbackid)
-    result = await database.execute(query)
-
-    return {
-        "status": True,
-        "message": "This feedback has been deleted!"
-    }
-
-@app.get("/reports/comments/{postid}", tags=["reports"])
-async def get_post_comments_by_id(postid: str):
-    query = feedback_table.select().where(feedback_table.c.postid == postid)
-    results = await database.fetch_all(query)
-    res = []
-    if results:
-        for result in results:
-            res.append({
-            "id": result["id"],
-            "postid": result["postid"],
-            "comment": result["comment"],
-            "attachment": result["attachment"],
-            "datecreated": result["datecreated"],
-            "createdby": await get_usernames_by_id(result["createdby"]),
-            "dateupdated": result["dateupdated"],
-            "updatedby": result["updatedby"],
-            "status": result["status"]
-            })
-        
-        return res
-    else:
-        raise HTTPException(status_code=204, detail='No comments found')
-
-@app.get("/reports/commentscount/{postid}", tags=["reports"])
-async def get_post_comments_count_by_id(postid: str):
-    counter = 0
-    query = feedback_table.select().where(feedback_table.c.postid == postid)
-    results = await database.fetch_all(query)
-    if results:
-        for result in results:
-            counter += 1
-
-    return counter
-
-@app.post("/reports/like", tags=["reports"])
-async def like_post(like: LikeSchema):
-    gID = str(uuid.uuid1())
-    gDate = datetime.datetime.now()
-    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
-    resultlikes = await database.fetch_all(querylikes)
-    if resultlikes:
-        query = likes_table.update().\
-        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
-        values(
-            userid=like.userid,
-            postid=like.postid,
-            isliked=True,
-            updatedby=like.userid,
-            status="1",
-            dateupdated=gDate
-    )
-    else:
-        query = likes_table.insert().values(
-            id=gID,
-            userid=like.userid,
-            postid=like.postid,
-            isliked=True,
-            createdby=like.userid,
-            datecreated=gDate,
-            status="1"
-        )
-
-    await database.execute(query)
-    return {
-        **like.dict(),
-        "id": gID,
-        "datecreated": gDate
-    }
-
-@app.post("/reports/dislike", tags=["reports"])
-async def dislike_post(like: LikeSchema):
-    gID = str(uuid.uuid1())
-    gDate = datetime.datetime.now()
-    querylikes = likes_table.select().where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid)
-    resultlikes = await database.fetch_all(querylikes)
-    if resultlikes:
-        query = likes_table.update().\
-        where(likes_table.c.postid == like.postid).where(likes_table.c.userid == like.userid).\
-        values(
-            userid=like.userid,
-            postid=like.postid,
-            isliked=False,
-            updatedby=like.userid,
-            status="1",
-            dateupdated=gDate
-    )
-    else:
-        query = likes_table.insert().values(
-            id=gID,
-            userid=like.userid,
-            postid=like.postid,
-            isliked=False,
-            createdby=like.userid,
-            datecreated=gDate,
-            status="1"
-        )
-
-    await database.execute(query)
-    return {
-        **like.dict(),
-        "id": gID,
-        "datecreated": gDate
-    }
-
-@app.get("/reports/likes/{postid}", tags=["reports"])
-async def get_post_likes_count_by_id(postid: str):
-    counter = 0
-    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == True)
-    results = await database.fetch_all(query)
-    if results:
-        for result in results:
-            counter += 1
-
-    return counter
-
-@app.get("/reports/dislikes/{postid}", tags=["reports"])
-async def get_post_dislikes_count_by_id(postid: str):
-    counter = 0
-    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.isliked == False)
-    results = await database.fetch_all(query)
-    if results:
-        for result in results:
-            counter += 1
-
-    return counter
-
-@app.post("/reports/userliked/{postid}/{userid}", tags=["reports"])
-async def check_if_user_liked_post(postid: str, userid: str):
-    query = likes_table.select().where(likes_table.c.postid == postid).where(likes_table.c.userid == userid)
-    result = await database.fetch_one(query)
-    if result:
-        if(result["isliked"]):
-            return "yes"
-        else:
-            return "no"
-    else:
-        return "none"
+    return await get_incident_by_id(incident.id)
 
 ###################### END REPORTS ##################
 
