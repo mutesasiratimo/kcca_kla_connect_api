@@ -1703,7 +1703,7 @@ async def get_news_by_id(newsid: str):
     result = await database.fetch_one(query)
     return result
 
-@router.get("/news/archives", response_model=List[NewsArchiveGroup], tags=["news"])
+@app.get("/news/archives", response_model=List[NewsArchiveGroup], tags=["news"])
 async def get_news_archives():
     # Fetch all news entries with status '1' only, ordered by datecreated
     query = select(news_table).where(news_table.c.status == '1').order_by(news_table.c.datecreated.desc())
