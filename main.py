@@ -1703,27 +1703,29 @@ async def get_news_by_id(newsid: str):
     result = await database.fetch_one(query)
     return result
 
-
-@app.get("/news/archives", response_model=List[NewsArchiveGroup], tags=["news"])
+@router.get("/news/archives", response_model=List[NewsArchiveGroup], tags=["news"])
 async def get_news_archives():
-    # Fetch all news
-    query = select(news_table).where(news_table.c.status == "2").order_by(news_table.c.datecreated.desc())
+    # Fetch all news entries with status '1' only, ordered by datecreated
+    query = select(news_table).where(news_table.c.status == '1').order_by(news_table.c.datecreated.desc())
     news_items = await database.fetch_all(query)
 
-    # Group by month-year
+    # Defensive grouping by (year, month)
     grouped = {}
     for item in news_items:
+        if item is None:
+            continue  # skip malformed rows
+
         created: datetime = item["datecreated"]
         year = created.year
-        month = created.strftime("%B")  # e.g., "May"
+        month = created.strftime("%B")
         key = (year, month)
 
         if key not in grouped:
             grouped[key] = []
 
-        grouped[key].append(dict(item))
+        grouped[key].append(NewsSchema(**dict(item)))  # enforce schema
 
-    # Build response list
+    # Format the result
     result = []
     for (year, month), articles in sorted(grouped.items(), reverse=True):
         result.append({
