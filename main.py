@@ -1704,6 +1704,38 @@ async def get_news_by_id(newsid: str):
     return result
 
 
+@app.get("/news/archives", response_model=List[NewsArchiveGroup], tags=["news"])
+async def get_news_archives():
+    # Fetch all news
+    query = select(news_table).where(news_table.c.status == "2").order_by(news_table.c.datecreated.desc())
+    news_items = await database.fetch_all(query)
+
+    # Group by month-year
+    grouped = {}
+    for item in news_items:
+        created: datetime = item["datecreated"]
+        year = created.year
+        month = created.strftime("%B")  # e.g., "May"
+        key = (year, month)
+
+        if key not in grouped:
+            grouped[key] = []
+
+        grouped[key].append(dict(item))
+
+    # Build response list
+    result = []
+    for (year, month), articles in sorted(grouped.items(), reverse=True):
+        result.append({
+            "month": month,
+            "year": year,
+            "count": len(articles),
+            "articles": articles
+        })
+
+    return result
+
+
 @app.post("/news/post", response_model=NewsSchema, tags=["news"])
 async def post_news_article(news: NewsSchema):
     gID = str(uuid.uuid1())
@@ -1766,8 +1798,9 @@ async def archive_news(news: NewsUpdateSchema):
             file3=news.file3,
             file4=news.file4,
             file5=news.file5,
-            status="0",
-            dateupdated=gDate
+            status="2",
+            dateupdated=gDate,
+            updatedby=news.updatedby
     )
 
     await database.execute(query)

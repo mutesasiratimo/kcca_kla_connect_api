@@ -1357,6 +1357,12 @@ class NewsUpdateSchema(BaseModel):
             }
         }
 
+class NewsArchiveGroup(BaseModel):
+    month: str
+    year: int
+    count: int
+    articles: List[NewsSchema]
+
 class NewsDeleteSchema(BaseModel):
     id : str = Field(default=None)
     class Config:
