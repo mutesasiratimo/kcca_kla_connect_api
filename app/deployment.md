@@ -17,7 +17,8 @@ source fastapi_env/bin/activate
 where pip
 
 IF NOT:
-sudo apt install pip or python3-pip
+sudo apt install pip or 
+sudo apt install python3-pip
 
 # SETUP OPEN SSH
 
@@ -106,7 +107,31 @@ paste text below
 
 server {
 listen 80;
-server_name 35.225.77.49;
+server_name 172.16.0.159;
+
+    #index index.html;
+    #root /var/www/html/mywebsite;
+
+    location / {
+
+        alias /home/timo/html/klakonnect;
+
+    }
+
+
+    location ^~ /apiklakonnect/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:6000/;
+
+    }
+
+}
+
+###########################
+
+server {
+listen 80;
+server_name 172.16.0.159;
 
     #index index.html;
     #root /var/www/html/mywebsite;

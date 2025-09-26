@@ -17,7 +17,7 @@ from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException
 from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
-from sqlalchemy import select, join
+from sqlalchemy import select, join, func
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -1055,6 +1055,53 @@ async def get_incidents_stats():
             rejectedcounter += 1
             if result["dateupdated"] == datetime.datetime.now():
                 rejected_today_counter += 1
+
+######################## DASHBOARD STATS #############################
+
+@app.get("/dash/stats/incidents-by-category", tags=["dash/stats"])
+async def get_incidents_by_category_stats():
+    """
+    Returns incident distribution by category for a pie/donut chart.
+    Response shape:
+    {
+        "labels": ["Potholes", "Traffic Jam", ...],
+        "series": [120, 85, ...],
+        "percents": [52.2, 37.0, ...],
+        "total": 230
+    }
+    """
+    # Join incidents with categories and aggregate counts per category
+    j = join(
+        incidents_table,
+        incidentcategories_table,
+        incidents_table.c.incidentcategoryid == incidentcategories_table.c.id
+    )
+
+    query = (
+        select(
+            incidentcategories_table.c.name.label("category_name"),
+            func.count(incidents_table.c.id).label("count")
+        )
+        .select_from(j)
+        .group_by(incidentcategories_table.c.name)
+        .order_by(func.count(incidents_table.c.id).desc())
+    )
+
+    rows = await database.fetch_all(query)
+    if not rows:
+        return {"labels": [], "series": [], "percents": [], "total": 0}
+
+    labels = [row["category_name"] or "Uncategorized" for row in rows]
+    series = [int(row["count"]) for row in rows]
+    total = sum(series)
+    percents = [round((c / total) * 100, 1) if total else 0 for c in series]
+
+    return {
+        "labels": labels,
+        "series": series,
+        "percents": percents,
+        "total": total,
+    }
 
     resolvedquery = incidents_table.select().where(incidents_table.c.status == "2")
     resolvedresults = await database.fetch_all(resolvedquery)
