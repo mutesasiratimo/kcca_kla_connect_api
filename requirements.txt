@@ -17,7 +17,7 @@ databases==0.2.2
 dataclasses==0.6
 decorator==4.4.0
 dnspython==1.16.0
-fastapi==0.104.1
+fastapi==0.88.0
 graphene==2.1.5
 graphql-core==2.2
 graphql-relay==0.4.5
@@ -54,13 +54,13 @@ six==1.12.0
 SQLAlchemy==1.3.5
 sqlalchemy-migrate==0.12.0
 sqlparse==0.3.0
-starlette==0.27.0
+starlette==0.22.0
 Tempita==0.5.2
 twilio==6.29.0
 typed-ast==1.4.0
 ujson==1.35
 urllib3==1.25.3
-uvicorn==0.24.0
+uvicorn==0.20.0
 websockets==7.0
 wincertstore==0.2
 wrapt==1.11.2
