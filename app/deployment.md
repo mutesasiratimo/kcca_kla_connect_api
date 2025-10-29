@@ -212,6 +212,8 @@ sudo systemctl start klakonnect
 
 sudo systemctl enable klakonnect
 
+sudo systemctl restart klakonnect
+
 # SETUP LOGGING (OPTIONAL)
 
 cd projects/kla_connect_api/
@@ -257,3 +259,31 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+
+
+
+my web dashboard is only loading metadata, but timing out
+
+this is my nginx proxy config, is it right?
+
+server {
+listen 80;
+server_name 172.16.0.159;
+
+    index index.html;
+    root /var/www/html;
+
+    location / {
+
+        try_files $uri /index.html;
+
+    }
+
+
+    location ^~ /apiklakonnect/ {
+        #allow 127.0.0.1;
+        proxy_pass http://127.0.0.1:7000/;
+
+    }
+
+}

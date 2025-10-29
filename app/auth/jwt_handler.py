@@ -3,8 +3,8 @@ import time
 import jwt
 from decouple import config
 
-JWT_SECRET = config("secret")
-JWT_ALGORITHM = config("algorithm")
+JWT_SECRET = config("secret", default="your-secret-key-change-in-production")
+JWT_ALGORITHM = config("algorithm", default="HS256")
 
 def token_response(token: str):
     """ Function returns generated tokens """

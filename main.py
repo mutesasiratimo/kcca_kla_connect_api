@@ -1,23 +1,18 @@
 from fastapi import FastAPI, File, UploadFile
-from asyncio import streams
-from collections import UserList
-from email.mime import image
 import hashlib
 import math
 import random
-from turtle import title
 from typing import List
 import urllib.request 
 from urllib.parse import urlparse, parse_qs
-from unittest import result
-from xmlrpc.client import DateTime
 from fastapi.responses import FileResponse, JSONResponse
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Body, Depends, HTTPException, Request
 from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
-from sqlalchemy import select, join, func
+import jwt
+from sqlalchemy import select, join, func, extract, case
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -57,6 +52,177 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+add_pagination(app)
+# =============== Activity Logs Middleware ===============
+MAX_BODY_LEN = 8192
+
+def _infer_module_from_path(path: str) -> str:
+    try:
+        first = path.strip("/").split("/")[0]
+        return first or "root"
+    except Exception:
+        return "unknown"
+
+def _infer_action(method: str, path: str) -> str:
+    method = (method or "").upper()
+    if method == "POST":
+        if any(x in path for x in ["approve", "resolve", "restore", "publish"]):
+            return "approve"
+        if any(x in path for x in ["reject"]):
+            return "reject"
+        if any(x in path for x in ["archive"]):
+            return "archive"
+        if any(x in path for x in ["login", "signin"]):
+            return "login"
+        if any(x in path for x in ["logout", "signout"]):
+            return "logout"
+        if any(x in path for x in ["update"]):
+            return "update"
+        return "add"
+    if method == "PUT":
+        return "update"
+    if method == "PATCH":
+        return "update"
+    if method == "DELETE":
+        return "delete"
+    return "get"
+
+def _redact_in_obj(obj):
+    if isinstance(obj, dict):
+        redacted = {}
+        for k, v in obj.items():
+            kl = str(k).lower()
+            if kl in {"password", "newpassword", "confirmpassword", "pass", "pwd"}:
+                redacted[k] = "***REDACTED***"
+            elif kl in {"token", "accesstoken", "access_token", "refreshtoken", "refresh_token", "jwt", "jwttoken", "bearer"}:
+                redacted[k] = "***REDACTED_TOKEN***"
+            else:
+                redacted[k] = _redact_in_obj(v)
+        return redacted
+    if isinstance(obj, list):
+        return [_redact_in_obj(x) for x in obj]
+    return obj
+
+def _redact_text(text: str) -> str:
+    if not text:
+        return text
+    try:
+        import json as _json
+        obj = _json.loads(text)
+        obj = _redact_in_obj(obj)
+        return _json.dumps(obj)
+    except Exception:
+        pass
+    # Fallback regex redactions for JWT-like tokens (header.payload.signature)
+    try:
+        import re
+        # Basic JWT pattern: three base64url segments separated by dots
+        jwt_regex = re.compile(r"\beyJ[\w-]+\.[\w-]+\.[\w-]+\b")
+        text = jwt_regex.sub("***REDACTED_TOKEN***", text)
+        # Password query/body patterns
+        # redact password-like assignments inside JSON/text
+        pw_regex = re.compile(r'("?password"?\s*[:=]\s*")([^"\n\r]*)(")', re.IGNORECASE)
+        text = pw_regex.sub(r'\1***REDACTED***\3', text)
+    except Exception:
+        pass
+    return text
+
+@app.middleware("http")
+async def activity_logs_middleware(request: Request, call_next):
+    start_time = datetime.datetime.now()
+    
+    # Don't consume request body; capture it safely
+    request_body = None
+    try:
+        if request.method in ["POST", "PUT", "PATCH"]:
+            body_bytes = await request.body()
+            if body_bytes:
+                request_body_raw = body_bytes[:MAX_BODY_LEN].decode("utf-8", errors="ignore")
+                request_body = _redact_text(request_body_raw) if request_body_raw else None
+                # Re-wrap body for FastAPI consumption
+                async def receive():
+                    return {"type": "http.request", "body": body_bytes}
+                request._receive = receive
+    except Exception:
+        pass
+
+    response = await call_next(request)
+
+    # Capture response safely
+    status_code = getattr(response, "status_code", 0)
+    response_body = None
+    try:
+        from starlette.responses import StreamingResponse
+        if isinstance(response, StreamingResponse):
+            # Don't try to capture streaming responses
+            response_body = None
+        elif hasattr(response, "body") and response.body:
+            # Direct body access
+            body_content = response.body
+            if isinstance(body_content, bytes):
+                response_body = body_content[:MAX_BODY_LEN].decode("utf-8", errors="ignore")
+            else:
+                response_body = str(body_content)[:MAX_BODY_LEN]
+        else:
+            # Fallback: try to get the rendered body
+            pass
+    except Exception as e:
+        # Debug: uncomment to see what's happening
+        # print(f"Response body capture failed: {e}")
+        response_body = None
+    
+    # Redact sensitive data in response body as well
+    if response_body:
+        response_body = _redact_text(response_body)
+
+    # Parse auth for user id/email if present
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    userid = None
+    email = None
+    if auth_header and auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        try:
+            # Decode without verification
+            payload = jwt.decode(token, options={"verify_signature": False})
+            # Try multiple common JWT field names for user identification
+            userid = payload.get("userID") or payload.get("userid") or payload.get("user_id") or payload.get("sub")
+            email = payload.get("email") or payload.get("username") or payload.get("userID") or userid
+        except Exception as e:
+            # Debug: uncomment to see what's failing
+            # print(f"JWT decode failed: {e}, token: {token[:50]}...")
+            pass
+
+    # Build log row
+    log_id = str(uuid.uuid1())
+    module_name = _infer_module_from_path(request.url.path)
+    action_type = _infer_action(request.method, request.url.path)
+    ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    try:
+        await database.execute(
+            activitylogs_table.insert().values(
+                id=log_id,
+                action_type=action_type,
+                module=module_name,
+                userid=userid,
+                email=email,
+                method=request.method,
+                path=str(request.url.path),
+                ip=ip,
+                user_agent=user_agent,
+                status_code=int(status_code or 0),
+                request_body_json=request_body,
+                response_body_json=(response_body[:MAX_BODY_LEN] if response_body else None),
+                datecreated=start_time,
+            )
+        )
+    except Exception:
+        # Avoid breaking the response due to logging failure
+        pass
+
+    return response
+
 
 origins = [
     "*"
@@ -883,6 +1049,7 @@ async def get_all_incidents():
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -929,6 +1096,7 @@ async def get_all_incidents_paginate(params: Params = Depends()):
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -970,6 +1138,7 @@ async def get_all_incidents_by_status_paginate(status: str, params: Params = Dep
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -1083,6 +1252,7 @@ async def get_incidents_by_category_stats():
             func.count(incidents_table.c.id).label("count")
         )
         .select_from(j)
+        .where(incidents_table.c.iscityreport == False)
         .group_by(incidentcategories_table.c.name)
         .order_by(func.count(incidents_table.c.id).desc())
     )
@@ -1102,6 +1272,198 @@ async def get_incidents_by_category_stats():
         "percents": percents,
         "total": total,
     }
+
+@app.get("/dash/stats/incidents-by-month-this-year", tags=["dash/stats"])
+async def get_incidents_by_month_this_year():
+    """
+    Returns incident count by month for the current year.
+    Response shape:
+    {
+        "labels": ["Jan", "Feb", "Mar", ...],
+        "series": [10, 15, 23, ...],
+        "total": 150
+    }
+    """
+    # Get current year
+    current_year = datetime.datetime.now().year
+    
+    # Extract month and count incidents
+    query = (
+        select(
+            func.extract('month', incidents_table.c.datecreated).label("month"),
+            func.count(incidents_table.c.id).label("count")
+        )
+        .where(func.extract('year', incidents_table.c.datecreated) == current_year)
+        .group_by("month")
+        .order_by("month")
+    )
+    
+    rows = await database.fetch_all(query)
+    if not rows:
+        return {"labels": [], "series": [], "total": 0}
+    
+    # Map month numbers to names
+    month_names = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    
+    # Create results for all 12 months (fill with 0 if no data)
+    data = {int(row["month"]): int(row["count"]) for row in rows}
+    labels = [month_names[i] for i in range(1, 13)]
+    series = [data.get(i, 0) for i in range(1, 13)]
+    
+    total = sum(series)
+    
+    return {
+        "labels": labels,
+        "series": series,
+        "total": total,
+    }
+
+@app.get("/dash/stats/incidents-by-quarter-this-year", tags=["dash/stats"])
+async def get_incidents_by_quarter_this_year():
+    """
+    Returns incident count by quarter for the current year.
+    Response shape:
+    {
+        "labels": ["Q1", "Q2", "Q3", "Q4"],
+        "series": [45, 67, 89, 34],
+        "total": 235
+    }
+    """
+    # Get current year
+    current_year = datetime.datetime.now().year
+    
+    # Get all incidents for this year
+    query = (
+        select(
+            func.extract('month', incidents_table.c.datecreated).label("month"),
+            incidents_table.c.id
+        )
+        .where(func.extract('year', incidents_table.c.datecreated) == current_year)
+    )
+    
+    rows = await database.fetch_all(query)
+    
+    # Process quarters in Python
+    quarter_counts = {1: 0, 2: 0, 3: 0, 4: 0}
+    
+    for row in rows:
+        month = int(row["month"])
+        if month <= 3:
+            quarter_counts[1] += 1
+        elif month <= 6:
+            quarter_counts[2] += 1
+        elif month <= 9:
+            quarter_counts[3] += 1
+        else:
+            quarter_counts[4] += 1
+    
+    labels = ["Q1", "Q2", "Q3", "Q4"]
+    series = [quarter_counts[i] for i in range(1, 5)]
+    total = sum(series)
+    
+    return {
+        "labels": labels,
+        "series": series,
+        "total": total,
+    }
+
+@app.get("/dash/stats/incidents-by-year", tags=["dash/stats"])
+async def get_incidents_by_year():
+    """
+    Returns incident count for all available years.
+    Response shape:
+    {
+        "labels": ["2020", "2021", "2022", ...],
+        "series": [150, 234, 345, ...],
+        "total": 729
+    }
+    """
+    # Extract year and count incidents
+    query = (
+        select(
+            func.extract('year', incidents_table.c.datecreated).label("year"),
+            func.count(incidents_table.c.id).label("count")
+        )
+        .group_by("year")
+        .order_by("year")
+    )
+    
+    rows = await database.fetch_all(query)
+    if not rows:
+        return {"labels": [], "series": [], "total": 0}
+    
+    labels = [str(int(row["year"])) for row in rows]
+    series = [int(row["count"]) for row in rows]
+    total = sum(series)
+    
+    return {
+        "labels": labels,
+        "series": series,
+        "total": total,
+    }
+
+
+@app.get("/dash/stats/incident-stats", tags=["dash/stats"])
+async def get_incident_status_stats():
+    """
+    Returns incident counts by status overall and for today.
+
+    Response shape:
+    {
+        "overall": {"0": n, "1": n, "2": n, "3": n, "total": n_total},
+        "today":   {"0": n, "1": n, "2": n, "3": n, "total": n_total}
+    }
+    """
+    # Helper to build a status->count dictionary
+    async def fetch_counts(where_clauses=None):
+        where_clauses = where_clauses or []
+        base = select(
+            incidents_table.c.status.label("status"),
+            func.count(incidents_table.c.id).label("count")
+        ).group_by(incidents_table.c.status)
+
+        # Only incidents (exclude city reports)
+        base = base.where(incidents_table.c.iscityreport == False)
+
+        # Apply filters if provided
+        for clause in where_clauses:
+            base = base.where(clause)
+
+        rows = await database.fetch_all(base)
+
+        # Map numeric codes to human-readable labels
+        status_labels = {
+            "0": "archived",
+            "1": "published",
+            "2": "resolved",
+            "3": "draft" if False else "rejected"
+        }
+
+        # Initialize all known labels to 0
+        counts_by_label = {label: 0 for label in set(status_labels.values())}
+
+        total = 0
+        for row in rows:
+            code = str(row["status"]) if row["status"] is not None else ""
+            label = status_labels.get(code, code)
+            value = int(row["count"]) if row["count"] is not None else 0
+            counts_by_label[label] = counts_by_label.get(label, 0) + value
+            total += value
+
+        counts_by_label["total"] = total
+        return counts_by_label
+
+    # Overall counts (incidents only)
+    overall_counts = await fetch_counts()
+
+    # Today counts (from start of today to start of tomorrow)
+    start_today = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+    start_tomorrow = start_today + datetime.timedelta(days=1)
+    today_counts = await fetch_counts([
+        (incidents_table.c.datecreated >= start_today) & (incidents_table.c.datecreated < start_tomorrow)
+    ])
+
+    return {"overall": overall_counts, "today": today_counts}
 
     resolvedquery = incidents_table.select().where(incidents_table.c.status == "2")
     resolvedresults = await database.fetch_all(resolvedquery)
@@ -1206,6 +1568,186 @@ async def get_incidentcounts_by_userid(userid: str):
 async def register_incident(incident: IncidentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
+
+    # Duplicate detection helpers
+    def haversine_distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        R = 6371000.0  # Earth radius in meters
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    radius_m = 500.0
+    time_window_minutes = 5
+    time_threshold = gDate - datetime.timedelta(minutes=time_window_minutes)
+
+    # Fetch recent/same-user incidents for quick duplicate checks within the category
+    candidate_query = (
+        select(incidents_table)
+        .where(
+            (incidents_table.c.incidentcategoryid == incident.incidentcategoryid)
+            & (
+                (incidents_table.c.datecreated >= time_threshold)
+                | (incidents_table.c.createdby == incident.createdby)
+            )
+        )
+    )
+    # Join category to apply expiry logic
+    j = incidents_table.join(incidentcategories_table, incidents_table.c.incidentcategoryid == incidentcategories_table.c.id)
+    candidate_query = (
+        select(
+            incidents_table.c.id,
+            incidents_table.c.name,
+            incidents_table.c.description,
+            incidents_table.c.isemergency,
+            incidents_table.c.iscityreport,
+            incidents_table.c.incidentcategoryid,
+            incidents_table.c.address,
+            incidents_table.c.addresslat,
+            incidents_table.c.addresslong,
+            incidents_table.c.file1,
+            incidents_table.c.file2,
+            incidents_table.c.file3,
+            incidents_table.c.file4,
+            incidents_table.c.file5,
+            incidents_table.c.upvotes,
+            incidents_table.c.createdby,
+            incidents_table.c.datecreated,
+            incidents_table.c.dateupdated,
+            incidents_table.c.updatedby,
+            incidents_table.c.status,
+            incidentcategories_table.c.doesexpire.label("category_doesexpire"),
+            incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        )
+        .select_from(j)
+        .where(
+            (incidents_table.c.incidentcategoryid == incident.incidentcategoryid)
+            & (
+                (incidents_table.c.datecreated >= time_threshold)
+                | (incidents_table.c.createdby == incident.createdby)
+            )
+        )
+        .order_by(desc(incidents_table.c.datecreated))
+    )
+    candidates = await database.fetch_all(candidate_query)
+
+    same_user_duplicate = None
+    nearby_same_category = None
+    for row in candidates:
+        try:
+            row_lat = float(row["addresslat"]) if row["addresslat"] is not None else None
+            row_lon = float(row["addresslong"]) if row["addresslong"] is not None else None
+        except Exception:
+            row_lat, row_lon = None, None
+
+        if row_lat is None or row_lon is None:
+            continue
+
+        distance_m = haversine_distance_meters(
+            float(incident.addresslat), float(incident.addresslong), row_lat, row_lon
+        )
+        minutes_diff = abs((gDate - row["datecreated"]).total_seconds()) / 60.0 if row["datecreated"] else 9999
+        is_same_user = (row["createdby"] == incident.createdby)
+
+        # Skip inactive statuses
+        if str(row["status"]) in ("0", "2"):
+            continue
+
+        # Skip expired incidents if category expires
+        does_expire = bool(row["category_doesexpire"]) if "category_doesexpire" in row.keys() else False
+        hours_to_expire = row["category_hourstoexpire"] if "category_hourstoexpire" in row.keys() else None
+        is_expired = False
+        if does_expire and hours_to_expire is not None:
+            try:
+                expiry_time = row["datecreated"] + datetime.timedelta(hours=int(hours_to_expire))
+                if gDate >= expiry_time:
+                    is_expired = True
+            except Exception:
+                is_expired = False
+        if is_expired:
+            continue
+
+        # Rule 1: Same user, similar coordinates within 500m OR within 5 minutes → duplicate
+        if is_same_user and (distance_m <= radius_m or minutes_diff <= time_window_minutes):
+            same_user_duplicate = row
+            break
+
+        # Rule 2: Different user, same category within 500m → treat as success but link to existing
+        if (not is_same_user) and (distance_m <= radius_m):
+            # Keep nearest
+            if nearby_same_category is None:
+                nearby_same_category = (row, distance_m)
+            elif distance_m < nearby_same_category[1]:
+                nearby_same_category = (row, distance_m)
+
+    if same_user_duplicate is not None:
+        # Return the existing incident as the response (flagging duplicate)
+        existing = same_user_duplicate
+        # Upvote existing atomically and return fresh row
+        await database.execute(
+            incidents_table.update()
+            .where(incidents_table.c.id == existing["id"]) 
+            .values(upvotes=(func.coalesce(incidents_table.c.upvotes, 0) + 1), dateupdated=gDate, updatedby=incident.createdby)
+        )
+        refreshed = await database.fetch_one(incidents_table.select().where(incidents_table.c.id == existing["id"]))
+        return {
+            "id": refreshed["id"],
+            "name": refreshed["name"],
+            "description": refreshed["description"],
+            "incidentcategoryid": refreshed["incidentcategoryid"],
+            "address": refreshed["address"],
+            "addresslat": refreshed["addresslat"],
+            "addresslong": refreshed["addresslong"],
+            "file1": refreshed["file1"],
+            "file2": refreshed["file2"],
+            "file3": refreshed["file3"],
+            "file4": refreshed["file4"],
+            "file5": refreshed["file5"],
+            "upvotes": refreshed["upvotes"],
+            "isemergency": refreshed["isemergency"],
+            "iscityreport": refreshed["iscityreport"],
+            "createdby": refreshed["createdby"],
+            "datecreated": refreshed["datecreated"],
+            "dateupdated": refreshed["dateupdated"],
+            "updatedby": refreshed["updatedby"],
+            "status": refreshed["status"],
+        }
+
+    if nearby_same_category is not None:
+        existing, _ = nearby_same_category
+        # Upvote existing instead of creating a new one, then return fresh row
+        await database.execute(
+            incidents_table.update()
+            .where(incidents_table.c.id == existing["id"]) 
+            .values(upvotes=(func.coalesce(incidents_table.c.upvotes, 0) + 1), dateupdated=gDate, updatedby=incident.createdby)
+        )
+        refreshed = await database.fetch_one(incidents_table.select().where(incidents_table.c.id == existing["id"]))
+        return {
+            "id": refreshed["id"],
+            "name": refreshed["name"],
+            "description": refreshed["description"],
+            "incidentcategoryid": refreshed["incidentcategoryid"],
+            "address": refreshed["address"],
+            "addresslat": refreshed["addresslat"],
+            "addresslong": refreshed["addresslong"],
+            "file1": refreshed["file1"],
+            "file2": refreshed["file2"],
+            "file3": refreshed["file3"],
+            "file4": refreshed["file4"],
+            "file5": refreshed["file5"],
+            "upvotes": refreshed["upvotes"],
+            "isemergency": refreshed["isemergency"],
+            "iscityreport": refreshed["iscityreport"],
+            "createdby": refreshed["createdby"],
+            "datecreated": refreshed["datecreated"],
+            "dateupdated": refreshed["dateupdated"],
+            "updatedby": refreshed["updatedby"],
+            "status": refreshed["status"],
+        }
+
     query = incidents_table.insert().values(
         id=gID,
         name=incident.name,
@@ -1541,6 +2083,7 @@ async def get_all_reports():
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -1588,6 +2131,7 @@ async def get_all_reports_paginate(params: Params = Depends()):
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -1629,6 +2173,7 @@ async def get_all_reports_by_status_paginate(status: str, params: Params = Depen
         incidents_table.c.file3,
         incidents_table.c.file4,
         incidents_table.c.file5,
+        incidents_table.c.upvotes,
         incidentcategories_table.c.name.label("category_name"),
         incidentcategories_table.c.description.label("category_description"),
         incidentcategories_table.c.image.label("category_image"),
@@ -1640,7 +2185,9 @@ async def get_all_reports_by_status_paginate(status: str, params: Params = Depen
         incidents_table.c.dateupdated,
         incidents_table.c.updatedby,
         incidents_table.c.status
-    ).select_from(j).where(incidents_table.c.status == status and incidents_table.c.iscityreport == True).order_by(desc(incidents_table.c.datecreated))
+    ).select_from(j).where(
+        (incidents_table.c.status == status) & (incidents_table.c.iscityreport == True)
+    ).order_by(desc(incidents_table.c.datecreated))
 
     result = await database.fetch_all(query)
     return paginate(result)
@@ -1650,6 +2197,111 @@ async def get_all_reports_by_status_paginate(status: str, params: Params = Depen
 async def register_report(incident: IncidentSchema):
     gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
+
+    # Duplicate detection (mirror incidents/register logic)
+    def haversine_distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        R = 6371000.0
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    radius_m = 500.0
+    time_window_minutes = 5
+    time_threshold = gDate - datetime.timedelta(minutes=time_window_minutes)
+
+    candidate_query = (
+        select(incidents_table)
+        .where(
+            (incidents_table.c.incidentcategoryid == incident.incidentcategoryid)
+            & (
+                (incidents_table.c.datecreated >= time_threshold)
+                | (incidents_table.c.createdby == incident.createdby)
+            )
+        )
+    )
+    candidates = await database.fetch_all(candidate_query)
+
+    same_user_duplicate = None
+    nearby_same_category = None
+    for row in candidates:
+        try:
+            row_lat = float(row["addresslat"]) if row["addresslat"] is not None else None
+            row_lon = float(row["addresslong"]) if row["addresslong"] is not None else None
+        except Exception:
+            row_lat, row_lon = None, None
+
+        if row_lat is None or row_lon is None:
+            continue
+
+        distance_m = haversine_distance_meters(
+            float(incident.addresslat), float(incident.addresslong), row_lat, row_lon
+        )
+        minutes_diff = abs((gDate - row["datecreated"]).total_seconds()) / 60.0 if row["datecreated"] else 9999
+        is_same_user = (row["createdby"] == incident.createdby)
+
+        if is_same_user and (distance_m <= radius_m or minutes_diff <= time_window_minutes):
+            same_user_duplicate = row
+            break
+
+        if (not is_same_user) and (distance_m <= radius_m):
+            if nearby_same_category is None:
+                nearby_same_category = (row, distance_m)
+            elif distance_m < nearby_same_category[1]:
+                nearby_same_category = (row, distance_m)
+
+    if same_user_duplicate is not None:
+        existing = same_user_duplicate
+        return {
+            "id": existing["id"],
+            "name": existing["name"],
+            "description": existing["description"],
+            "incidentcategoryid": existing["incidentcategoryid"],
+            "address": existing["address"],
+            "addresslat": existing["addresslat"],
+            "addresslong": existing["addresslong"],
+            "file1": existing["file1"],
+            "file2": existing["file2"],
+            "file3": existing["file3"],
+            "file4": existing["file4"],
+            "file5": existing["file5"],
+            "isemergency": existing["isemergency"],
+            "iscityreport": existing["iscityreport"],
+            "createdby": existing["createdby"],
+            "datecreated": existing["datecreated"],
+            "dateupdated": existing["dateupdated"],
+            "updatedby": existing["updatedby"],
+            "status": existing["status"],
+        }
+
+    if nearby_same_category is not None:
+        existing, _ = nearby_same_category
+        return {
+            "id": existing["id"],
+            "name": existing["name"],
+            "description": existing["description"],
+            "incidentcategoryid": existing["incidentcategoryid"],
+            "address": existing["address"],
+            "addresslat": existing["addresslat"],
+            "addresslong": existing["addresslong"],
+            "file1": existing["file1"],
+            "file2": existing["file2"],
+            "file3": existing["file3"],
+            "file4": existing["file4"],
+            "file5": existing["file5"],
+            "isemergency": existing["isemergency"],
+            "iscityreport": existing["iscityreport"],
+            "createdby": existing["createdby"],
+            "datecreated": existing["datecreated"],
+            "dateupdated": existing["dateupdated"],
+            "updatedby": existing["updatedby"],
+            "status": existing["status"],
+        }
+
+    # Insert when no duplicate conditions met
     query = incidents_table.insert().values(
         id=gID,
         name=incident.name,
@@ -2602,41 +3254,44 @@ async def delete_language(languageid: str):
 
 ##################### END LANGUAGES ##################
 
-##################### MAILER #########################
 
-# test email standart sending mail
-# @app.post('/email')
-# async def simple_send(email: EmailSchema) -> JSONResponse:
+# =============== Activity Logs API ===============
 
-#     message = MessageSchema(
-#         subject='Fastapi-Mail module',
-#         recipients=email.dict().get('email'),
-#         body=html,
-#         subtype='html',
-#     )
+@app.get("/activitylogs", response_model=Page[ActivityLogSchema], tags=["activitylogs"], dependencies=[Depends(jwtBearer())])
+async def get_activity_logs(
+    start: str = None,
+    end: str = None,
+    module: str = None,
+    action: str = None,
+    userid: str = None,
+    status_code: int = None,
+    params: Params = Depends(),
+):
+    query = activitylogs_table.select()
 
-#     fm = FastMail(conf)
-#     await fm.send_message(message)
-#     return JSONResponse(status_code=200, content={'message': 'email has been sent'})
+    if start:
+        try:
+            start_dt = datetime.datetime.fromisoformat(start)
+            query = query.where(activitylogs_table.c.datecreated >= start_dt)
+        except Exception:
+            pass
+    if end:
+        try:
+            end_dt = datetime.datetime.fromisoformat(end)
+            query = query.where(activitylogs_table.c.datecreated <= end_dt)
+        except Exception:
+            pass
+    if module:
+        query = query.where(activitylogs_table.c.module == module)
+    if action:
+        query = query.where(activitylogs_table.c.action_type == action)
+    if userid:
+        query = query.where(activitylogs_table.c.userid == userid)
+    if status_code is not None:
+        query = query.where(activitylogs_table.c.status_code == status_code)
 
-
-# # this mail sending using starlettes background tasks, faster than the above one
-# @app.post('/emailbackground')
-# async def send_in_background(background_tasks: BackgroundTasks, email: EmailSchema) -> JSONResponse:
-
-#     message = MessageSchema(
-#         subject='Fastapi mail module',
-#         recipients=email.dict().get('email'),
-#         body='Simple background task ',
-#     )
-
-#     fm = FastMail(conf)
-
-#     background_tasks.add_task(fm.send_message, message)
-
-#     return JSONResponse(status_code=200, content={'message': 'email has been sent'})
-
-
-####################### END MAILER ###################
+    query = query.order_by(activitylogs_table.c.datecreated.desc())
+    rows = await database.fetch_all(query)
+    return paginate(rows)
 
 add_pagination(app) 

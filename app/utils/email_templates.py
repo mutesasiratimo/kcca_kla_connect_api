@@ -3,10 +3,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
-from dotenv import load_dotenv
+from decouple import config
 
-# Load .env variables
-load_dotenv()
+# Environment variables are loaded via decouple.config() which reads from .env or environment
 
 # Setup Jinja2
 template_env = Environment(

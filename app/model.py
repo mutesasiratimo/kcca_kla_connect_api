@@ -2,6 +2,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, validator
 import databases, sqlalchemy, datetime, uuid  
 from typing import Dict, List, Optional, Union
+from decouple import config
 
 ## Postgres Database 
 # TEST_DATABASE_URL = "postgresql://postgres:password@172.16.0.192/klaconnect"
@@ -9,7 +10,8 @@ TEST_DATABASE_URL = "postgresql://postgres:password@127.0.0.1/klaconnect"
 LOCAL_DATABASE_URL = "postgresql://postgres:4e3w2q11423@0.0.0.0:5432/klaconnect"
 LIVE_DATABASE_URL = "postgresql://doadmin:AVNS_SPpMTrX1fz2cZ7tusan@db-postgresql-nyc3-89277-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
 # LIVE_DATABASE_URL = "postgresql://doadmin:qoXVNkR3aK6Gaita@db-postgresql-nyc3-44787-do-user-11136722-0.b.db.ondigitalocean.com:25060/klaconnect?sslmode=require"
-DATABASE_URL = LOCAL_DATABASE_URL
+# Use environment variable if set (for Docker), otherwise fallback to TEST_DATABASE_URL
+DATABASE_URL = config("DATABASE_URL", default=TEST_DATABASE_URL)
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData() 
 
@@ -94,11 +96,31 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("file3"        , sqlalchemy.Text),
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
+    sqlalchemy.Column("upvotes"      , sqlalchemy.Integer, nullable=False, server_default="0"),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("updatedby"    , sqlalchemy.String),
     sqlalchemy.Column("status"       , sqlalchemy.String),
+)
+
+# ===================== ACTIVITY LOGS =====================
+activitylogs_table = sqlalchemy.Table(
+    "activitylogs",
+    metadata,
+    sqlalchemy.Column("id"                   , sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("action_type"          , sqlalchemy.String),
+    sqlalchemy.Column("module"               , sqlalchemy.String),
+    sqlalchemy.Column("userid"               , sqlalchemy.String),
+    sqlalchemy.Column("email"                , sqlalchemy.String),
+    sqlalchemy.Column("method"               , sqlalchemy.String),
+    sqlalchemy.Column("path"                 , sqlalchemy.String),
+    sqlalchemy.Column("ip"                   , sqlalchemy.String),
+    sqlalchemy.Column("user_agent"           , sqlalchemy.String),
+    sqlalchemy.Column("status_code"          , sqlalchemy.Integer),
+    sqlalchemy.Column("request_body_json"    , sqlalchemy.Text),
+    sqlalchemy.Column("response_body_json"   , sqlalchemy.Text),
+    sqlalchemy.Column("datecreated"          , sqlalchemy.DateTime),
 )
 
 reports_table = sqlalchemy.Table(
@@ -620,6 +642,7 @@ class IncidentWithCategorySchema(BaseModel):
     file3                     : str = Field(default= None)
     file4                     : str = Field(default= None)
     file5                     : str = Field(default= None)
+    upvotes                   : int = Field(default= 0)
     category_name             : str = Field(default=None)
     category_image            : str = Field(default=None)
     category_description      : str = Field(default= None)
@@ -647,6 +670,7 @@ class IncidentSchema(BaseModel):
     file3               : str = Field(default= None)
     file4               : str = Field(default= None)
     file5               : str = Field(default= None)
+    upvotes             : int = Field(default= 0)
     createdby           : Optional[str] = None
     datecreated         : datetime.datetime
     dateupdated         : Optional[datetime.datetime] = None
@@ -670,6 +694,7 @@ class IncidentSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
+                "upvotes": 0,
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -693,6 +718,7 @@ class IncidentUpdateSchema(BaseModel):
     file3               : str = Field(default= None)
     file4               : str = Field(default= None)
     file5               : str = Field(default= None)
+    upvotes             : int = Field(default= 0)
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -714,6 +740,7 @@ class IncidentUpdateSchema(BaseModel):
                 "file3": "File",
                 "file4": "File",
                 "file5": "File",
+                "upvotes": 0,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"
@@ -803,6 +830,44 @@ class ReportSchema(BaseModel):
                 "status": "1"
             }
         }
+
+######################## ACTIVITY LOGS #############################
+
+class ActivityLogSchema(BaseModel):
+    id                   : str = Field(default=None)
+    action_type          : str = Field(default=None)
+    module               : str = Field(default=None)
+    userid               : str = Field(default=None)
+    email                : str = Field(default=None)
+    method               : str = Field(default=None)
+    path                 : str = Field(default=None)
+    ip                   : str = Field(default=None)
+    user_agent           : str = Field(default=None)
+    status_code          : Optional[int] = None
+    request_body_json    : Optional[str] = None
+    response_body_json   : Optional[str] = None
+    datecreated          : datetime.datetime
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "activity_demo": {
+                "id": "---",
+                "action_type": "add",
+                "module": "incidents",
+                "userid": "user@example.com",
+                "email": "user@example.com",
+                "method": "POST",
+                "path": "/incidents/register",
+                "ip": "127.0.0.1",
+                "user_agent": "curl/8.0",
+                "status_code": 200,
+                "request_body_json": "{...}",
+                "response_body_json": "{...}",
+                "datecreated": datetime.datetime
+            }
+        }
+
+###################### END ACTIVITY LOGS ##################
 
 class ReportUpdateSchema(BaseModel):
     id                  : str = Field(default=None)
