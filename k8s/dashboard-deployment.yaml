@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcca-kla-connect-dashboard
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: dashboard
+spec:
+  replicas: 2  # Dashboard can scale independently
+  selector:
+    matchLabels:
+      app: kcca-kla-connect
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: kcca-kla-connect
+        component: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        # Update with your Flutter web build image
+        # Build with: docker build -t your-registry/dashboard:latest -f Dockerfile.dashboard .
+        image: kcca-kla-connect-dashboard:latest
+        # For local/VPS: IfNotPresent, For production: Always
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        # Health check
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kcca-kla-connect-dashboard
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: dashboard
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: kcca-kla-connect
+    component: dashboard
+

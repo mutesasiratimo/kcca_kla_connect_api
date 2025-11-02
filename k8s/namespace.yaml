@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kcca-kla-connect
+  labels:
+    name: kcca-kla-connect
+    environment: production
+

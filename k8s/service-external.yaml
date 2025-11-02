@@ -1,0 +1,27 @@
+# NodePort Service for external network access
+# Use this for accessing the API from other devices on the same network
+apiVersion: v1
+kind: Service
+metadata:
+  name: kcca-kla-connect-external
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: web
+spec:
+  type: NodePort
+  ports:
+  - port: 8000
+    targetPort: 8000
+    nodePort: 30080  # Accessible on <host-ip>:30080
+    protocol: TCP
+    name: http
+  selector:
+    app: kcca-kla-connect
+    component: web
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+

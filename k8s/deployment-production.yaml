@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcca-kla-connect-web
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: web
+    environment: production
+spec:
+  replicas: 3  # Production: minimum 3 for HA
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Zero-downtime deployments
+  selector:
+    matchLabels:
+      app: kcca-kla-connect
+      component: web
+  template:
+    metadata:
+      labels:
+        app: kcca-kla-connect
+        component: web
+        environment: production
+    spec:
+      # Image pull secrets for private registries (DigitalOcean, ECR, etc.)
+      # Uncomment if using private registry:
+      # imagePullSecrets:
+      # - name: regcred
+      
+      containers:
+      - name: web
+        # PRODUCTION: Update with your container registry URL
+        # Examples:
+        # Docker Hub: your-username/kcca-kla-connect-api:v1.0.0
+        # DigitalOcean: registry.digitalocean.com/your-registry/kcca-kla-connect-api:v1.0.0
+        # AWS ECR: 123456789012.dkr.ecr.us-east-1.amazonaws.com/kcca-kla-connect-api:v1.0.0
+        image: your-registry.io/kcca-kla-connect-api:v1.0.0
+        
+        # PRODUCTION: Always pull fresh images
+        imagePullPolicy: Always
+        
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: kcca-kla-connect-secrets
+              key: DATABASE_URL
+        - name: DATABASE_HOST
+          value: "postgres-service"  # Only if using in-cluster DB
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: kcca-kla-connect-secrets
+              key: SECRET
+        - name: ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: ALGORITHM
+        - name: UPLOAD_FOLDER
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: UPLOAD_FOLDER
+        - name: PYTHONUNBUFFERED
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: PYTHONUNBUFFERED
+        
+        # Production resource limits
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+      
+      # Security context for pod
+      securityContext:
+        fsGroup: 1000
+      
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: kcca-kla-connect-uploads-pvc
+      
+      restartPolicy: Always
+      
+      # Anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - kcca-kla-connect
+                - key: component
+                  operator: In
+                  values:
+                  - web
+              topologyKey: kubernetes.io/hostname
+

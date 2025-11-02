@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-backup-manual
+  namespace: kcca-kla-connect
+  labels:
+    app: postgres
+    component: backup
+spec:
+  ttlSecondsAfterFinished: 3600  # Delete job 1 hour after completion
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: backup
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: postgres-backup
+        image: postgres:14
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          BACKUP_FILE="/backups/backup-$(date +%Y%m%d-%H%M%S).sql"
+          
+          echo "Starting manual backup at $(date)"
+          
+          # Perform backup
+          PGPASSWORD=${POSTGRES_PASSWORD} pg_dump \
+            -h postgres-service \
+            -U ${POSTGRES_USER} \
+            -d ${POSTGRES_DB} \
+            -F c \
+            -f ${BACKUP_FILE} \
+            --verbose
+          
+          # Compress backup
+          gzip ${BACKUP_FILE}
+          
+          echo "Backup completed: ${BACKUP_FILE}.gz"
+          echo "File size:"
+          ls -lh ${BACKUP_FILE}.gz
+          
+          # Create a readable summary
+          echo ""
+          echo "=== Backup Summary ==="
+          echo "Database: ${POSTGRES_DB}"
+          echo "Backup file: ${BACKUP_FILE}.gz"
+          echo "Timestamp: $(date)"
+          echo ""
+          echo "To download this backup, use:"
+          echo "kubectl cp kcca-kla-connect/<pod-name>:/backups/$(basename ${BACKUP_FILE}.gz) ./backup-$(date +%Y%m%d-%H%M%S).sql.gz"
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kcca-kla-connect-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          value: klaconnect
+        - name: PGHOST
+          value: postgres-service
+        volumeMounts:
+        - name: backup-storage
+          mountPath: /backups
+      volumes:
+      - name: backup-storage
+        persistentVolumeClaim:
+          claimName: postgres-backup-pvc
+
+

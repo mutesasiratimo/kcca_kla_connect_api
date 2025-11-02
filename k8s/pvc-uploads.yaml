@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kcca-kla-connect-uploads-pvc
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce  # For local kind cluster (ReadWriteMany not supported by default storage)
+    # Use ReadWriteMany for cloud providers with appropriate storage class
+  storageClassName: standard  # Update with your cluster's storage class
+  # For cloud providers:
+  # AWS: gp3, gp2, ebs-sc
+  # GCP: standard, ssd, pd-ssd
+  # Azure: managed-premium, managed-standard
+  resources:
+    requests:
+      storage: 10Gi  # Adjust size as needed
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Simple wrapper - just run the full deployment script
+cd "$(dirname "$0")"
+./deploy-full.sh "$@"
+
+

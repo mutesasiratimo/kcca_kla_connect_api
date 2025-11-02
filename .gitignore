@@ -1,2 +1,6 @@
 .env
 /uploads/
+k8s/secret.yaml
+*.kubeconfig
+*.pem
+*.key

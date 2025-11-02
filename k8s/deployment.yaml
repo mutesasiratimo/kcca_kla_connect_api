@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcca-kla-connect-web
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+    component: web
+spec:
+  replicas: 3  # Number of pod replicas for high availability
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: kcca-kla-connect
+      component: web
+  template:
+    metadata:
+      labels:
+        app: kcca-kla-connect
+        component: web
+    spec:
+      containers:
+      - name: web
+        image: kcca-kla-connect-api-web:latest  # Update with your container registry
+        # imagePullPolicy: Always  # Use 'Always' for production with container registry
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: kcca-kla-connect-secrets
+              key: DATABASE_URL
+        - name: DATABASE_HOST
+          value: "postgres-service"  # Kubernetes service name
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: kcca-kla-connect-secrets
+              key: SECRET
+        - name: ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: ALGORITHM
+        - name: UPLOAD_FOLDER
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: UPLOAD_FOLDER
+        - name: PYTHONUNBUFFERED
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: PYTHONUNBUFFERED
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 25
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: kcca-kla-connect-uploads-pvc
+      restartPolicy: Always
+

@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: kcca-kla-connect
+  labels:
+    app: postgres
+    component: backup
+spec:
+  # Run daily at 2 AM
+  schedule: "0 2 * * *"
+  # Keep last 7 successful jobs
+  successfulJobsHistoryLimit: 7
+  # Keep last 3 failed jobs for debugging
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: postgres
+            component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: postgres-backup
+            image: postgres:14
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              BACKUP_DIR="/backups"
+              BACKUP_FILE="${BACKUP_DIR}/backup-$(date +%Y%m%d-%H%M%S).sql"
+              
+              echo "Starting backup at $(date)"
+              
+              # Create backup directory
+              mkdir -p ${BACKUP_DIR}
+              
+              # Perform backup
+              PGPASSWORD=${POSTGRES_PASSWORD} pg_dump \
+                -h postgres-service \
+                -U ${POSTGRES_USER} \
+                -d ${POSTGRES_DB} \
+                -F c \
+                -f ${BACKUP_FILE} \
+                --verbose
+              
+              # Compress backup
+              gzip ${BACKUP_FILE}
+              
+              # Keep only last 7 days of backups
+              find ${BACKUP_DIR} -name "backup-*.sql.gz" -mtime +7 -delete
+              
+              echo "Backup completed: ${BACKUP_FILE}.gz"
+              ls -lh ${BACKUP_DIR}/
+            env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kcca-kla-connect-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: klaconnect
+            - name: PGHOST
+              value: postgres-service
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: postgres-backup-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: kcca-kla-connect
+  labels:
+    app: postgres
+    component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi  # Adjust based on your data size
+

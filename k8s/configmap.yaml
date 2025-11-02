@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kcca-kla-connect-config
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+data:
+  # Database configuration (non-sensitive)
+  ALGORITHM: "HS256"
+  # Upload directory path
+  UPLOAD_FOLDER: "uploads"
+  # Python environment
+  PYTHONUNBUFFERED: "1"
+
