@@ -338,3 +338,157 @@ ssh user@server "cd kcca_kla_connect_api && make deploy-prod REGISTRY=your-docke
 
 This gives you production-like setup but with full control on your VPS!
 
+---
+
+## 🧪 Testing `make deploy-vps` Locally
+
+You can test `make deploy-vps` on your local machine if you have a Kubernetes cluster running (kind, minikube, k3s, etc.):
+
+### Non-Interactive Testing with Environment Variables
+
+```bash
+# Test with NO_CONFIRM to skip prompts
+NO_CONFIRM=true make deploy-vps
+
+# Test with skip build (if image already exists)
+NO_CONFIRM=true SKIP_BUILD=true make deploy-vps
+
+# Test with registry image (simulates production)
+NO_CONFIRM=true REGISTRY=your-dockerhub-username IMAGE_TAG=v1.0.0 make deploy-vps
+
+# Test without database deployment (use external/managed DB)
+NO_CONFIRM=true SKIP_DB=true make deploy-vps
+
+# Combined: Production-like testing
+NO_CONFIRM=true SKIP_BUILD=true REGISTRY=your-dockerhub-username IMAGE_TAG=v1.0.0 SKIP_DB=true make deploy-vps
+```
+
+### Available Environment Variables
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `NO_CONFIRM` | Skip confirmation prompts | `false` | `NO_CONFIRM=true` |
+| `SKIP_BUILD` | Skip Docker build step | `false` | `SKIP_BUILD=true` |
+| `REGISTRY` | Container registry URL | (empty) | `REGISTRY=your-registry.io` |
+| `IMAGE_TAG` | Image tag/version | `latest` | `IMAGE_TAG=v1.0.0` |
+| `SKIP_DB` | Skip PostgreSQL deployment | `false` | `SKIP_DB=true` |
+
+### Testing Workflow
+
+```bash
+# 1. Ensure you have a Kubernetes cluster (kind, minikube, k3s, etc.)
+kubectl cluster-info
+
+# 2. Test non-interactive deployment
+NO_CONFIRM=true make deploy-vps
+
+# 3. Test with registry (if you have one set up)
+NO_CONFIRM=true REGISTRY=your-username make deploy-vps
+
+# 4. Verify deployment
+kubectl get all -n kcca-kla-connect
+
+# 5. Test access
+make port-forward
+# Then visit: http://localhost:8000/docs
+```
+
+---
+
+## 🏭 Production Server Usage
+
+Yes, `make deploy-vps` is designed to run on production servers! Here's how:
+
+### Prerequisites on Production Server
+
+1. **Install k3s or microk8s**
+   ```bash
+   # k3s (recommended)
+   curl -sfL https://get.k3s.io | sh -
+   sudo systemctl enable k3s
+   
+   # OR microk8s (Ubuntu)
+   sudo snap install microk8s --classic
+   microk8s enable dns storage ingress
+   ```
+
+2. **Configure kubectl**
+   ```bash
+   # For k3s
+   mkdir -p ~/.kube
+   sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+   sudo chown $USER ~/.kube/config
+   
+   # For microk8s
+   microk8s kubectl config view --raw > ~/.kube/config
+   ```
+
+3. **Install Docker** (if building locally)
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get update
+   sudo apt-get install docker.io
+   sudo usermod -aG docker $USER
+   ```
+
+### Production Deployment Options
+
+#### Option A: Build on Server, Deploy Locally
+```bash
+# On server
+cd /path/to/kcca_kla_connect_api
+NO_CONFIRM=true make deploy-vps
+```
+
+#### Option B: Use Container Registry (Recommended)
+```bash
+# From local machine: Build and push
+make build-push REGISTRY=your-registry.io TAG=v1.0.0
+
+# On server: Deploy from registry
+NO_CONFIRM=true REGISTRY=your-registry.io IMAGE_TAG=v1.0.0 SKIP_BUILD=true make deploy-vps
+```
+
+#### Option C: Use External Database
+```bash
+# Create secret with external database connection
+kubectl create secret generic kcca-kla-connect-secrets \
+  --from-literal=DATABASE_URL='postgresql://user:pass@external-db:5432/db' \
+  --from-literal=SECRET='your-production-secret' \
+  --namespace=kcca-kla-connect
+
+# Deploy without database
+NO_CONFIRM=true SKIP_DB=true SKIP_BUILD=true REGISTRY=your-registry.io make deploy-vps
+```
+
+### Production Checklist
+
+- [ ] Use versioned image tags (not `:latest`)
+- [ ] Set `REGISTRY` to a production registry
+- [ ] Use `SKIP_DB=true` with external/managed database
+- [ ] Set proper secrets before deployment
+- [ ] Configure firewall rules
+- [ ] Set up TLS/HTTPS via Ingress
+- [ ] Configure monitoring and logging
+- [ ] Set up automated backups
+
+### Example Production Deployment
+
+```bash
+# On production server
+export NO_CONFIRM=true
+export REGISTRY=registry.digitalocean.com/your-registry
+export IMAGE_TAG=v1.2.3
+export SKIP_BUILD=true
+export SKIP_DB=true
+
+make deploy-vps
+```
+
+This will:
+- Deploy to your existing k3s/microk8s cluster
+- Pull image from registry
+- Skip database deployment (use external DB)
+- Skip all prompts
+- Work in CI/CD pipelines
+

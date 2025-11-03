@@ -53,6 +53,106 @@ app = FastAPI(
     },
 )
 add_pagination(app)
+# =============== Simple Rate Limiter Middleware ===============
+import asyncio
+from collections import deque, defaultdict
+
+class _SlidingWindowRateLimiter:
+    def __init__(self, max_requests: int, window_seconds: int) -> None:
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._buckets = defaultdict(deque)  # key -> deque[timestamps]
+        self._lock = asyncio.Lock()
+
+    async def allow(self, key: str, now: float) -> tuple[bool, int, float]:
+        # Returns (allowed, remaining, reset_epoch_seconds)
+        async with self._lock:
+            q = self._buckets[key]
+            # prune old
+            cutoff = now - self.window_seconds
+            while q and q[0] <= cutoff:
+                q.popleft()
+            if len(q) < self.max_requests:
+                q.append(now)
+                remaining = self.max_requests - len(q)
+                reset = (q[0] + self.window_seconds) if q else (now + self.window_seconds)
+                return True, remaining, reset
+            # rejected
+            reset = q[0] + self.window_seconds
+            remaining = 0
+            return False, remaining, reset
+
+# Config from environment
+def _get_bool(name: str, default: bool) -> bool:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    return str(v).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+RATE_LIMIT_ENABLED = _get_bool("RATE_LIMIT_ENABLED", True)
+RATE_LIMIT_WINDOW_SEC = int(os.environ.get("RATE_LIMIT_WINDOW_SEC", "60"))
+RATE_LIMIT_REQS = int(os.environ.get("RATE_LIMIT_REQS", "120"))
+
+_rate_limiter = _SlidingWindowRateLimiter(RATE_LIMIT_REQS, RATE_LIMIT_WINDOW_SEC) if RATE_LIMIT_ENABLED else None
+
+def _is_probe_like(path: str, ua: str) -> bool:
+    path_lower = (path or "").lower()
+    ua_lower = (ua or "").lower()
+    return (
+        "kube-probe" in ua_lower
+        or "readiness" in ua_lower
+        or "liveness" in ua_lower
+        or path_lower in {"/health", "/healthz", "/ready", "/readyz"}
+        or path_lower.startswith("/metrics")
+        or path_lower.startswith("/docs")
+        or path_lower.startswith("/openapi")
+    )
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if not RATE_LIMIT_ENABLED:
+        return await call_next(request)
+
+    ua = request.headers.get("user-agent") or ""
+    if _is_probe_like(request.url.path, ua):
+        return await call_next(request)
+
+    # Key by authenticated user if available (JWT parsed later in activity logger),
+    # but here we only have headers; try to parse lightweight
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    key = None
+    if auth_header and auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            key = str(payload.get("userID") or payload.get("userid") or payload.get("user_id") or payload.get("sub"))
+        except Exception:
+            key = None
+    if not key:
+        key = request.client.host if request.client else "anonymous"
+
+    now = datetime.datetime.now().timestamp()
+    allowed, remaining, reset_epoch = await _rate_limiter.allow(f"rl:{key}", now)
+    if not allowed:
+        reset_in = max(0, int(reset_epoch - now))
+        headers = {
+            "Retry-After": str(reset_in),
+            "X-RateLimit-Limit": str(RATE_LIMIT_REQS),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": str(int(reset_epoch)),
+        }
+        return JSONResponse(status_code=429, content={"detail": "Too Many Requests"}, headers=headers)
+
+    response = await call_next(request)
+    # Attach rate headers to successful responses for observability
+    try:
+        response.headers["X-RateLimit-Limit"] = str(RATE_LIMIT_REQS)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+        response.headers["X-RateLimit-Reset"] = str(int(reset_epoch))
+    except Exception:
+        pass
+    return response
+
 # =============== Activity Logs Middleware ===============
 MAX_BODY_LEN = 8192
 
@@ -198,6 +298,48 @@ async def activity_logs_middleware(request: Request, call_next):
     action_type = _infer_action(request.method, request.url.path)
     ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
+
+    # Balanced anonymous logging to reduce clutter but keep signals
+    # 1) Skip well-known health checks and probes entirely
+    path_lower = (request.url.path or "").lower()
+    ua_lower = (request.headers.get("user-agent") or "").lower()
+    known_probe = (
+        "kube-probe" in ua_lower
+        or "readiness" in ua_lower
+        or "liveness" in ua_lower
+        or path_lower in {"/health", "/healthz", "/ready", "/readyz"}
+        or path_lower.startswith("/metrics")
+        or path_lower.startswith("/docs")
+        or path_lower.startswith("/openapi")
+    )
+    if known_probe:
+        return response
+
+    # 2) If anonymous (no userid/email), log only suspicious or sampled
+    if (userid is None) or (email is None):
+        # Log suspicious: auth errors, not found spikes, rate limits, server errors
+        is_suspicious = False
+        try:
+            sc = int(status_code or 0)
+            is_suspicious = (
+                sc in (401, 403, 404, 429) or (500 <= sc <= 599)
+            )
+        except Exception:
+            pass
+
+        if not is_suspicious:
+            # Sample remaining anonymous traffic
+            try:
+                sample_rate = float(os.environ.get("ANON_LOG_SAMPLE_RATE", "0.01"))
+            except Exception:
+                sample_rate = 0.01
+            try:
+                import random as _random
+                if _random.random() >= max(0.0, min(1.0, sample_rate)):
+                    return response
+            except Exception:
+                # If sampling fails, default to skipping to avoid noise
+                return response
 
     try:
         await database.execute(

@@ -12,4 +12,10 @@ data:
   UPLOAD_FOLDER: "uploads"
   # Python environment
   PYTHONUNBUFFERED: "1"
+  # Rate limiting & logging config (non-sensitive)
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQS: "120"
+  RATE_LIMIT_WINDOW_SEC: "60"
+  # Anonymous activity log sampling (0.0 - 1.0)
+  ANON_LOG_SAMPLE_RATE: "0.01"
 

@@ -9,6 +9,11 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/klaconnect
       - SECRET=your-secret-key
       - ALGORITHM=HS256
+      # Rate limiting & logging
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_REQS=120
+      - RATE_LIMIT_WINDOW_SEC=60
+      - ANON_LOG_SAMPLE_RATE=0.01
     depends_on:
       - db
     volumes:

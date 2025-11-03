@@ -10,8 +10,12 @@ help:
 	@echo "  make deploy-restore  - Deploy and restore from backup if found"
 	@echo "  make deploy-prod     - Deploy to production cloud (requires registry)"
 	@echo "  make deploy-vps      - Deploy to VPS/server (k3s/microk8s)"
+	@echo "                         Env vars: NO_CONFIRM=true, SKIP_BUILD=true, REGISTRY=..., IMAGE_TAG=..., SKIP_DB=true"
+	@echo "  make restart         - Stop app only, rebuild & redeploy (keeps data)"
+	@echo "  make restart-fast    - Stop app only, redeploy without rebuild"
 	@echo "  make build-push      - Build and push image to registry"
-	@echo "  make stop            - Stop all deployments (keeps cluster)"
+	@echo "  make stop            - Stop app only (keeps namespace & data)"
+	@echo "  make teardown        - Delete namespace (removes app & data)"
 	@echo "  make clean           - Delete everything (cluster + namespace)"
 	@echo "  make logs            - View application logs"
 	@echo "  make status          - Show deployment status"
@@ -138,21 +142,61 @@ deploy-vps:
 		echo "   or microk8s: sudo snap install microk8s --classic"; \
 		exit 1; \
 	fi; \
-	read -p "Continue with this cluster? (yes/no): " confirm; \
-	if [ "$$confirm" != "yes" ]; then \
-		echo "Deployment cancelled."; \
-		exit 0; \
+	if [ "$$NO_CONFIRM" != "true" ]; then \
+		read -p "Continue with this cluster? (yes/no): " confirm; \
+		if [ "$$confirm" != "yes" ]; then \
+			echo "Deployment cancelled."; \
+			exit 0; \
+		fi; \
 	fi; \
-	cd k8s && ./deploy-vps.sh
+	cd k8s && \
+	SKIP_BUILD=$${SKIP_BUILD:-false} \
+	REGISTRY=$${REGISTRY:-} \
+	IMAGE_TAG=$${IMAGE_TAG:-latest} \
+	NO_CONFIRM=$${NO_CONFIRM:-false} \
+	SKIP_DB=$${SKIP_DB:-false} \
+	./deploy-vps.sh \
+	$$([ "$$SKIP_BUILD" = "true" ] && echo "--skip-build" || echo "") \
+	$$([ -n "$$REGISTRY" ] && echo "--registry=$$REGISTRY" || echo "") \
+	$$([ -n "$$IMAGE_TAG" ] && [ "$$IMAGE_TAG" != "latest" ] && echo "--image-tag=$$IMAGE_TAG" || echo "") \
+	$$([ "$$NO_CONFIRM" = "true" ] && echo "--no-confirm" || echo "") \
+	$$([ "$$SKIP_DB" = "true" ] && echo "--skip-db" || echo "")
 
 stop:
-	@echo "🛑 Stopping all deployments..."
+	@echo "🛑 Stopping application (preserving data/PVCs)..."
 	@pkill -f "kubectl port-forward.*8000" 2>/dev/null || true
 	@echo "✓ Port-forwards stopped"
-	@kubectl delete namespace kcca-kla-connect --ignore-not-found=true && echo "✓ Namespace deleted" || echo "⚠️  Namespace not found or already deleted"
+	@kubectl scale deployment kcca-kla-connect-web --replicas=0 -n kcca-kla-connect 2>/dev/null || echo "ℹ️  Deployment not found or already scaled to 0"
+	@kubectl delete deployment kcca-kla-connect-web -n kcca-kla-connect --ignore-not-found=true && echo "✓ Deployment deleted" || true
+	@kubectl delete service kcca-kla-connect-service -n kcca-kla-connect --ignore-not-found=true && echo "✓ Service deleted" || true
+	@kubectl delete service kcca-kla-connect-internal -n kcca-kla-connect --ignore-not-found=true && echo "✓ Internal service deleted" || true
+	@kubectl delete ingress kcca-kla-connect-ingress -n kcca-kla-connect --ignore-not-found=true && echo "✓ Ingress deleted" || true
 	@echo ""
-	@echo "✅ All deployments stopped (cluster still running)"
-	@echo "   To also delete the cluster: make clean"
+	@echo "✅ App stopped, namespace and PVCs retained: kcca-kla-connect"
+	@echo "   To remove EVERYTHING including data: make teardown"
+
+teardown:
+	@echo "🧨 TEARDOWN: Deleting namespace (this removes PVCs/data depending on storage class)..."
+	@read -p "Are you sure you want to delete namespace 'kcca-kla-connect'? (yes/no): " confirm; \
+	if [ "$$confirm" = "yes" ]; then \
+		kubectl delete namespace kcca-kla-connect --ignore-not-found=true && echo "✓ Namespace deleted" || echo "⚠️  Namespace not found or already deleted"; \
+		echo ""; \
+		echo "✅ Teardown complete"; \
+	else \
+		echo "Teardown cancelled."; \
+	fi
+
+restart:
+	@echo "🔁 Restarting application (preserving data/PVCs)..."
+	@$(MAKE) stop
+	@echo "🏗️  Rebuilding image and redeploying to existing cluster..."
+	@cd k8s && ./deploy-full.sh --skip-cluster
+
+restart-fast:
+	@echo "🔁 Restarting application quickly (no rebuild, preserving data/PVCs)..."
+	@$(MAKE) stop
+	@echo "🚀 Redeploying to existing cluster (skipping build)..."
+	@cd k8s && ./deploy-full.sh --skip-cluster --skip-build
 
 clean:
 	@echo "🧹 Cleaning up..."

@@ -7,7 +7,7 @@ metadata:
     app: kcca-kla-connect
     component: web
 spec:
-  replicas: 3  # Number of pod replicas for high availability
+  replicas: 2  # Desired replicas; HPA minReplicas will keep at least 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -60,6 +60,26 @@ spec:
             configMapKeyRef:
               name: kcca-kla-connect-config
               key: PYTHONUNBUFFERED
+        - name: RATE_LIMIT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: RATE_LIMIT_ENABLED
+        - name: RATE_LIMIT_REQS
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: RATE_LIMIT_REQS
+        - name: RATE_LIMIT_WINDOW_SEC
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: RATE_LIMIT_WINDOW_SEC
+        - name: ANON_LOG_SAMPLE_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: kcca-kla-connect-config
+              key: ANON_LOG_SAMPLE_RATE
         resources:
           requests:
             memory: "256Mi"
