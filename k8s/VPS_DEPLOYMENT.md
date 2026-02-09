@@ -2,6 +2,20 @@
 
 This guide is for deploying to a provisioned Linux server with a public IP address. This is similar to local deployment but on a remote server.
 
+## 🚀 Quick Start: Deploy from GHCR (No Repository Needed)
+
+**If you're using GitHub Container Registry (GHCR)**, see **[GHCR_VPS_DEPLOYMENT.md](./GHCR_VPS_DEPLOYMENT.md)** for deploying without cloning the repository on your VPS. This is the recommended approach for production deployments.
+
+Quick command:
+```bash
+# On VPS, download and run the deployment script
+curl -sSL https://raw.githubusercontent.com/mutesasiratimo/kcca_kla_connect_api/main/k8s/deploy-ghcr-remote.sh -o deploy-ghcr-remote.sh
+chmod +x deploy-ghcr-remote.sh
+./deploy-ghcr-remote.sh --no-confirm
+```
+
+---
+
 ## 🎯 Overview
 
 You have:

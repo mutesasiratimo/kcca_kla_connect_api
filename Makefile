@@ -11,6 +11,9 @@ help:
 	@echo "  make deploy-prod     - Deploy to production cloud (requires registry)"
 	@echo "  make deploy-vps      - Deploy to VPS/server (k3s/microk8s)"
 	@echo "                         Env vars: NO_CONFIRM=true, SKIP_BUILD=true, REGISTRY=..., IMAGE_TAG=..., SKIP_DB=true"
+	@echo "  make deploy-ghcr     - Deploy fixed GHCR image (no build)"
+	@echo "  make deploy-ghcr-remote - Deploy from GHCR on VPS without repo (downloads manifests)"
+	@echo "                              Env vars: IMAGE_TAG=..., SKIP_DB=true, NO_CONFIRM=true"
 	@echo "  make restart         - Stop app only, rebuild & redeploy (keeps data)"
 	@echo "  make restart-fast    - Stop app only, redeploy without rebuild"
 	@echo "  make build-push      - Build and push image to registry"
@@ -78,25 +81,74 @@ deploy-no-cluster:
 build-push:
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "❌ REGISTRY not specified"; \
-		echo "Usage: make build-push REGISTRY=your-registry.io [TAG=v1.0.0]"; \
+		echo "Usage: make build-push REGISTRY=ghcr.io/username [TAG=v1.0.0] [PLATFORM=linux/amd64]"; \
 		echo ""; \
 		echo "Examples:"; \
-		echo "  Docker Hub:  make build-push REGISTRY=your-username TAG=v1.0.0"; \
-		echo "  DigitalOcean: make build-push REGISTRY=registry.digitalocean.com/your-registry TAG=v1.0.0"; \
-		echo "  AWS ECR:    make build-push REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com/your-repo TAG=v1.0.0"; \
+		echo "  GHCR:       make build-push REGISTRY=ghcr.io/mutesasiratimo/kcca_kla_connect_api"; \
+		echo "  Docker Hub: make build-push REGISTRY=your-username/kcca-kla-connect-api TAG=v1.0.0"; \
+		echo "  DigitalOcean: make build-push REGISTRY=registry.digitalocean.com/your-registry/kcca-kla-connect-api"; \
 		exit 1; \
 	fi; \
 	IMAGE_TAG=$${TAG:-latest}; \
-	FULL_IMAGE="$$REGISTRY/kcca-kla-connect-api:$$IMAGE_TAG"; \
+	PLATFORM=$${PLATFORM:-linux/amd64}; \
+	FULL_IMAGE="$$REGISTRY:$$IMAGE_TAG"; \
 	echo "🏗️  Building image: $$FULL_IMAGE"; \
-	docker build -t $$FULL_IMAGE .; \
-	echo "📤 Pushing image to registry..."; \
-	docker push $$FULL_IMAGE; \
-	echo "✅ Image pushed: $$FULL_IMAGE"; \
-	if [ "$$IMAGE_TAG" != "latest" ]; then \
-		echo "📌 Also tagging as latest..."; \
-		docker tag $$FULL_IMAGE $$REGISTRY/kcca-kla-connect-api:latest; \
-		docker push $$REGISTRY/kcca-kla-connect-api:latest; \
+	echo "📦 Platform: $$PLATFORM"; \
+	echo ""; \
+	echo "🔍 Checking Docker..."; \
+	if ! docker info >/dev/null 2>&1; then \
+		echo "❌ Docker is not running!"; \
+		echo "   Please start Docker Desktop and try again."; \
+		exit 1; \
+	fi; \
+	echo "✅ Docker is running"; \
+	if command -v docker buildx &> /dev/null; then \
+		echo "📦 Setting up Docker Buildx..."; \
+		DOCKER_CONTEXT=$$(docker context ls --format '{{.Name}}' | grep -E '^\*|desktop' | head -1 | sed 's/^\*//' | sed 's/^ //'); \
+		if [ -n "$$DOCKER_CONTEXT" ] && [ "$$DOCKER_CONTEXT" != "*" ]; then \
+			echo "   Using Docker context: $$DOCKER_CONTEXT"; \
+			docker context use "$$DOCKER_CONTEXT" 2>/dev/null || true; \
+		fi; \
+		if docker buildx ls 2>/dev/null | grep -q "multiplatform"; then \
+			echo "   Using existing 'multiplatform' builder..."; \
+			docker buildx use multiplatform 2>/dev/null || true; \
+		else \
+			echo "   Creating buildx builder 'multiplatform'..."; \
+			docker buildx create --name multiplatform --driver docker-container --use 2>/dev/null || \
+			docker buildx create --name multiplatform --use --bootstrap 2>/dev/null || \
+			{ echo "   Using default builder..."; docker buildx use default 2>/dev/null || true; }; \
+		fi; \
+		echo "🏗️  Building and pushing with Buildx..."; \
+		if docker buildx build --platform $$PLATFORM -t $$FULL_IMAGE --push .; then \
+			echo "✅ Image pushed: $$FULL_IMAGE"; \
+			if [ "$$IMAGE_TAG" != "latest" ]; then \
+				echo "📌 Also tagging as latest..."; \
+				LATEST_IMAGE="$$REGISTRY:latest"; \
+				if docker buildx build --platform $$PLATFORM -t $$LATEST_IMAGE --push .; then \
+					echo "✅ Latest tag pushed: $$LATEST_IMAGE"; \
+				else \
+					echo "⚠️  Failed to push latest tag"; \
+				fi; \
+			fi; \
+		else \
+			echo "❌ Build failed!"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "⚠️  Docker Buildx not available, using standard Docker build..."; \
+		echo "⚠️  Note: This may not work for cross-platform builds (e.g., Mac to Linux)"; \
+		if docker build -t $$FULL_IMAGE . && docker push $$FULL_IMAGE; then \
+			echo "✅ Image pushed: $$FULL_IMAGE"; \
+			if [ "$$IMAGE_TAG" != "latest" ]; then \
+				echo "📌 Also tagging as latest..."; \
+				LATEST_IMAGE="$$REGISTRY:latest"; \
+				docker tag $$FULL_IMAGE $$LATEST_IMAGE && docker push $$LATEST_IMAGE && \
+				echo "✅ Latest tag pushed: $$LATEST_IMAGE" || echo "⚠️  Failed to push latest tag"; \
+			fi; \
+		else \
+			echo "❌ Build or push failed!"; \
+			exit 1; \
+		fi; \
 	fi
 
 deploy-prod:
@@ -185,6 +237,32 @@ teardown:
 	else \
 		echo "Teardown cancelled."; \
 	fi
+
+deploy-ghcr:
+	@echo "🚀 Deploying GHCR image (no build) ..."
+	@cd k8s && \
+	NO_CONFIRM=true SKIP_BUILD=true \
+	FULL_IMAGE=ghcr.io/mutesasiratimo/kcca_kla_connect_api:latest \
+	./deploy-vps.sh --skip-build --no-confirm --image=$$FULL_IMAGE
+
+deploy-ghcr-remote:
+	@echo "🚀 Deploying from GHCR on remote VPS (no repo needed)..."
+	@echo "⚠️  This script downloads manifests from GitHub and deploys"
+	@echo "   Make sure you're on the VPS or have kubectl configured for it!"
+	@if kubectl cluster-info &> /dev/null; then \
+		kubectl config current-context; \
+	else \
+		echo "❌ Cannot connect to cluster. Make sure kubectl is configured."; \
+		exit 1; \
+	fi; \
+	cd k8s && \
+	IMAGE_TAG=$${IMAGE_TAG:-latest} \
+	SKIP_DB=$${SKIP_DB:-false} \
+	NO_CONFIRM=$${NO_CONFIRM:-false} \
+	./deploy-ghcr-remote.sh \
+	$$([ -n "$$IMAGE_TAG" ] && [ "$$IMAGE_TAG" != "latest" ] && echo "--image-tag=$$IMAGE_TAG" || echo "") \
+	$$([ "$$SKIP_DB" = "true" ] && echo "--skip-db" || echo "") \
+	$$([ "$$NO_CONFIRM" = "true" ] && echo "--no-confirm" || echo "")
 
 restart:
 	@echo "🔁 Restarting application (preserving data/PVCs)..."

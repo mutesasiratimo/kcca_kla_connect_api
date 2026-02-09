@@ -1,0 +1,74 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kcca-kla-connect-ingress
+  namespace: kcca-kla-connect
+  labels:
+    app: kcca-kla-connect
+  annotations:
+    # Traefik Ingress Controller (k3s default)
+    # Note: ingressClassName in spec is preferred, but annotation works too
+    ingress.kubernetes.io/ingress.class: traefik
+    
+    # Optional: Apply middleware for upload size limit
+    # Format: namespace-middleware@kubernetescrd (uncomment if middleware is needed)
+    # traefik.ingress.kubernetes.io/router.middlewares: kcca-kla-connect-kcca-kla-connect-upload-size@kubernetescrd
+spec:
+  ingressClassName: traefik  # k3s uses traefik by default
+  rules:
+  - http:
+      paths:
+      # Frontend - root path
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kcca-kla-connect-frontend
+            port:
+              number: 80
+      # API - /apiklakonnect path
+      - path: /apiklakonnect
+        pathType: Prefix
+        backend:
+          service:
+            name: kcca-kla-connect-internal
+            port:
+              number: 8000
+
+---
+# Optional: Traefik Middleware for upload size limit (50MB)
+# Note: Requires Traefik CRDs to be installed
+# To install CRDs: kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.9/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+# 
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: kcca-kla-connect-upload-size
+#   namespace: kcca-kla-connect
+# spec:
+#   buffering:
+#     maxRequestBodyBytes: 52428800  # 50MB
+
+---
+# Optional: CORS Middleware (uncomment if needed and CRDs are installed)
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: kcca-kla-connect-cors
+#   namespace: kcca-kla-connect
+# spec:
+#   headers:
+#     accessControlAllowMethods:
+#       - GET
+#       - POST
+#       - PUT
+#       - DELETE
+#       - OPTIONS
+#       - PATCH
+#     accessControlAllowOriginList:
+#       - "*"  # Change to specific origins in production
+#     accessControlAllowHeaders:
+#       - "*"
+#     accessControlAllowCredentials: true
+#     accessControlMaxAge: 3600
+

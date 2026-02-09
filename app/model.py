@@ -97,6 +97,8 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
     sqlalchemy.Column("upvotes"      , sqlalchemy.Integer, nullable=False, server_default="0"),
+    sqlalchemy.Column("startdate"    , sqlalchemy.DateTime),
+    sqlalchemy.Column("enddate"      , sqlalchemy.DateTime),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
     sqlalchemy.Column("createdby"    , sqlalchemy.String),
     sqlalchemy.Column("dateupdated"  , sqlalchemy.DateTime),
@@ -501,6 +503,18 @@ class UserDeleteSchema(BaseModel):
             }
         }
 
+class UserDeactivateSchema(BaseModel):
+    userid   : str = Field(default=None)
+    updatedby: Optional[str] = None
+    class Config:
+        orm_mode = True
+        the_schema = {
+            "user_deactivate": {
+                "userid": "---",
+                "updatedby": "admin-id"
+            }
+        }
+
 class UserLoginSchema(BaseModel):
     username : str = Field(default= None)
     password : str = Field(default=None)
@@ -654,6 +668,8 @@ class IncidentWithCategorySchema(BaseModel):
     dateupdated               : Optional[datetime.datetime] = None
     updatedby                 : Optional[str] = None
     status                    : Optional[str] = None
+    startdate                 : Optional[datetime.datetime] = None
+    enddate                   : Optional[datetime.datetime] = None
 
 class IncidentSchema(BaseModel):
     id                  : str = Field(default=None)
@@ -676,6 +692,8 @@ class IncidentSchema(BaseModel):
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
+    startdate           : Optional[datetime.datetime] = None
+    enddate             : Optional[datetime.datetime] = None
     class Config:
         orm_mode = True
         the_schema = {
@@ -695,6 +713,8 @@ class IncidentSchema(BaseModel):
                 "file4": "File",
                 "file5": "File",
                 "upvotes": 0,
+                "startdate": datetime.datetime,
+                "enddate": datetime.datetime,
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,

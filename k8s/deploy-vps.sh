@@ -9,7 +9,7 @@ set -e
 
 # Configuration
 NAMESPACE="kcca-kla-connect"
-IMAGE_NAME="kcca-kla-connect-api-web"
+IMAGE_NAME="${IMAGE_NAME:-kcca-kla-connect-api-web}"
 DEFAULT_TAG="latest"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -20,6 +20,7 @@ REGISTRY=${REGISTRY:-""}
 IMAGE_TAG=${IMAGE_TAG:-"${DEFAULT_TAG}"}
 NO_CONFIRM=${NO_CONFIRM:-false}
 SKIP_DB=${SKIP_DB:-false}
+FULL_IMAGE=${FULL_IMAGE:-""}
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -42,6 +43,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-db)
             SKIP_DB=true
+            shift
+            ;;
+        --image=*)
+            FULL_IMAGE="${1#*=}"
             shift
             ;;
         *)
@@ -91,8 +96,11 @@ if [ "$NO_CONFIRM" = false ]; then
     fi
 fi
 
-# Determine image name
-if [ -n "$REGISTRY" ]; then
+# Determine image name (prefer explicit FULL_IMAGE)
+if [ -n "$FULL_IMAGE" ]; then
+    echo ""
+    echo "📦 Using explicit image: ${FULL_IMAGE}"
+elif [ -n "$REGISTRY" ]; then
     FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
     echo ""
     echo "📦 Using registry image: ${FULL_IMAGE}"
@@ -101,7 +109,7 @@ else
 fi
 
 # Step 1: Build Docker image (if not skipped and no registry)
-if [ "$SKIP_BUILD" = false ] && [ -z "$REGISTRY" ]; then
+if [ "$SKIP_BUILD" = false ] && [ -z "$REGISTRY" ] && [ -z "$FULL_IMAGE" ]; then
     echo ""
     echo "🔷 Step 1/8: Building Docker image..."
     check_command docker
@@ -199,11 +207,11 @@ echo ""
 echo "🔷 Step 7/8: Deploying FastAPI application..."
 echo "   Using image: ${FULL_IMAGE}"
 
-# Update deployment image if registry is specified
-if [ -n "$REGISTRY" ]; then
-    # Create a temporary deployment file with the registry image
+# Update deployment image if an explicit or registry image is provided
+if [ -n "$REGISTRY" ] || [ -n "$FULL_IMAGE" ]; then
     TEMP_DEPLOYMENT=$(mktemp)
-    sed "s|image:.*kcca-kla-connect-api-web.*|image: ${FULL_IMAGE}|g; s|imagePullPolicy:.*|imagePullPolicy: Always|g" \
+    # Replace any 'image:' line for the main container and force Always pull
+    sed "s|^\([[:space:]]*image:\).*|\1 ${FULL_IMAGE}|g; s|imagePullPolicy:.*|imagePullPolicy: Always|g" \
         "${SCRIPT_DIR}/deployment.yaml" > "${TEMP_DEPLOYMENT}"
     kubectl apply -f "${TEMP_DEPLOYMENT}"
     rm -f "${TEMP_DEPLOYMENT}"

@@ -24,6 +24,23 @@ def upgrade() -> None:
         op.execute('ALTER TABLE incidentstablenew ADD COLUMN IF NOT EXISTS upvotes INTEGER NOT NULL DEFAULT 0')
     except Exception:
         pass
+
+    # Add startdate and enddate columns to incidentstablenew if not exists
+    try:
+        op.execute("""
+        ALTER TABLE incidentstablenew 
+        ADD COLUMN IF NOT EXISTS startdate TIMESTAMP NULL;
+    """)
+    except Exception:
+        pass
+
+    try:
+        op.execute("""
+        ALTER TABLE incidentstablenew 
+        ADD COLUMN IF NOT EXISTS enddate TIMESTAMP NULL;
+    """)
+    except Exception:
+        pass
     
     # Create activitylogs table
     op.create_table(
@@ -63,4 +80,6 @@ def downgrade() -> None:
     op.drop_index('idx_activitylogs_created', table_name='activitylogs')
     op.drop_table('activitylogs')
     op.execute('ALTER TABLE incidentstablenew DROP COLUMN IF EXISTS upvotes')
+    op.execute('ALTER TABLE incidentstablenew DROP COLUMN IF EXISTS startdate')
+    op.execute('ALTER TABLE incidentstablenew DROP COLUMN IF EXISTS enddate')
 

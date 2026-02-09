@@ -7,7 +7,7 @@ metadata:
     app: kcca-kla-connect
     component: web
 spec:
-  replicas: 2  # Desired replicas; HPA minReplicas will keep at least 2
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -23,11 +23,12 @@ spec:
         app: kcca-kla-connect
         component: web
     spec:
+      imagePullSecrets:
+      - name: ghcr-pull-secret
       containers:
       - name: web
-        image: kcca-kla-connect-api-web:latest  # Update with your container registry
-        # imagePullPolicy: Always  # Use 'Always' for production with container registry
-        imagePullPolicy: IfNotPresent
+        image: ghcr.io/mutesasiratimo/kcca_kla_connect_api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
           name: http
@@ -39,7 +40,7 @@ spec:
               name: kcca-kla-connect-secrets
               key: DATABASE_URL
         - name: DATABASE_HOST
-          value: "postgres-service"  # Kubernetes service name
+          value: "postgres-service"
         - name: SECRET
           valueFrom:
             secretKeyRef:
@@ -111,4 +112,3 @@ spec:
         persistentVolumeClaim:
           claimName: kcca-kla-connect-uploads-pvc
       restartPolicy: Always
-

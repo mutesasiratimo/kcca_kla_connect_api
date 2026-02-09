@@ -12,7 +12,7 @@ from app.model import *
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 import jwt
-from sqlalchemy import select, join, func, extract, case
+from sqlalchemy import select, join, func, extract, case, or_
 from decouple import config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -30,27 +30,26 @@ import firebase_admin
 from firebase_admin import credentials
 from fastapi_pagination import Page, LimitOffsetPage, paginate, add_pagination, Params
 from app.utils.email_templates import send_welcome_email, send_password_reset_email
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
 UPLOAD_FOLDER = "uploads"
 
 #Create upload folder if it does not exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 app = FastAPI(
-    # root_path="/apiklakonnect",
-    title="KCCA Kla Connect",
-    description= 'A system for reporting and managing incidents.',
+    title="KCCA Kla Konnect",
+    description="A system for reporting and managing incidents.",
     version="0.1.1",
-    # terms_of_service="http://example.com/terms/",
     contact={
         "name": "KCCA",
         "url": "http://kcca.go.ug",
         "email": "info@kcca.go.ug",
     },
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-    },
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None,
 )
 add_pagination(app)
 # =============== Simple Rate Limiter Middleware ===============
@@ -372,7 +371,14 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=[
+        "https://klakonnect.kcca.go.ug",
+        "https://klakonnect.kcca.go.ug/",
+        "https://kcca.go.ug",
+        "http://localhost:3000",  # For local development
+        "http://localhost:8000",  # For local development
+        "http://localhost:8080",  # For local development
+    ],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
@@ -393,6 +399,20 @@ async def shutdown():
 @app.get("/", tags=["welcome"])
 def greet():
     return{"Hello": "Welcome to the KLA CONNECT API"}
+
+# @app.get("/docs", include_in_schema=False)
+# async def custom_swagger_ui():
+#     return get_swagger_ui_html(
+#         openapi_url="/apiklakonnect/openapi.json",  # <-- set full path
+#         title="KCCA Kla Konnect - Swagger UI",
+#     )
+
+# @app.get("/redoc", include_in_schema=False)
+# async def custom_redoc():
+#     return get_redoc_html(
+#         openapi_url="/apiklakonnect/openapi.json",  # full path to OpenAPI spec
+#         title="KCCA Kla Konnect - ReDoc",
+#     )
 
 ############# FILES ###########################
 
@@ -814,76 +834,97 @@ async def check_if_user_exists(email: str):
 
 @app.post("/users/signup", tags=["user"], status_code=201)
 async def register_user(user: UserSignUpSchema, background_tasks: BackgroundTasks):
-    gID = str(uuid.uuid1())
     gDate = datetime.datetime.now()
-    query = users_table.insert().values(
-        id=gID,
-        fcmid=user.fcmid,
-        username=user.username,
-        password=user.password,
-        firstname=user.firstname,
-        lastname=user.lastname,
-        phone=user.phone,
-        mobile=user.mobile,
-        dateofbirth=datetime.datetime.strptime(
-            (user.dateofbirth), "%Y-%m-%d").date(),
-        address=user.address,
-        addresslat=user.addresslat,
-        addresslong=user.addresslong,
-        photo=user.photo,
-        email=user.email,
-        nin=user.nin,
-        gender=user.gender,
-        isclerk=user.isclerk,
-        isengineer=user.isengineer,
-        iscitizen=user.iscitizen,
-        issuperadmin=user.issuperadmin,
-        isadmin=user.isadmin,
-        datecreated=gDate,
-        status="1"
-    )
-    exists = await check_if_user_exists(user.email)
-    if (exists):
-        raise HTTPException(
-            status_code=409, detail="User already exists with this phone number or email.")
-    else:
-        # otp = ""
-        # otp = await generate_otp(gID)
-        digits = "0123456789"
-        OTP = ""
-        for i in range(4):
-            OTP += digits[math.floor(random.random() * 10)]
-        email_address = user.email
-        sms_number = user.phone
-        sms_message = f"Welcome to Kla Konnect! Kindly use "+OTP+" as the OTP to activate your account"
-        print(OTP)
-        print(user.phone)
-        print(sms_message)
-        sms_gateway_url = 'https://sms.dmarkmobile.com/v2/api/send_sms/?spname=spesho@dmarkmobile.com&sppass=t4x1sms&numbers='+sms_number+'&msg='+sms_message+'&type=json'.replace(" ", "%20")
-        
-        # contents = urllib.request.urlopen(parsed_url).read()
-        # background_tasks = BackgroundTasks()
-        # background_tasks.add_task(send_email_asynchronous, title="Welcome to Kla Konnect", body=sms_message, to=email_address)
-        # send_email_backgroundtasks(BackgroundTasks(), "Welcome to Kla Konnect", sms_message, email_address)
-        # await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
-        
-        await database.execute(query)
-        parsed_url = urlparse(sms_gateway_url).query
-        parse_qs(parsed_url)
-        contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
+    date_of_birth_value = datetime.datetime.strptime(
+        (user.dateofbirth), "%Y-%m-%d").date()
 
-        print(str(contents))
-        # await send_email_asynchronous("Welcome to Kla Konnect", sms_message, email_address)
-        # TO DO MAKE BACKGROUND EMAIL SENDING FUNCTIONAL, AWAIT SLOWS DOWN RESPONSE.
-        background_tasks.add_task(send_welcome_email, email_address, user.firstname, OTP)
-        return {
-            **user.dict(), 
-            "id": gID,
-            "datecreated": gDate,
-            "otp": OTP,
-            "token": signJWT(user.username),
-            "status": "1"
-        }
+    existing_users_query = users_table.select().where(
+        or_(
+            users_table.c.email == user.email,
+            users_table.c.phone == user.phone
+        )
+    )
+    existing_users = await database.fetch_all(existing_users_query)
+
+    for record in existing_users:
+        if record["status"] != "2":
+            raise HTTPException(
+                status_code=409, detail="User already exists with this phone number or email.")
+
+    digits = "0123456789"
+    OTP = ""
+    for i in range(4):
+        OTP += digits[math.floor(random.random() * 10)]
+
+    email_address = user.email
+    sms_number = user.phone
+    sms_message = f"Welcome to Kla Konnect! Kindly use " + OTP + " as the OTP to activate your account"
+    sms_gateway_url = 'https://sms.dmarkmobile.com/v2/api/send_sms/?spname=spesho@dmarkmobile.com&sppass=t4x1sms&numbers=' + sms_number + '&msg=' + sms_message + '&type=json'.replace(" ", "%20")
+
+    base_user_values = {
+        "fcmid": user.fcmid,
+        "username": user.username,
+        "password": user.password,
+        "firstname": user.firstname,
+        "lastname": user.lastname,
+        "phone": user.phone,
+        "mobile": user.mobile,
+        "dateofbirth": date_of_birth_value,
+        "address": user.address,
+        "addresslat": user.addresslat,
+        "addresslong": user.addresslong,
+        "photo": user.photo,
+        "email": user.email,
+        "nin": user.nin,
+        "gender": user.gender,
+        "isclerk": user.isclerk,
+        "isengineer": user.isengineer,
+        "iscitizen": user.iscitizen,
+        "issuperadmin": user.issuperadmin,
+        "isadmin": user.isadmin,
+        "status": "1"
+    }
+
+    if existing_users:
+        inactive_user = existing_users[0]
+        for record in existing_users:
+            if record["email"] == user.email:
+                inactive_user = record
+                break
+            if record["phone"] == user.phone:
+                inactive_user = record
+        target_user_id = inactive_user["id"]
+        update_values = {**base_user_values, "dateupdated": gDate}
+        await database.execute(
+            users_table.update()
+            .where(users_table.c.id == target_user_id)
+            .values(**update_values)
+        )
+        date_created_value = inactive_user["datecreated"]
+    else:
+        target_user_id = str(uuid.uuid1())
+        insert_values = {**base_user_values, "id": target_user_id, "datecreated": gDate}
+        await database.execute(users_table.insert().values(**insert_values))
+        date_created_value = gDate
+
+    parsed_url = urlparse(sms_gateway_url).query
+    parse_qs(parsed_url)
+    contents = urllib.request.urlopen(sms_gateway_url.replace(" ", "%20")).read()
+
+    print(OTP)
+    print(user.phone)
+    print(sms_message)
+    print(str(contents))
+
+    background_tasks.add_task(send_welcome_email, email_address, user.firstname, OTP)
+    return {
+        **user.dict(),
+        "id": target_user_id,
+        "datecreated": date_created_value,
+        "otp": OTP,
+        "token": signJWT(user.username),
+        "status": "1"
+    }
 
 
 @app.post("/users/update", response_model=UserUpdateSchema, tags=["user"], dependencies=[Depends(jwtBearer())])
@@ -961,6 +1002,33 @@ async def update_user_rights(user: UserUpdateRightsSchema):
         "success": "User rights updated"
     }
 
+@app.post("/users/deactivate", tags=["user"], dependencies=[Depends(jwtBearer())])
+async def deactivate_user_account(payload: UserDeactivateSchema):
+    user = await database.fetch_one(users_table.select().where(users_table.c.id == payload.userid))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    gDate = datetime.datetime.now()
+    async with database.transaction():
+        await database.execute(
+            users_table.update()
+            .where(users_table.c.id == payload.userid)
+            .values(status="2", dateupdated=gDate, updatedby=payload.updatedby)
+        )
+        await database.execute(
+            incidents_table.update()
+            .where(incidents_table.c.createdby == payload.userid)
+            .values(status="2", dateupdated=gDate, updatedby=payload.updatedby)
+        )
+        await database.execute(
+            user_trips_table.update()
+            .where(user_trips_table.c.createdby == payload.userid)
+            .values(status="2", dateupdated=gDate, updatedby=payload.updatedby)
+        )
+
+    return {
+        "message": "User account and related records deactivated"
+    }
 
 @app.get("/users/resetpassword/{email}", tags=["user"])
 async def reset_password(email: str, background_tasks: BackgroundTasks):
@@ -1198,6 +1266,8 @@ async def get_all_incidents():
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1245,6 +1315,8 @@ async def get_all_incidents_paginate(params: Params = Depends()):
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1287,6 +1359,8 @@ async def get_all_incidents_by_status_paginate(status: str, params: Params = Dep
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1761,6 +1835,8 @@ async def register_incident(incident: IncidentSchema):
             incidents_table.c.dateupdated,
             incidents_table.c.updatedby,
             incidents_table.c.status,
+            incidents_table.c.startdate,
+            incidents_table.c.enddate,
             incidentcategories_table.c.doesexpire.label("category_doesexpire"),
             incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         )
@@ -1851,6 +1927,8 @@ async def register_incident(incident: IncidentSchema):
             "upvotes": refreshed["upvotes"],
             "isemergency": refreshed["isemergency"],
             "iscityreport": refreshed["iscityreport"],
+            "startdate": refreshed["startdate"],
+            "enddate": refreshed["enddate"],
             "createdby": refreshed["createdby"],
             "datecreated": refreshed["datecreated"],
             "dateupdated": refreshed["dateupdated"],
@@ -1883,6 +1961,8 @@ async def register_incident(incident: IncidentSchema):
             "upvotes": refreshed["upvotes"],
             "isemergency": refreshed["isemergency"],
             "iscityreport": refreshed["iscityreport"],
+            "startdate": refreshed["startdate"],
+            "enddate": refreshed["enddate"],
             "createdby": refreshed["createdby"],
             "datecreated": refreshed["datecreated"],
             "dateupdated": refreshed["dateupdated"],
@@ -1907,7 +1987,9 @@ async def register_incident(incident: IncidentSchema):
         file5=incident.file5,
         createdby=incident.createdby,
         datecreated=gDate,
-        status= incident.status
+        status= incident.status,
+        startdate=incident.startdate,
+        enddate=incident.enddate,
     )
 
     await database.execute(query)
@@ -2232,6 +2314,8 @@ async def get_all_reports():
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2280,6 +2364,8 @@ async def get_all_reports_paginate(params: Params = Depends()):
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2322,6 +2408,8 @@ async def get_all_reports_by_status_paginate(status: str, params: Params = Depen
         incidentcategories_table.c.autoapprove.label("category_autoapprove"),
         incidentcategories_table.c.doesexpire.label("category_doesexpire"),
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
+        incidents_table.c.startdate,
+        incidents_table.c.enddate,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2413,6 +2501,8 @@ async def register_report(incident: IncidentSchema):
             "isemergency": existing["isemergency"],
             "iscityreport": existing["iscityreport"],
             "createdby": existing["createdby"],
+            "startdate": existing["startdate"],
+            "enddate": existing["enddate"],
             "datecreated": existing["datecreated"],
             "dateupdated": existing["dateupdated"],
             "updatedby": existing["updatedby"],
@@ -2437,6 +2527,8 @@ async def register_report(incident: IncidentSchema):
             "isemergency": existing["isemergency"],
             "iscityreport": existing["iscityreport"],
             "createdby": existing["createdby"],
+            "startdate": existing["startdate"],
+            "enddate": existing["enddate"],
             "datecreated": existing["datecreated"],
             "dateupdated": existing["dateupdated"],
             "updatedby": existing["updatedby"],
@@ -2459,6 +2551,8 @@ async def register_report(incident: IncidentSchema):
         file3=incident.file3,
         file4=incident.file4,
         file5=incident.file5,
+        startdate=incident.startdate,
+        enddate=incident.enddate,
         createdby=incident.createdby,
         datecreated=gDate,
         status= incident.status
@@ -2492,7 +2586,9 @@ async def update_report(incident: IncidentUpdateSchema):
             file4=incident.file4,
             file5=incident.file5,
             updatedby=incident.updatedby,
-            dateupdated=gDate
+            dateupdated=gDate,
+            startdate=incident.startdate,
+            enddate=incident.enddate,
     )
 
     await database.execute(query)
