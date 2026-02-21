@@ -97,6 +97,8 @@ incidents_table = sqlalchemy.Table(
     sqlalchemy.Column("file4"        , sqlalchemy.Text),
     sqlalchemy.Column("file5"        , sqlalchemy.Text),
     sqlalchemy.Column("upvotes"      , sqlalchemy.Integer, nullable=False, server_default="0"),
+    sqlalchemy.Column("cause"        , sqlalchemy.String, nullable=True),
+    sqlalchemy.Column("fulldisruption", sqlalchemy.Boolean, nullable=True, server_default=sqlalchemy.text("false")),
     sqlalchemy.Column("startdate"    , sqlalchemy.DateTime),
     sqlalchemy.Column("enddate"      , sqlalchemy.DateTime),
     sqlalchemy.Column("datecreated"  , sqlalchemy.DateTime),
@@ -670,6 +672,8 @@ class IncidentWithCategorySchema(BaseModel):
     status                    : Optional[str] = None
     startdate                 : Optional[datetime.datetime] = None
     enddate                   : Optional[datetime.datetime] = None
+    cause                     : Optional[str] = None
+    fulldisruption            : Optional[bool] = None
 
 class IncidentSchema(BaseModel):
     id                  : str = Field(default=None)
@@ -694,6 +698,8 @@ class IncidentSchema(BaseModel):
     status              : Optional[str] = None
     startdate           : Optional[datetime.datetime] = None
     enddate             : Optional[datetime.datetime] = None
+    cause               : Optional[str] = None
+    fulldisruption      : Optional[bool] = None
     class Config:
         orm_mode = True
         the_schema = {
@@ -715,6 +721,8 @@ class IncidentSchema(BaseModel):
                 "upvotes": 0,
                 "startdate": datetime.datetime,
                 "enddate": datetime.datetime,
+                "cause": None,
+                "fulldisruption": False,
                 "datecreated": datetime.datetime,
                 "createdby": "1",
                 "dateupdated": None,
@@ -739,6 +747,8 @@ class IncidentUpdateSchema(BaseModel):
     file4               : str = Field(default= None)
     file5               : str = Field(default= None)
     upvotes             : int = Field(default= 0)
+    cause               : Optional[str] = None
+    fulldisruption      : Optional[bool] = None
     dateupdated         : Optional[datetime.datetime] = None
     updatedby           : Optional[str] = None
     status              : Optional[str] = None
@@ -761,6 +771,8 @@ class IncidentUpdateSchema(BaseModel):
                 "file4": "File",
                 "file5": "File",
                 "upvotes": 0,
+                "cause": None,
+                "fulldisruption": False,
                 "dateupdated": datetime.datetime,
                 "updatedby": None,
                 "status": "1"

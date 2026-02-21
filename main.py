@@ -1267,6 +1267,8 @@ async def get_all_incidents():
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1316,6 +1318,8 @@ async def get_all_incidents_paginate(params: Params = Depends()):
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1360,6 +1364,8 @@ async def get_all_incidents_by_status_paginate(status: str, params: Params = Dep
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -1728,7 +1734,9 @@ async def get_incident_by_id(incidentid: str):
             "createdbyobj": await get_user_by_id(result["createdby"]),
             "dateupdated": result["dateupdated"],
             "updatedby": result["updatedby"],
-            "status": result["status"]
+            "status": result["status"],
+            "cause": result["cause"],
+            "fulldisruption": result["fulldisruption"],
         }
 
 
@@ -1799,17 +1807,6 @@ async def register_incident(incident: IncidentSchema):
     time_window_minutes = 5
     time_threshold = gDate - datetime.timedelta(minutes=time_window_minutes)
 
-    # Fetch recent/same-user incidents for quick duplicate checks within the category
-    candidate_query = (
-        select(incidents_table)
-        .where(
-            (incidents_table.c.incidentcategoryid == incident.incidentcategoryid)
-            & (
-                (incidents_table.c.datecreated >= time_threshold)
-                | (incidents_table.c.createdby == incident.createdby)
-            )
-        )
-    )
     # Join category to apply expiry logic
     j = incidents_table.join(incidentcategories_table, incidents_table.c.incidentcategoryid == incidentcategories_table.c.id)
     candidate_query = (
@@ -1853,6 +1850,7 @@ async def register_incident(incident: IncidentSchema):
 
     same_user_duplicate = None
     nearby_same_category = None
+
     for row in candidates:
         try:
             row_lat = float(row["addresslat"]) if row["addresslat"] is not None else None
@@ -1894,22 +1892,12 @@ async def register_incident(incident: IncidentSchema):
 
         # Rule 2: Different user, same category within 500m → treat as success but link to existing
         if (not is_same_user) and (distance_m <= radius_m):
-            # Keep nearest
             if nearby_same_category is None:
                 nearby_same_category = (row, distance_m)
             elif distance_m < nearby_same_category[1]:
                 nearby_same_category = (row, distance_m)
 
-    if same_user_duplicate is not None:
-        # Return the existing incident as the response (flagging duplicate)
-        existing = same_user_duplicate
-        # Upvote existing atomically and return fresh row
-        await database.execute(
-            incidents_table.update()
-            .where(incidents_table.c.id == existing["id"]) 
-            .values(upvotes=(func.coalesce(incidents_table.c.upvotes, 0) + 1), dateupdated=gDate, updatedby=incident.createdby)
-        )
-        refreshed = await database.fetch_one(incidents_table.select().where(incidents_table.c.id == existing["id"]))
+    def build_response(refreshed: dict) -> dict:
         return {
             "id": refreshed["id"],
             "name": refreshed["name"],
@@ -1928,6 +1916,8 @@ async def register_incident(incident: IncidentSchema):
             "iscityreport": refreshed["iscityreport"],
             "startdate": refreshed["startdate"],
             "enddate": refreshed["enddate"],
+            "cause": refreshed.get("cause"),
+            "fulldisruption": refreshed.get("fulldisruption"),
             "createdby": refreshed["createdby"],
             "datecreated": refreshed["datecreated"],
             "dateupdated": refreshed["dateupdated"],
@@ -1935,39 +1925,39 @@ async def register_incident(incident: IncidentSchema):
             "status": refreshed["status"],
         }
 
-    if nearby_same_category is not None:
-        existing, _ = nearby_same_category
-        # Upvote existing instead of creating a new one, then return fresh row
+    async def upvote_and_return(existing_id: str) -> dict:
         await database.execute(
             incidents_table.update()
-            .where(incidents_table.c.id == existing["id"]) 
-            .values(upvotes=(func.coalesce(incidents_table.c.upvotes, 0) + 1), dateupdated=gDate, updatedby=incident.createdby)
+            .where(incidents_table.c.id == existing_id)
+            .values(
+                upvotes=(func.coalesce(incidents_table.c.upvotes, 0) + 1),
+                dateupdated=gDate,
+                updatedby=incident.createdby,
+            )
         )
-        refreshed = await database.fetch_one(incidents_table.select().where(incidents_table.c.id == existing["id"]))
-        return {
-            "id": refreshed["id"],
-            "name": refreshed["name"],
-            "description": refreshed["description"],
-            "incidentcategoryid": refreshed["incidentcategoryid"],
-            "address": refreshed["address"],
-            "addresslat": refreshed["addresslat"],
-            "addresslong": refreshed["addresslong"],
-            "file1": refreshed["file1"],
-            "file2": refreshed["file2"],
-            "file3": refreshed["file3"],
-            "file4": refreshed["file4"],
-            "file5": refreshed["file5"],
-            "upvotes": refreshed["upvotes"],
-            "isemergency": refreshed["isemergency"],
-            "iscityreport": refreshed["iscityreport"],
-            "startdate": refreshed["startdate"],
-            "enddate": refreshed["enddate"],
-            "createdby": refreshed["createdby"],
-            "datecreated": refreshed["datecreated"],
-            "dateupdated": refreshed["dateupdated"],
-            "updatedby": refreshed["updatedby"],
-            "status": refreshed["status"],
-        }
+        refreshed = await database.fetch_one(incidents_table.select().where(incidents_table.c.id == existing_id))
+        return build_response(refreshed)
+
+    if same_user_duplicate is not None:
+        return await upvote_and_return(same_user_duplicate["id"])
+
+    if nearby_same_category is not None:
+        existing, _ = nearby_same_category
+        return await upvote_and_return(existing["id"])
+
+    # Auto-set startdate/enddate from category expiry if not provided
+    incident_startdate = incident.startdate
+    incident_enddate = incident.enddate
+
+    if incident_startdate is None or incident_enddate is None:
+        category_row = await database.fetch_one(
+            select(incidentcategories_table).where(incidentcategories_table.c.id == incident.incidentcategoryid)
+        )
+        if category_row and bool(category_row["doesexpire"]) and category_row["hourstoexpire"] is not None:
+            if incident_startdate is None:
+                incident_startdate = gDate
+            if incident_enddate is None:
+                incident_enddate = gDate + datetime.timedelta(hours=int(category_row["hourstoexpire"]))
 
     query = incidents_table.insert().values(
         id=gID,
@@ -1986,16 +1976,20 @@ async def register_incident(incident: IncidentSchema):
         file5=incident.file5,
         createdby=incident.createdby,
         datecreated=gDate,
-        status= incident.status,
-        startdate=incident.startdate,
-        enddate=incident.enddate,
+        status=incident.status,
+        startdate=incident_startdate,
+        enddate=incident_enddate,
+        cause=incident.cause,
+        fulldisruption=incident.fulldisruption,
     )
 
     await database.execute(query)
     return {
         **incident.dict(),
         "id": gID,
-        "datecreated": gDate
+        "datecreated": gDate,
+        "startdate": incident_startdate,
+        "enddate": incident_enddate,
     }
 
 
@@ -2018,6 +2012,8 @@ async def update_incident(incident: IncidentUpdateSchema):
             file3=incident.file3,
             file4=incident.file4,
             file5=incident.file5,
+            cause=incident.cause,
+            fulldisruption=incident.fulldisruption,
             updatedby=incident.updatedby,
             dateupdated=gDate
     )
@@ -2315,6 +2311,8 @@ async def get_all_reports():
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2365,6 +2363,8 @@ async def get_all_reports_paginate(params: Params = Depends()):
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2409,6 +2409,8 @@ async def get_all_reports_by_status_paginate(status: str, params: Params = Depen
         incidentcategories_table.c.hourstoexpire.label("category_hourstoexpire"),
         incidents_table.c.startdate,
         incidents_table.c.enddate,
+        incidents_table.c.cause,
+        incidents_table.c.fulldisruption,
         incidents_table.c.createdby,
         incidents_table.c.datecreated,
         incidents_table.c.dateupdated,
@@ -2552,6 +2554,8 @@ async def register_report(incident: IncidentSchema):
         file5=incident.file5,
         startdate=incident.startdate,
         enddate=incident.enddate,
+        cause=incident.cause,
+        fulldisruption=incident.fulldisruption,
         createdby=incident.createdby,
         datecreated=gDate,
         status= incident.status
@@ -2584,6 +2588,8 @@ async def update_report(incident: IncidentUpdateSchema):
             file3=incident.file3,
             file4=incident.file4,
             file5=incident.file5,
+            cause=incident.cause,
+            fulldisruption=incident.fulldisruption,
             updatedby=incident.updatedby,
             dateupdated=gDate,
             startdate=incident.startdate,
@@ -4004,7 +4010,7 @@ async def get_incidents_time_series(
         func.count().filter(incidents_table.c.status == "1").label("published"),
         func.count().filter(incidents_table.c.status == "2").label("resolved"),
         func.count().filter(incidents_table.c.status == "3").label("rejected"),
-        func.count().filter(incidents_table.c.isemergenct == True).label("emergency")
+        func.count().filter(incidents_table.c.isemergency == True).label("emergency")
     ).group_by("period").order_by("period")
     
     if base_filter:
